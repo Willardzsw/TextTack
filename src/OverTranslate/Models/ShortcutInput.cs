@@ -4,8 +4,8 @@ namespace OverTranslate.Models;
 
 /// <summary>
 /// The physical input used to trigger a shortcut. Keyboard keeps the existing Windows RegisterHotKey
-/// path; mouse and gamepad are observed without swallowing the original input, so the foreground game
-/// or application still receives them.
+/// path; the mouse buttons are observed without swallowing the original input, so the foreground
+/// application still receives them.
 /// </summary>
 /// <remarks>
 /// The side buttons are named after Windows' own XBUTTON1/XBUTTON2 rather than after what a mouse
@@ -26,35 +26,10 @@ public enum ShortcutInputKind
     MouseMiddle,
     MouseX1,
     MouseX2,
-    Gamepad,
 
     /// <summary>Ctrl pressed and released twice in quick succession, nothing else in between.</summary>
     CtrlDoubleTap,
 
     /// <summary>C pressed twice while Ctrl is held, the first press being an ordinary copy.</summary>
     CtrlCC,
-}
-
-/// <summary>
-/// A single XInput button that can be bound as a shortcut. Values deliberately match XInput's
-/// wButtons bit mask, so no translation table is needed in the polling path.
-/// </summary>
-[JsonConverter(typeof(JsonStringEnumConverter))]
-public enum GamepadShortcutButton : ushort
-{
-    None = 0x0000,
-    DPadUp = 0x0001,
-    DPadDown = 0x0002,
-    DPadLeft = 0x0004,
-    DPadRight = 0x0008,
-    Start = 0x0010,
-    Back = 0x0020,
-    LeftThumb = 0x0040,
-    RightThumb = 0x0080,
-    LeftShoulder = 0x0100,
-    RightShoulder = 0x0200,
-    A = 0x1000,
-    B = 0x2000,
-    X = 0x4000,
-    Y = 0x8000,
 }

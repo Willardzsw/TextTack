@@ -18,7 +18,9 @@ $out = Join-Path $work "out"
 if (Test-Path $work) { Remove-Item $work -Recurse -Force }
 New-Item -ItemType Directory -Force $out | Out-Null
 
-dotnet publish $project -c Release -r win-x64 --self-contained true `
+# ReadyToRun: the app's own code ships precompiled, so a slow machine does not spend its first
+# seconds compiling it before the tray icon appears. Same code, a few MB larger.
+dotnet publish $project -c Release -r win-x64 --self-contained true -p:PublishReadyToRun=true `
     --source https://api.nuget.org/v3/index.json --artifacts-path (Join-Path $work "build") -o $stage -p:DebugType=none -p:DebugSymbols=false
 if ($LASTEXITCODE -ne 0) { throw "dotnet publish failed" }
 

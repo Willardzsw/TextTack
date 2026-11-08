@@ -27,12 +27,15 @@ public static class ThemeService
 
         var old = dicts.FirstOrDefault(d =>
             d.Source?.OriginalString.EndsWith("Theme.xaml", StringComparison.OrdinalIgnoreCase) == true);
-        if (old != null) dicts.Remove(old);
+        var target = theme == Dark ? DarkUri : LightUri;
 
-        dicts.Insert(0, new ResourceDictionary
+        // Already the one in place — App.xaml starts with the light theme, which is what most
+        // startups ask for: reading the same dictionary again would only cost startup time.
+        if (old is null || !old.Source.OriginalString.EndsWith(target.OriginalString, StringComparison.OrdinalIgnoreCase))
         {
-            Source = theme == Dark ? DarkUri : LightUri
-        });
+            if (old != null) dicts.Remove(old);
+            dicts.Insert(0, new ResourceDictionary { Source = target });
+        }
 
         Changed?.Invoke(null, EventArgs.Empty);
     }

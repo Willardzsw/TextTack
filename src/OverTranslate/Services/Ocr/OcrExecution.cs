@@ -7,7 +7,8 @@ namespace OverTranslate.Services.Ocr;
 
 internal static class OcrExecution
 {
-    internal sealed record DeviceOption(string Id, string Display);
+    /// <param name="Integrated">An integrated GPU — usually slower than the CPU for OCR.</param>
+    internal sealed record DeviceOption(string Id, string Display, bool Integrated = false);
     internal static event EventHandler? Changed;
     internal static string? LastIdentity { get; private set; }
     internal static string? LastDevice { get; private set; }
@@ -23,7 +24,10 @@ internal static class OcrExecution
             result.AddRange(DirectMlDevice.Enumerate().Where(a => !DirectMlDevice.IsSoftware(a))
                 .OrderByDescending(a => a.DedicatedMemory)
                 .DistinctBy(a => a.Name)
-                .Select(a => new DeviceOption($"directml:{a.Name}", $"DirectML · {a.Name}")));
+                .Select(a => DirectMlDevice.IsIntegrated(a)
+                    ? new DeviceOption($"directml:{a.Name}",
+                        $"DirectML · {a.Name} {LocalizationService.Get("S.OcrModel.IntegratedTag")}", true)
+                    : new DeviceOption($"directml:{a.Name}", $"DirectML · {a.Name}")));
         }
         catch { /* CPU remains available on machines without DXGI. */ }
         return result;

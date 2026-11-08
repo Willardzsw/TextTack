@@ -36,7 +36,7 @@ internal sealed class CaptureCopyHook : IDisposable
     private static extern IntPtr CallNextHookEx(IntPtr hhk, int nCode, IntPtr wParam, IntPtr lParam);
 
     [DllImport("user32.dll")]
-    private static extern short GetKeyState(int nVirtKey);
+    private static extern short GetAsyncKeyState(int vKey);
 
     [DllImport("kernel32.dll")]
     private static extern IntPtr GetModuleHandle(string? lpModuleName);
@@ -48,6 +48,11 @@ internal sealed class CaptureCopyHook : IDisposable
     private readonly Action _onCopy;
     private IntPtr _hookId;
 
+    // Its own thread, as GlobalEscapeHook has: a low-level hook runs on the thread that installed
+    // it, so on the interface thread every key pressed anywhere on the desktop waited for whatever
+    // the capture's interface was busy with — a stutter in other programs on a slow machine.
+    private readonly HookThread _thread = new("OverTranslate capture copy hook");
+
     private CaptureCopyHook(Action onCopy)
     {
         _onCopy = onCopy;
@@ -57,14 +62,20 @@ internal sealed class CaptureCopyHook : IDisposable
     public static CaptureCopyHook Install(Action onCopy)
     {
         var hook = new CaptureCopyHook(onCopy);
-        hook._hookId = SetWindowsHookEx(WH_KEYBOARD_LL, hook._proc, GetModuleHandle(null), 0);
-        if (hook._hookId == IntPtr.Zero)
-            Log.Warn("Capture Ctrl+C hook install failed (win32 error {Error}) — 截圖 stays on the toolbar only",
-                Marshal.GetLastWin32Error());
+        hook._thread.Start();
+        hook._thread.Invoke(() =>
+        {
+            hook._hookId = SetWindowsHookEx(WH_KEYBOARD_LL, hook._proc, GetModuleHandle(null), 0);
+            if (hook._hookId == IntPtr.Zero)
+                Log.Warn("Capture Ctrl+C hook install failed (win32 error {Error}) — 截圖 stays on the toolbar only",
+                    Marshal.GetLastWin32Error());
+        });
         return hook;
     }
 
-    private static bool IsDown(int key) => (GetKeyState(key) & 0x8000) != 0;
+    // The asynchronous state: the hook thread receives no keyboard input of its own, so its
+    // per-thread key state would never see the modifiers go down.
+    private static bool IsDown(int key) => (GetAsyncKeyState(key) & 0x8000) != 0;
 
     private IntPtr HookCallback(int nCode, IntPtr wParam, IntPtr lParam)
     {
@@ -80,8 +91,12 @@ internal sealed class CaptureCopyHook : IDisposable
 
     public void Dispose()
     {
-        if (_hookId == IntPtr.Zero) return;
-        UnhookWindowsHookEx(_hookId);
-        _hookId = IntPtr.Zero;
+        // On the hook thread: a hook is removed from the thread that installed it.
+        _thread.Stop(() =>
+        {
+            if (_hookId == IntPtr.Zero) return;
+            UnhookWindowsHookEx(_hookId);
+            _hookId = IntPtr.Zero;
+        });
     }
 }

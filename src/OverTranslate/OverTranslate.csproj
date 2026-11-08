@@ -33,7 +33,7 @@
     <AssemblyTitle>TextTack</AssemblyTitle>
     <AssemblyName>TextTack</AssemblyName>
     <RootNamespace>OverTranslate</RootNamespace>
-    <Version>1.7.1</Version>
+    <Version>1.7.2</Version>
     <RuntimeIdentifier>win-x64</RuntimeIdentifier>
     <!-- WFAC010 tells WinForms apps to declare DPI awareness through Application.SetHighDpiMode.
          This is a WPF app that only references WinForms types; ApplicationConfiguration.Initialize

@@ -93,6 +93,9 @@ public partial class OcrModelCard : UserControl
         RecognizerBox.IsEnabled = _preparation is null &&
             OcrModelCatalog.Normalize(_settings.Selection) is OcrModelCatalog.ByLanguage or OcrModelCatalog.General;
         AssetStatus.Text = LocalizationService.Get(ready ? "S.OcrModel.Ready" : "S.OcrModel.PrepareNeeded");
+        IntegratedGpuWarning.Visibility = DeviceBox.SelectedItem is OcrExecution.DeviceOption { Integrated: true }
+            ? Visibility.Visible
+            : Visibility.Collapsed;
         PrepareButton.IsEnabled = !ready && _preparation is null;
         ExecutionStatus.Text = OcrExecution.LastIdentity == OcrModelCatalog.Identity(_settings) && OcrExecution.LastDevice is { } device
             ? string.Format(LocalizationService.Get("S.OcrModel.ActualDevice"), device)

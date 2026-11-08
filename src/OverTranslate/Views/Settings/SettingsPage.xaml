@@ -158,8 +158,7 @@
              more rights than it has, so while a program run as administrator is in front these
              shortcuts do nothing at all — tested, not supposed. Warning-coloured and with its own
              mark rather than the row's grey ⓘ, so it does not read as one more description; shown
-             only when it applies (see ShowStoredShortcut). The gamepad is polled, not hooked, and
-             is not affected. -->
+             only when it applies (see ShowStoredShortcut). -->
         <Style x:Key="HotkeyElevatedNote" TargetType="ContentControl">
             <Setter Property="Visibility" Value="Collapsed"/>
             <Setter Property="Focusable"  Value="False"/>
@@ -558,7 +557,6 @@
                                                     <RowDefinition Height="Auto"/>
                                                     <RowDefinition Height="Auto"/>
                                                     <RowDefinition Height="Auto"/>
-                                                    <RowDefinition Height="Auto"/>
                                                 </Grid.RowDefinitions>
                                                 <TextBlock Grid.Row="0" Text="{DynamicResource S.Settings.HotkeyGuideCombo}" Style="{StaticResource HotkeyGuideLabel}"/>
                                                 <StackPanel Grid.Row="0" Grid.Column="1" Margin="0,0,0,10">
@@ -596,22 +594,14 @@
                                                     </WrapPanel>
                                                 </StackPanel>
                                                 <Border Grid.Row="3" Grid.Column="2" Style="{StaticResource HotkeyGuideSharedTag}"><TextBlock Text="{DynamicResource S.Settings.HotkeyGuideShared}" Style="{StaticResource HotkeyGuideTagText}"/></Border>
-                                                <TextBlock Grid.Row="4" Text="{DynamicResource S.Settings.HotkeyGuideGamepad}" Style="{StaticResource HotkeyGuideLabel}"/>
-                                                <StackPanel Grid.Row="4" Grid.Column="1" Margin="0,0,0,10">
-                                                    <WrapPanel>
-                                                        <StackPanel Orientation="Horizontal" Margin="0,0,14,0"><Border Style="{StaticResource HotkeyGuideKey}"><TextBlock Text="A" Style="{StaticResource HotkeyGuideKeyText}"/></Border><Border Style="{StaticResource HotkeyGuideKey}"><TextBlock Text="B" Style="{StaticResource HotkeyGuideKeyText}"/></Border><Border Style="{StaticResource HotkeyGuideKey}"><TextBlock Text="X" Style="{StaticResource HotkeyGuideKeyText}"/></Border><Border Style="{StaticResource HotkeyGuideKey}"><TextBlock Text="Y" Style="{StaticResource HotkeyGuideKeyText}"/></Border><Border Style="{StaticResource HotkeyGuideKey}"><TextBlock Text="LB" Style="{StaticResource HotkeyGuideKeyText}"/></Border><Border Style="{StaticResource HotkeyGuideKey}"><TextBlock Text="RB" Style="{StaticResource HotkeyGuideKeyText}"/></Border><Border Style="{StaticResource HotkeyGuideKey}"><TextBlock Text="Start" Style="{StaticResource HotkeyGuideKeyText}"/></Border></StackPanel>
-                                                    </WrapPanel>
-                                                    <TextBlock Text="{DynamicResource S.Settings.HotkeyGuideGamepadNote}" Style="{StaticResource HotkeyGuideNote}"/>
-                                                </StackPanel>
-                                                <Border Grid.Row="4" Grid.Column="2" Style="{StaticResource HotkeyGuideSharedTag}"><TextBlock Text="{DynamicResource S.Settings.HotkeyGuideShared}" Style="{StaticResource HotkeyGuideTagText}"/></Border>
-                                                <Border Grid.Row="5" Grid.ColumnSpan="3" Height="1" Margin="0,2,0,12" Background="{DynamicResource AppSeparator}"/>
-                                                <Border Grid.Row="6" HorizontalAlignment="Left" Margin="0,0,16,0" Style="{StaticResource HotkeyGuideTag}"><TextBlock Text="{DynamicResource S.Settings.HotkeyGuideExclusive}" Style="{StaticResource HotkeyGuideTagText}"/></Border>
-                                                <StackPanel Grid.Row="6" Grid.Column="1" Grid.ColumnSpan="2" Margin="0,1,0,10">
+                                                <Border Grid.Row="4" Grid.ColumnSpan="3" Height="1" Margin="0,2,0,12" Background="{DynamicResource AppSeparator}"/>
+                                                <Border Grid.Row="5" HorizontalAlignment="Left" Margin="0,0,16,0" Style="{StaticResource HotkeyGuideTag}"><TextBlock Text="{DynamicResource S.Settings.HotkeyGuideExclusive}" Style="{StaticResource HotkeyGuideTagText}"/></Border>
+                                                <StackPanel Grid.Row="5" Grid.Column="1" Grid.ColumnSpan="2" Margin="0,1,0,10">
                                                     <TextBlock Text="{DynamicResource S.Settings.HotkeyGuideExclusiveNote}" Style="{StaticResource HotkeyGuideText}"/>
                                                     <TextBlock Text="{DynamicResource S.Settings.HotkeyGuideExclusiveExample}" Style="{StaticResource HotkeyGuideNote}"/>
                                                 </StackPanel>
-                                                <Border Grid.Row="7" HorizontalAlignment="Left" Margin="0,0,16,0" Style="{StaticResource HotkeyGuideSharedTag}"><TextBlock Text="{DynamicResource S.Settings.HotkeyGuideShared}" Style="{StaticResource HotkeyGuideTagText}"/></Border>
-                                                <StackPanel Grid.Row="7" Grid.Column="1" Grid.ColumnSpan="2" Margin="0,1,0,0">
+                                                <Border Grid.Row="6" HorizontalAlignment="Left" Margin="0,0,16,0" Style="{StaticResource HotkeyGuideSharedTag}"><TextBlock Text="{DynamicResource S.Settings.HotkeyGuideShared}" Style="{StaticResource HotkeyGuideTagText}"/></Border>
+                                                <StackPanel Grid.Row="6" Grid.Column="1" Grid.ColumnSpan="2" Margin="0,1,0,0">
                                                     <TextBlock Text="{DynamicResource S.Settings.HotkeyGuideSharedNote}" Style="{StaticResource HotkeyGuideText}"/>
                                                     <TextBlock Text="{DynamicResource S.Settings.HotkeyGuideSharedExample}" Style="{StaticResource HotkeyGuideNote}"/>
                                                     <!-- The double-press keys read as examples, the way the other rows' keys do, so this

@@ -88,9 +88,17 @@ public partial class ShellWindow : Window
     private object? _contentTransition;
 
     private readonly TranslationPage _translationPage = new();
-    private readonly RealtimePage    _realtimePage    = new();
-    private readonly SettingsPage    _settingsPage    = new();
-    private readonly StickyNote.StickyNotesPage _notesPage = new();
+    // The other three are built the first time they are shown, not with the window: this window is
+    // destroyed on close, so building them up front paid for the settings page (thousands of
+    // elements, the GPU list) and the realtime page every time the window was opened, even when
+    // the user only came to translate some text.
+    private RealtimePage? _realtimePage;
+    private SettingsPage? _settingsPage;
+    private StickyNote.StickyNotesPage? _notesPage;
+
+    private RealtimePage RealtimePageInstance => _realtimePage ??= new();
+    private SettingsPage SettingsPageInstance => _settingsPage ??= new();
+    private StickyNote.StickyNotesPage NotesPageInstance => _notesPage ??= new();
 
     private ShellPage? _current;
 
@@ -146,8 +154,8 @@ public partial class ShellWindow : Window
 
         // Subscribed once here rather than per open, so the handler is not stacked up by a user who
         // opens the service panel more than once.
-        ServiceSettings.Closed += (_, _) => _settingsPage.RefreshServiceTiles();
-        DiagnosticNote.Closed += (_, result) => _settingsPage.ReportDiagnosticUpload(result);
+        ServiceSettings.Closed += (_, _) => _settingsPage?.RefreshServiceTiles();
+        DiagnosticNote.Closed += (_, result) => _settingsPage?.ReportDiagnosticUpload(result);
 
         // Subscribed rather than refreshed on show: a session ending brings this window back with
         // Show(), not through ShowOrActivate, so nothing else would clear the disabled state and
@@ -238,7 +246,7 @@ public partial class ShellWindow : Window
     /// <summary>Puts the 即時翻譯 shortcut's refusal on the realtime page — see MainWindow.</summary>
 
 
-    public void ShowRealtimeShortcutRefusal(string key) => _realtimePage.ShowShortcutRefusal(key);
+    public void ShowRealtimeShortcutRefusal(string key) => RealtimePageInstance.ShowShortcutRefusal(key);
 
     public void RefreshHotkeyHints() { }
 
@@ -479,15 +487,17 @@ public partial class ShellWindow : Window
         // These pages read state that can change while the user is elsewhere: shared translation
         // preferences, the settings file, and attached monitors plus realtime session state.
         if (page == ShellPage.Translation) _translationPage.Reload();
-        if (page == ShellPage.Realtime) _realtimePage.Reload();
-        if (page == ShellPage.Settings) _settingsPage.Reload();
-        if (page == ShellPage.StickyNotes) _notesPage.Reload();
+        // A settings page built just now has read the settings in its constructor already.
+        bool settingsFresh = _settingsPage is null;
+        if (page == ShellPage.Realtime) RealtimePageInstance.Reload();
+        if (page == ShellPage.Settings && !settingsFresh) _settingsPage!.Reload();
+        if (page == ShellPage.StickyNotes) NotesPageInstance.Reload();
 
         ContentHost.Child = page switch
         {
-            ShellPage.Realtime => _realtimePage,
-            ShellPage.Settings => _settingsPage,
-            ShellPage.StickyNotes => _notesPage,
+            ShellPage.Realtime => RealtimePageInstance,
+            ShellPage.Settings => SettingsPageInstance,
+            ShellPage.StickyNotes => NotesPageInstance,
             _                  => (UIElement)_translationPage
         };
 
@@ -635,7 +645,7 @@ public partial class ShellWindow : Window
         _translationPage.Teardown();
         // Only detaches the page from the session controller: a realtime session already running is
         // on the screen, not in this window, and closing the shell is not a request to end it.
-        _realtimePage.Teardown();
+        _realtimePage?.Teardown();
         // Only detaches the page from the session controller: a realtime session already running is
         // on the screen, not in this window, and closing the shell is not a request to end it.
         _instance = null;

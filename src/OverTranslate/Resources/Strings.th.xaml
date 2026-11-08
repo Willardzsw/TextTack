@@ -422,8 +422,6 @@
     <sys:String x:Key="S.Settings.HotkeyGuideMouseMiddle">ปุ่มกลาง</sys:String>
     <sys:String x:Key="S.Settings.HotkeyGuideMouseX1">ปุ่มข้าง 1</sys:String>
     <sys:String x:Key="S.Settings.HotkeyGuideMouseX2">ปุ่มข้าง 2</sys:String>
-    <sys:String x:Key="S.Settings.HotkeyGuideGamepad">เกมแพด</sys:String>
-    <sys:String x:Key="S.Settings.HotkeyGuideGamepadNote">ปุ่มใดก็ได้บนคอนโทรลเลอร์ที่รองรับ Xbox (XInput)</sys:String>
     <sys:String x:Key="S.Settings.HotkeyGuideExclusive">ใช้แต่เพียงผู้เดียว</sys:String>
     <sys:String x:Key="S.Settings.HotkeyGuideExclusiveNote">โปรแกรมอื่นจะไม่ได้รับปุ่มเหล่านี้</sys:String>
     <sys:String x:Key="S.Settings.HotkeyGuideExclusiveExample">เช่น เมื่อตั้งเป็น Ctrl+Alt+A แล้ว Ctrl+Alt+A จะใช้ที่อื่นไม่ได้</sys:String>
@@ -584,7 +582,6 @@
     <sys:String x:Key="S.Settings.MouseMiddle">ปุ่มกลางเมาส์</sys:String>
     <sys:String x:Key="S.Settings.MouseX1">ปุ่มข้างเมาส์ 1</sys:String>
     <sys:String x:Key="S.Settings.MouseX2">ปุ่มข้างเมาส์ 2</sys:String>
-    <sys:String x:Key="S.Settings.GamepadButton">เกมแพด {0}</sys:String>
     <sys:String x:Key="S.Settings.FolderPickerTitle">เลือกตำแหน่งบันทึกภาพหน้าจอ</sys:String>
     <sys:String x:Key="S.Settings.LoggingEnvOverride">ขณะนี้ระดับล็อกถูกกำหนดโดยตัวแปรสภาพแวดล้อม OVERTRANSLATE_LOGLEVEL ตัวเลือกนี้จึงไม่มีผล</sys:String>
     <sys:String x:Key="S.Settings.StartupFailed">✗ เปลี่ยนการตั้งค่าเริ่มต้นระบบไม่ได้: {0}</sys:String>
@@ -680,7 +677,9 @@
     <sys:String x:Key="S.OcrModel.RecognizerSize">ขนาดการรู้จำทั่วไป (จีน/อังกฤษ/ญี่ปุ่น)</sys:String>
     <sys:String x:Key="S.OcrModel.ScaleHint">โมเดลที่ใหญ่กว่ามักใช้เวลาและหน่วยความจำมากกว่า ให้เปรียบเทียบด้วยภาพเดียวกัน ภาษาไทยและเกาหลีใช้ตัวรู้จำเฉพาะของตัวเอง</sys:String>
     <sys:String x:Key="S.OcrModel.Device">อุปกรณ์ประมวลผล</sys:String>
-    <sys:String x:Key="S.OcrModel.DeviceHint">GPU ใช้ DirectML ไม่จำเป็นต้องมี CUDA การใช้งานครั้งแรกอาจช้ากว่า หาก GPU ที่เลือกใช้ไม่ได้ ให้เลือก CPU</sys:String>
+    <sys:String x:Key="S.OcrModel.DeviceHint">GPU ใช้ DirectML ไม่จำเป็นต้องมี CUDA การใช้งานครั้งแรกอาจช้ากว่า หาก GPU ที่เลือกใช้ไม่ได้ ให้เลือก CPU หลีกเลี่ยงการ์ดจอออนบอร์ดหากเป็นไปได้ เพราะมักช้ากว่า CPU</sys:String>
+    <sys:String x:Key="S.OcrModel.IntegratedTag">(การ์ดจอออนบอร์ด — ไม่แนะนำ)</sys:String>
+    <sys:String x:Key="S.OcrModel.IntegratedWarning">นี่คือการ์ดจอออนบอร์ด OCR บนการ์ดจอออนบอร์ดมักช้ากว่า CPU มาก ครั้งแรกอาจใช้เวลาราวครึ่งนาที และภาพขนาดใหม่แต่ละครั้งก็ใช้เวลาอีกหลายวินาที โปรดเลือก CPU หรือการ์ดจอแยกหากเป็นไปได้</sys:String>
     <sys:String x:Key="S.OcrModel.Tiny">Tiny · เร็ว</sys:String>
     <sys:String x:Key="S.OcrModel.Small">Small · สมดุล</sys:String>
     <sys:String x:Key="S.OcrModel.Medium">Medium · ใหญ่กว่า</sys:String>

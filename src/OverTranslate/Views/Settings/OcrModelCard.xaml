@@ -18,6 +18,10 @@
             <TextBlock Text="{DynamicResource S.OcrModel.Device}" Margin="0,16,0,0" Style="{StaticResource FieldLabel}"/>
             <ComboBox x:Name="DeviceBox" Margin="0,8,0,0" Style="{StaticResource ModernComboBox}"
                       SelectedValuePath="Id" SelectionChanged="Performance_SelectionChanged"/>
+            <!-- Only while an integrated GPU is the choice: for OCR it is usually slower than the CPU. -->
+            <TextBlock x:Name="IntegratedGpuWarning" Text="{DynamicResource S.OcrModel.IntegratedWarning}" Margin="0,8,0,0"
+                       Style="{StaticResource FieldHint}" Foreground="{DynamicResource AppWarning}" TextWrapping="Wrap"
+                       Visibility="Collapsed"/>
             <TextBlock Text="{DynamicResource S.OcrModel.DeviceHint}" Margin="0,8,0,0" Style="{StaticResource FieldHint}" TextWrapping="Wrap"/>
             <Button x:Name="PrepareButton" Content="{DynamicResource S.OcrModel.Prepare}" Margin="0,12,0,0"
                     Style="{StaticResource FlatButton}" HorizontalAlignment="Left" Padding="16,8" Click="Prepare_Click"/>

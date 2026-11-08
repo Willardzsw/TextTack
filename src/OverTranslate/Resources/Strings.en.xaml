@@ -427,8 +427,6 @@ Details: {0}</sys:String>
     <sys:String x:Key="S.Settings.HotkeyGuideMouseMiddle">Middle</sys:String>
     <sys:String x:Key="S.Settings.HotkeyGuideMouseX1">Side 1</sys:String>
     <sys:String x:Key="S.Settings.HotkeyGuideMouseX2">Side 2</sys:String>
-    <sys:String x:Key="S.Settings.HotkeyGuideGamepad">Gamepad</sys:String>
-    <sys:String x:Key="S.Settings.HotkeyGuideGamepadNote">Any button on an Xbox-compatible (XInput) controller</sys:String>
     <sys:String x:Key="S.Settings.HotkeyGuideExclusive">Exclusive</sys:String>
     <sys:String x:Key="S.Settings.HotkeyGuideExclusiveNote">Other programs won’t receive these keys</sys:String>
     <sys:String x:Key="S.Settings.HotkeyGuideExclusiveExample">E.g. once set to Ctrl+Alt+A, Ctrl+Alt+A stops working elsewhere</sys:String>
@@ -589,7 +587,6 @@ same settings, the same seed usually gives the same output.</sys:String>
     <sys:String x:Key="S.Settings.MouseMiddle">Middle Mouse</sys:String>
     <sys:String x:Key="S.Settings.MouseX1">Mouse Side 1</sys:String>
     <sys:String x:Key="S.Settings.MouseX2">Mouse Side 2</sys:String>
-    <sys:String x:Key="S.Settings.GamepadButton">Gamepad {0}</sys:String>
     <sys:String x:Key="S.Settings.FolderPickerTitle">Choose where to save screenshots</sys:String>
     <sys:String x:Key="S.Settings.LoggingEnvOverride">The log level is currently set by the OVERTRANSLATE_LOGLEVEL environment variable, so this option has no effect.</sys:String>
     <sys:String x:Key="S.Settings.StartupFailed">✗ Could not change the startup setting: {0}</sys:String>
@@ -685,7 +682,9 @@ same settings, the same seed usually gives the same output.</sys:String>
     <sys:String x:Key="S.OcrModel.RecognizerSize">General recognition size (Chinese/English/Japanese)</sys:String>
     <sys:String x:Key="S.OcrModel.ScaleHint">Larger models usually take more time and memory. Compare on the same images. Thai and Korean keep their dedicated recognizers.</sys:String>
     <sys:String x:Key="S.OcrModel.Device">Execution device</sys:String>
-    <sys:String x:Key="S.OcrModel.DeviceHint">GPU uses DirectML; CUDA is not required. The first run may be slower. If the selected GPU fails, choose CPU.</sys:String>
+    <sys:String x:Key="S.OcrModel.DeviceHint">GPU uses DirectML; CUDA is not required. The first run may be slower. If the selected GPU fails, choose CPU. Avoid integrated GPUs where possible; they are usually slower than the CPU.</sys:String>
+    <sys:String x:Key="S.OcrModel.IntegratedTag">(integrated — not recommended)</sys:String>
+    <sys:String x:Key="S.OcrModel.IntegratedWarning">This is an integrated GPU. OCR on it is usually much slower than on the CPU: the first run can take half a minute, and every new picture size a few seconds more. Choose CPU if you can, or a dedicated GPU.</sys:String>
     <sys:String x:Key="S.OcrModel.Tiny">Tiny · Fast</sys:String>
     <sys:String x:Key="S.OcrModel.Small">Small · Balanced</sys:String>
     <sys:String x:Key="S.OcrModel.Medium">Medium · Larger</sys:String>

@@ -235,22 +235,29 @@ internal static class StickyNoteManager
     /// <summary>How long a note waits for the picture to be read before giving up.</summary>
     internal static readonly TimeSpan RecognitionLimit = TimeSpan.FromSeconds(30);
 
+    /// <summary>How long after startup the GPU recognizer is warmed up.</summary>
+    internal static readonly TimeSpan WarmUpDelay = TimeSpan.FromSeconds(60);
+
     private static bool ConfiguredIsCpu =>
         string.Equals(SettingsService.Instance.Current.OcrModels?.Device ?? "cpu", "cpu", StringComparison.OrdinalIgnoreCase);
 
     /// <summary>
-    /// Starts both recognizers once, in the background, a few seconds after the program starts:
-    /// the configured device (its first run is the slow one — models built for the GPU) and the
-    /// CPU stand-in. Silent; a failure here only means the first note waits as it would have.
+    /// Runs the configured GPU recognizer once, in the background, a minute after the program
+    /// starts — only its first run is slow (models built for the GPU; 33 s on an Intel Iris Xe),
+    /// and the driver keeps what it built for the next time.
     /// </summary>
+    /// <remarks>
+    /// Not on the CPU: it loads in about 0.13 s, and the engine lets go of any model after a minute
+    /// unused anyway, so warming it only cost memory and a burst of work while Windows was still
+    /// starting up. Not straight after startup either, for that same burst.
+    /// </remarks>
     public static void WarmUp()
     {
         _ = Task.Run(async () =>
         {
-            await Task.Delay(TimeSpan.FromSeconds(5));
-            var language = Settings.OcrLanguage;
-            await Warm(AppServices.Ocr, language, "configured");
-            if (!ConfiguredIsCpu) await Warm(CpuOcr.Value, language, "cpu");
+            await Task.Delay(WarmUpDelay);
+            if (ConfiguredIsCpu) return;
+            await Warm(AppServices.Ocr, Settings.OcrLanguage, "configured");
         });
 
         static async Task Warm(OcrService service, string language, string name)

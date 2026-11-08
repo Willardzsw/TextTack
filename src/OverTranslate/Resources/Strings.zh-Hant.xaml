@@ -449,8 +449,6 @@
     <sys:String x:Key="S.Settings.HotkeyGuideMouseMiddle">中鍵</sys:String>
     <sys:String x:Key="S.Settings.HotkeyGuideMouseX1">側鍵 1</sys:String>
     <sys:String x:Key="S.Settings.HotkeyGuideMouseX2">側鍵 2</sys:String>
-    <sys:String x:Key="S.Settings.HotkeyGuideGamepad">遊戲手把</sys:String>
-    <sys:String x:Key="S.Settings.HotkeyGuideGamepadNote">Xbox 相容（XInput）手把的任一按鍵</sys:String>
     <sys:String x:Key="S.Settings.HotkeyGuideExclusive">獨佔</sys:String>
     <sys:String x:Key="S.Settings.HotkeyGuideExclusiveNote">其他程式收不到這組按鍵</sys:String>
     <sys:String x:Key="S.Settings.HotkeyGuideExclusiveExample">例：設為 Ctrl+Alt+A 後，其他程式的 Ctrl+Alt+A 會失效</sys:String>
@@ -612,7 +610,6 @@
     <sys:String x:Key="S.Settings.MouseMiddle">滑鼠中鍵</sys:String>
     <sys:String x:Key="S.Settings.MouseX1">滑鼠側鍵 1</sys:String>
     <sys:String x:Key="S.Settings.MouseX2">滑鼠側鍵 2</sys:String>
-    <sys:String x:Key="S.Settings.GamepadButton">手把 {0}</sys:String>
     <sys:String x:Key="S.Settings.FolderPickerTitle">選擇截圖儲存資料夾</sys:String>
     <sys:String x:Key="S.Settings.LoggingEnvOverride">目前記錄等級由環境變數 OVERTRANSLATE_LOGLEVEL 指定，此選項暫時無效。</sys:String>
     <sys:String x:Key="S.Settings.StartupFailed">✗ 無法設定開機啟動：{0}</sys:String>
@@ -706,7 +703,9 @@
     <sys:String x:Key="S.OcrModel.RecognizerSize">通用文字辨識規模（中英日）</sys:String>
     <sys:String x:Key="S.OcrModel.ScaleHint">規模越大通常越慢、佔用越高，效果需同圖比較。泰語和韓語保留專用辨識模型。</sys:String>
     <sys:String x:Key="S.OcrModel.Device">執行裝置</sys:String>
-    <sys:String x:Key="S.OcrModel.DeviceHint">顯卡使用 DirectML，無需 CUDA。首次執行可能較慢；所選顯卡無法使用時會報錯，請改選 CPU。</sys:String>
+    <sys:String x:Key="S.OcrModel.DeviceHint">顯卡使用 DirectML，無需 CUDA。首次執行可能較慢；所選顯卡無法使用時會報錯，請改選 CPU。請盡量不要選內建顯示卡（核顯），它通常比 CPU 慢。</sys:String>
+    <sys:String x:Key="S.OcrModel.IntegratedTag">（內建顯示卡，不建議）</sys:String>
+    <sys:String x:Key="S.OcrModel.IntegratedWarning">這是內建顯示卡（核顯）。OCR 在核顯上通常比 CPU 慢很多：第一次可能要半分鐘，之後每遇到新尺寸的圖片也要幾秒。請盡量改選 CPU，或選獨立顯示卡。</sys:String>
     <sys:String x:Key="S.OcrModel.Tiny">Tiny · 快速</sys:String>
     <sys:String x:Key="S.OcrModel.Small">Small · 均衡</sys:String>
     <sys:String x:Key="S.OcrModel.Medium">Medium · 較大</sys:String>

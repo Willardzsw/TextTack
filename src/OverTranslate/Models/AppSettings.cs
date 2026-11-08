@@ -28,7 +28,6 @@ public class AppSettings
     public uint HotkeyVirtualKey { get; set; } = 0x41;
     public string HotkeyDisplay { get; set; } = "Ctrl+Alt+A";
     public ShortcutInputKind HotkeyInputKind { get; set; } = ShortcutInputKind.Keyboard;
-    public GamepadShortcutButton HotkeyGamepadButton { get; set; } = GamepadShortcutButton.None;
 
     /// <summary>
     /// The shortcut that opens the translation window. Ctrl+Alt+W by default.
@@ -45,7 +44,6 @@ public class AppSettings
 
     public string TranslationWindowHotkeyDisplay { get; set; } = "Ctrl+Alt+W";
     public ShortcutInputKind TranslationWindowHotkeyInputKind { get; set; } = ShortcutInputKind.Keyboard;
-    public GamepadShortcutButton TranslationWindowHotkeyGamepadButton { get; set; } = GamepadShortcutButton.None;
 
     /// <summary>
     /// Whether the translation-window shortcut is registered at all.
@@ -86,7 +84,6 @@ public class AppSettings
     /// <inheritdoc cref="RealtimePauseHotkeyModifiers"/>
     public string RealtimePauseHotkeyDisplay { get; set; } = "Ctrl+Alt+S";
     public ShortcutInputKind RealtimePauseHotkeyInputKind { get; set; } = ShortcutInputKind.Keyboard;
-    public GamepadShortcutButton RealtimePauseHotkeyGamepadButton { get; set; } = GamepadShortcutButton.None;
 
     /// <inheritdoc cref="TranslationWindowHotkeyEnabled"/>
     public bool RealtimePauseHotkeyEnabled { get; set; } = true;
@@ -117,7 +114,6 @@ public class AppSettings
     /// <inheritdoc cref="QuickLookupHotkeyModifiers"/>
     public string QuickLookupHotkeyDisplay { get; set; } = "Ctrl+C+C";
     public ShortcutInputKind QuickLookupHotkeyInputKind { get; set; } = ShortcutInputKind.CtrlCC;
-    public GamepadShortcutButton QuickLookupHotkeyGamepadButton { get; set; } = GamepadShortcutButton.None;
 
     /// <inheritdoc cref="TranslationWindowHotkeyEnabled"/>
     public bool QuickLookupHotkeyEnabled { get; set; } = true;
@@ -149,7 +145,6 @@ public class AppSettings
     /// <inheritdoc cref="QuickTranslateHotkeyModifiers"/>
     public string QuickTranslateHotkeyDisplay { get; set; } = "Ctrl+Alt+E";
     public ShortcutInputKind QuickTranslateHotkeyInputKind { get; set; } = ShortcutInputKind.Keyboard;
-    public GamepadShortcutButton QuickTranslateHotkeyGamepadButton { get; set; } = GamepadShortcutButton.None;
 
     /// <inheritdoc cref="TranslationWindowHotkeyEnabled"/>
     public bool QuickTranslateHotkeyEnabled { get; set; } = true;
@@ -173,7 +168,6 @@ public class AppSettings
     /// <inheritdoc cref="PinClipboardHotkeyModifiers"/>
     public string PinClipboardHotkeyDisplay { get; set; } = "F3";
     public ShortcutInputKind PinClipboardHotkeyInputKind { get; set; } = ShortcutInputKind.Keyboard;
-    public GamepadShortcutButton PinClipboardHotkeyGamepadButton { get; set; } = GamepadShortcutButton.None;
 
     /// <inheritdoc cref="TranslationWindowHotkeyEnabled"/>
     public bool PinClipboardHotkeyEnabled { get; set; } = true;
@@ -190,7 +184,6 @@ public class AppSettings
     /// <inheritdoc cref="StickyNoteHotkeyModifiers"/>
     public string StickyNoteHotkeyDisplay { get; set; } = "F2";
     public ShortcutInputKind StickyNoteHotkeyInputKind { get; set; } = ShortcutInputKind.Keyboard;
-    public GamepadShortcutButton StickyNoteHotkeyGamepadButton { get; set; } = GamepadShortcutButton.None;
 
     /// <inheritdoc cref="TranslationWindowHotkeyEnabled"/>
     public bool StickyNoteHotkeyEnabled { get; set; } = true;
@@ -207,7 +200,6 @@ public class AppSettings
     /// <inheritdoc cref="StickyNoteNewHotkeyModifiers"/>
     public string StickyNoteNewHotkeyDisplay { get; set; } = "Alt+F2";
     public ShortcutInputKind StickyNoteNewHotkeyInputKind { get; set; } = ShortcutInputKind.Keyboard;
-    public GamepadShortcutButton StickyNoteNewHotkeyGamepadButton { get; set; } = GamepadShortcutButton.None;
 
     /// <summary>
     /// Whether a released copy asks the user's own GitHub repository for a newer release when it

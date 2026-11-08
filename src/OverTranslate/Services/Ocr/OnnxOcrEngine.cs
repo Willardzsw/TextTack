@@ -1028,11 +1028,14 @@ internal sealed class OnnxOcrEngine : IOcrEngine
             // still running against the runtime. A timer callback that
             // was queued before a later Change() still fires; these checks are what make a stale
             // callback benign — including one queued before SetKeepWarm was turned on.
-            if (_disposed || _keepWarm || _inUse > 0)
+            if (_disposed || _keepWarm || _inUse > 0 || _current is null)
                 return;
 
             DisposeCurrentRuntime();
         }
+
+        // The model's buffers are garbage now; an idle process would otherwise keep them.
+        IdleMemory.ReleaseSoon();
     }
 
     // Callers hold _sync and have already established that nothing is running against the runtime.

@@ -431,8 +431,6 @@
     <sys:String x:Key="S.Settings.HotkeyGuideMouseMiddle">가운데 버튼</sys:String>
     <sys:String x:Key="S.Settings.HotkeyGuideMouseX1">옆 버튼 1</sys:String>
     <sys:String x:Key="S.Settings.HotkeyGuideMouseX2">옆 버튼 2</sys:String>
-    <sys:String x:Key="S.Settings.HotkeyGuideGamepad">게임패드</sys:String>
-    <sys:String x:Key="S.Settings.HotkeyGuideGamepadNote">Xbox 호환(XInput) 컨트롤러의 모든 버튼</sys:String>
     <sys:String x:Key="S.Settings.HotkeyGuideExclusive">독점</sys:String>
     <sys:String x:Key="S.Settings.HotkeyGuideExclusiveNote">다른 프로그램에는 키가 전달되지 않습니다</sys:String>
     <sys:String x:Key="S.Settings.HotkeyGuideExclusiveExample">예: Ctrl+Alt+A로 설정하면 다른 프로그램의 Ctrl+Alt+A는 작동하지 않습니다</sys:String>
@@ -591,7 +589,6 @@
     <sys:String x:Key="S.Settings.MouseMiddle">마우스 가운데 버튼</sys:String>
     <sys:String x:Key="S.Settings.MouseX1">마우스 옆 버튼 1</sys:String>
     <sys:String x:Key="S.Settings.MouseX2">마우스 옆 버튼 2</sys:String>
-    <sys:String x:Key="S.Settings.GamepadButton">게임패드 {0}</sys:String>
     <sys:String x:Key="S.Settings.FolderPickerTitle">스크린샷을 저장할 폴더 선택</sys:String>
     <sys:String x:Key="S.Settings.LoggingEnvOverride">지금은 로그 수준이 환경 변수 OVERTRANSLATE_LOGLEVEL로 정해져 있어 이 옵션은 적용되지 않습니다.</sys:String>
     <sys:String x:Key="S.Settings.StartupFailed">✗ 시작 프로그램 설정을 바꾸지 못했습니다: {0}</sys:String>
@@ -687,7 +684,9 @@
     <sys:String x:Key="S.OcrModel.RecognizerSize">일반 인식 크기 (중국어/영어/일본어)</sys:String>
     <sys:String x:Key="S.OcrModel.ScaleHint">큰 모델은 보통 시간과 메모리를 더 사용합니다. 같은 이미지로 비교하세요. 태국어와 한국어는 전용 인식 모델을 유지합니다.</sys:String>
     <sys:String x:Key="S.OcrModel.Device">실행 장치</sys:String>
-    <sys:String x:Key="S.OcrModel.DeviceHint">GPU는 DirectML을 사용하며 CUDA가 필요 없습니다. 첫 실행은 느릴 수 있습니다. GPU 오류가 발생하면 CPU를 선택하세요.</sys:String>
+    <sys:String x:Key="S.OcrModel.DeviceHint">GPU는 DirectML을 사용하며 CUDA가 필요 없습니다. 첫 실행은 느릴 수 있습니다. GPU 오류가 발생하면 CPU를 선택하세요. 내장 그래픽은 보통 CPU보다 느리므로 가능하면 피하세요.</sys:String>
+    <sys:String x:Key="S.OcrModel.IntegratedTag">(내장 그래픽, 권장하지 않음)</sys:String>
+    <sys:String x:Key="S.OcrModel.IntegratedWarning">내장 그래픽입니다. 내장 그래픽에서의 OCR은 보통 CPU보다 훨씬 느립니다. 첫 실행은 30초 정도, 이후에도 새로운 크기의 이미지마다 몇 초가 걸릴 수 있습니다. 가능하면 CPU나 외장 그래픽을 선택하세요.</sys:String>
     <sys:String x:Key="S.OcrModel.Tiny">Tiny · 빠름</sys:String>
     <sys:String x:Key="S.OcrModel.Small">Small · 균형</sys:String>
     <sys:String x:Key="S.OcrModel.Medium">Medium · 대형</sys:String>

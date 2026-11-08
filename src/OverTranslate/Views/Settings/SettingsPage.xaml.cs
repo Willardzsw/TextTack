@@ -37,8 +37,6 @@ public partial class SettingsPage : UserControl
     /// thing that was just sent. Null until the first export of this session.
     /// </summary>
     private string? _lastBundlePath;
-    private readonly DispatcherTimer _hotkeyGamepadRecordTimer;
-    private readonly ushort[] _recordGamepadButtons = new ushort[4];
 
     // Recognises Ctrl twice and Ctrl+C+C while a box records — the same detector the global hook
     // uses, so what can be recorded is exactly what will fire. New for each recording.
@@ -209,8 +207,6 @@ public partial class SettingsPage : UserControl
         UpdateOps.Saved += (_, _) => FlashSaved();
         PinSelectionRow.Saved += (_, _) => FlashSaved();
 
-        _hotkeyGamepadRecordTimer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(45) };
-        _hotkeyGamepadRecordTimer.Tick += (_, _) => PollRecordingGamepad();
         _ctrlCCommitTimer = new DispatcherTimer
         {
             Interval = TimeSpan.FromMilliseconds(KeySequenceDetector.RepeatMaxGap + 100),
@@ -1514,11 +1510,6 @@ public partial class SettingsPage : UserControl
         {
             s.HotkeyModifiers = trigger.Modifiers;
             s.HotkeyVirtualKey = trigger.VirtualKey;
-            s.HotkeyGamepadButton = GamepadShortcutButton.None;
-        }
-        else if (trigger.Kind == ShortcutInputKind.Gamepad)
-        {
-            s.HotkeyGamepadButton = trigger.GamepadButton;
         }
     }
 
@@ -1530,11 +1521,6 @@ public partial class SettingsPage : UserControl
         {
             s.TranslationWindowHotkeyModifiers = trigger.Modifiers;
             s.TranslationWindowHotkeyVirtualKey = trigger.VirtualKey;
-            s.TranslationWindowHotkeyGamepadButton = GamepadShortcutButton.None;
-        }
-        else if (trigger.Kind == ShortcutInputKind.Gamepad)
-        {
-            s.TranslationWindowHotkeyGamepadButton = trigger.GamepadButton;
         }
     }
 
@@ -1546,11 +1532,6 @@ public partial class SettingsPage : UserControl
         {
             s.RealtimePauseHotkeyModifiers = trigger.Modifiers;
             s.RealtimePauseHotkeyVirtualKey = trigger.VirtualKey;
-            s.RealtimePauseHotkeyGamepadButton = GamepadShortcutButton.None;
-        }
-        else if (trigger.Kind == ShortcutInputKind.Gamepad)
-        {
-            s.RealtimePauseHotkeyGamepadButton = trigger.GamepadButton;
         }
     }
 
@@ -1562,11 +1543,6 @@ public partial class SettingsPage : UserControl
         {
             s.QuickLookupHotkeyModifiers = trigger.Modifiers;
             s.QuickLookupHotkeyVirtualKey = trigger.VirtualKey;
-            s.QuickLookupHotkeyGamepadButton = GamepadShortcutButton.None;
-        }
-        else if (trigger.Kind == ShortcutInputKind.Gamepad)
-        {
-            s.QuickLookupHotkeyGamepadButton = trigger.GamepadButton;
         }
     }
 
@@ -1578,11 +1554,6 @@ public partial class SettingsPage : UserControl
         {
             s.StickyNoteHotkeyModifiers = trigger.Modifiers;
             s.StickyNoteHotkeyVirtualKey = trigger.VirtualKey;
-            s.StickyNoteHotkeyGamepadButton = GamepadShortcutButton.None;
-        }
-        else if (trigger.Kind == ShortcutInputKind.Gamepad)
-        {
-            s.StickyNoteHotkeyGamepadButton = trigger.GamepadButton;
         }
     }
 
@@ -1594,11 +1565,6 @@ public partial class SettingsPage : UserControl
         {
             s.StickyNoteNewHotkeyModifiers = trigger.Modifiers;
             s.StickyNoteNewHotkeyVirtualKey = trigger.VirtualKey;
-            s.StickyNoteNewHotkeyGamepadButton = GamepadShortcutButton.None;
-        }
-        else if (trigger.Kind == ShortcutInputKind.Gamepad)
-        {
-            s.StickyNoteNewHotkeyGamepadButton = trigger.GamepadButton;
         }
     }
 
@@ -1610,11 +1576,6 @@ public partial class SettingsPage : UserControl
         {
             s.PinClipboardHotkeyModifiers = trigger.Modifiers;
             s.PinClipboardHotkeyVirtualKey = trigger.VirtualKey;
-            s.PinClipboardHotkeyGamepadButton = GamepadShortcutButton.None;
-        }
-        else if (trigger.Kind == ShortcutInputKind.Gamepad)
-        {
-            s.PinClipboardHotkeyGamepadButton = trigger.GamepadButton;
         }
     }
 
@@ -1626,11 +1587,6 @@ public partial class SettingsPage : UserControl
         {
             s.QuickTranslateHotkeyModifiers = trigger.Modifiers;
             s.QuickTranslateHotkeyVirtualKey = trigger.VirtualKey;
-            s.QuickTranslateHotkeyGamepadButton = GamepadShortcutButton.None;
-        }
-        else if (trigger.Kind == ShortcutInputKind.Gamepad)
-        {
-            s.QuickTranslateHotkeyGamepadButton = trigger.GamepadButton;
         }
     }
 
@@ -1690,10 +1646,6 @@ public partial class SettingsPage : UserControl
             () => 0,
             key => Keyboard.IsKeyDown(KeyInterop.KeyFromVirtualKey((int)key)));
         GlobalAuxiliaryHotkeys.Paused = true;
-
-        for (int i = 0; i < _recordGamepadButtons.Length; i++)
-            _recordGamepadButtons[i] = GamepadInput.TryGetButtons(i, out var buttons) ? buttons : (ushort)0;
-        _hotkeyGamepadRecordTimer.Start();
     }
 
     /// <summary>Ends recording and puts the stored trigger back in the box.</summary>
@@ -1704,7 +1656,6 @@ public partial class SettingsPage : UserControl
     /// </remarks>
     private void StopRecording()
     {
-        _hotkeyGamepadRecordTimer.Stop();
         _ctrlCCommitTimer.Stop();
         _pendingCtrlC = null;
         _recordSequences = null;
@@ -1962,35 +1913,6 @@ public partial class SettingsPage : UserControl
         ShortcutInputKind.MouseX2 => "S.Settings.MouseX2",
         _ => "S.Settings.MouseMiddle",
     };
-
-    private void PollRecordingGamepad()
-    {
-        if (_recording is not { } recording)
-        {
-            _hotkeyGamepadRecordTimer.Stop();
-            return;
-        }
-
-        for (int i = 0; i < _recordGamepadButtons.Length; i++)
-        {
-            if (!GamepadInput.TryGetButtons(i, out var current))
-            {
-                _recordGamepadButtons[i] = 0;
-                continue;
-            }
-
-            ushort pressed = (ushort)(current & ~_recordGamepadButtons[i]);
-            _recordGamepadButtons[i] = current;
-            var button = GamepadInput.FirstButton(pressed);
-            if (button == GamepadShortcutButton.None) continue;
-
-            var display = LocalizationService.Format(
-                "S.Settings.GamepadButton",
-                GamepadInput.ButtonName(button));
-            CommitShortcut(recording, ShortcutTrigger.Gamepad(button), display);
-            return;
-        }
-    }
 
     /// <remarks>
     /// Windows keys a registration by window and combination, so the second shortcut to claim one is

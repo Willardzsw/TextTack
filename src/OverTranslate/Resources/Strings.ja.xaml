@@ -431,8 +431,6 @@
     <sys:String x:Key="S.Settings.HotkeyGuideMouseMiddle">中ボタン</sys:String>
     <sys:String x:Key="S.Settings.HotkeyGuideMouseX1">サイドボタン 1</sys:String>
     <sys:String x:Key="S.Settings.HotkeyGuideMouseX2">サイドボタン 2</sys:String>
-    <sys:String x:Key="S.Settings.HotkeyGuideGamepad">ゲームパッド</sys:String>
-    <sys:String x:Key="S.Settings.HotkeyGuideGamepadNote">Xbox 互換（XInput）コントローラーの任意のボタン</sys:String>
     <sys:String x:Key="S.Settings.HotkeyGuideExclusive">占有</sys:String>
     <sys:String x:Key="S.Settings.HotkeyGuideExclusiveNote">ほかのアプリにはキーが届きません</sys:String>
     <sys:String x:Key="S.Settings.HotkeyGuideExclusiveExample">例：Ctrl+Alt+A に設定すると、ほかのアプリの Ctrl+Alt+A は効かなくなります</sys:String>
@@ -591,7 +589,6 @@
     <sys:String x:Key="S.Settings.MouseMiddle">マウス中ボタン</sys:String>
     <sys:String x:Key="S.Settings.MouseX1">マウスサイドボタン 1</sys:String>
     <sys:String x:Key="S.Settings.MouseX2">マウスサイドボタン 2</sys:String>
-    <sys:String x:Key="S.Settings.GamepadButton">ゲームパッド {0}</sys:String>
     <sys:String x:Key="S.Settings.FolderPickerTitle">スクリーンショットの保存先を選択</sys:String>
     <sys:String x:Key="S.Settings.LoggingEnvOverride">現在ログレベルは環境変数 OVERTRANSLATE_LOGLEVEL で指定されているため、この項目は効きません。</sys:String>
     <sys:String x:Key="S.Settings.StartupFailed">✗ スタートアップの設定を変更できませんでした：{0}</sys:String>
@@ -687,7 +684,9 @@
     <sys:String x:Key="S.OcrModel.RecognizerSize">汎用認識サイズ（中国語・英語・日本語）</sys:String>
     <sys:String x:Key="S.OcrModel.ScaleHint">大きいモデルは通常、時間とメモリを多く使います。同じ画像で比較してください。タイ語と韓国語は専用認識モデルを維持します。</sys:String>
     <sys:String x:Key="S.OcrModel.Device">実行デバイス</sys:String>
-    <sys:String x:Key="S.OcrModel.DeviceHint">GPU は DirectML を使用し、CUDA は不要です。初回は遅くなる場合があります。GPU が使えない場合は CPU を選択してください。</sys:String>
+    <sys:String x:Key="S.OcrModel.DeviceHint">GPU は DirectML を使用し、CUDA は不要です。初回は遅くなる場合があります。GPU が使えない場合は CPU を選択してください。内蔵 GPU は通常 CPU より遅いため、できるだけ避けてください。</sys:String>
+    <sys:String x:Key="S.OcrModel.IntegratedTag">（内蔵 GPU・非推奨）</sys:String>
+    <sys:String x:Key="S.OcrModel.IntegratedWarning">これは内蔵 GPU です。内蔵 GPU での OCR は通常 CPU よりかなり遅く、初回は 30 秒ほど、その後も新しいサイズの画像ごとに数秒かかります。できるだけ CPU か、専用 GPU を選択してください。</sys:String>
     <sys:String x:Key="S.OcrModel.Tiny">Tiny · 高速</sys:String>
     <sys:String x:Key="S.OcrModel.Small">Small · バランス</sys:String>
     <sys:String x:Key="S.OcrModel.Medium">Medium · 大型</sys:String>

@@ -1875,6 +1875,9 @@ public partial class MainWindow : Window
         // they would come back over a capture still being torn down. Unconditional — it does nothing
         // unless this capture is the one that stood a session down.
         RealtimeSessionController.Instance.ResumeAfterCapture();
+
+        // The frozen desktop and the crop went with the windows; give their memory back.
+        IdleMemory.ReleaseSoon();
     }
 
     /// <summary>

@@ -16,9 +16,8 @@ public enum HotkeyAction
 }
 
 /// <summary>
-/// One physical shortcut trigger. Keyboard uses modifiers + virtual key; the mouse buttons carry no
-/// code, the button being the kind itself; gamepad stores exactly one XInput button value in
-/// <see cref="Code"/>.
+/// One physical shortcut trigger. Keyboard uses modifiers + virtual key; the mouse buttons and key
+/// sequences carry no code, the kind being the trigger itself.
 /// </summary>
 public readonly record struct ShortcutTrigger(ShortcutInputKind Kind, uint Modifiers, uint Code)
 {
@@ -30,9 +29,6 @@ public readonly record struct ShortcutTrigger(ShortcutInputKind Kind, uint Modif
 
     public static ShortcutTrigger Mouse(ShortcutInputKind kind) => new(kind, 0, 0);
 
-    public static ShortcutTrigger Gamepad(GamepadShortcutButton button) =>
-        new(ShortcutInputKind.Gamepad, 0, (uint)button);
-
     /// <summary>Ctrl twice, or Ctrl+C+C — the sequence being the kind itself, as with the mouse.</summary>
     public static ShortcutTrigger KeySequence(ShortcutInputKind kind) => new(kind, 0, 0);
 
@@ -43,9 +39,6 @@ public readonly record struct ShortcutTrigger(ShortcutInputKind Kind, uint Modif
     public bool IsKeySequence => Kind.IsKeySequence();
 
     public uint VirtualKey => Kind == ShortcutInputKind.Keyboard ? Code : 0;
-    public GamepadShortcutButton GamepadButton => Kind == ShortcutInputKind.Gamepad
-        ? (GamepadShortcutButton)Code
-        : GamepadShortcutButton.None;
 }
 
 /// <summary>Which shortcut kinds the mouse hook is responsible for.</summary>
@@ -79,17 +72,15 @@ public readonly record struct HotkeyBinding(
     public ShortcutInputKind InputKind => Trigger.Kind;
     public uint Modifiers => Trigger.Modifiers;
     public uint VirtualKey => Trigger.VirtualKey;
-    public GamepadShortcutButton GamepadButton => Trigger.GamepadButton;
 }
 
 /// <summary>
 /// Works out which shortcuts are live when two of them want the same physical trigger.
 /// </summary>
 /// <remarks>
-/// Keyboard combinations are registered with RegisterHotKey; the mouse and gamepad buttons are
-/// observed by the application's global input listener. They all share the same conflict resolver so
-/// one mouse button cannot silently do two different things, and the same is true of one gamepad
-/// button.
+/// Keyboard combinations are registered with RegisterHotKey; the mouse buttons and key
+/// sequences are observed by the application's global input listener. They all share the same
+/// conflict resolver so one mouse button cannot silently do two different things.
 ///
 /// The keyboard half is where the cost of not resolving it shows. Windows keys a registration by
 /// window and combination, so the second claim on one is simply refused: <c>RegisterHotKey</c>
@@ -115,43 +106,35 @@ public static class HotkeyBindings
         HotkeyAction.Capture => BuildTrigger(
             settings.HotkeyInputKind,
             settings.HotkeyModifiers,
-            settings.HotkeyVirtualKey,
-            settings.HotkeyGamepadButton),
+            settings.HotkeyVirtualKey),
         HotkeyAction.TranslationWindow => BuildTrigger(
             settings.TranslationWindowHotkeyInputKind,
             settings.TranslationWindowHotkeyModifiers,
-            settings.TranslationWindowHotkeyVirtualKey,
-            settings.TranslationWindowHotkeyGamepadButton),
+            settings.TranslationWindowHotkeyVirtualKey),
         HotkeyAction.RealtimePause => BuildTrigger(
             settings.RealtimePauseHotkeyInputKind,
             settings.RealtimePauseHotkeyModifiers,
-            settings.RealtimePauseHotkeyVirtualKey,
-            settings.RealtimePauseHotkeyGamepadButton),
+            settings.RealtimePauseHotkeyVirtualKey),
         HotkeyAction.QuickLookup => BuildTrigger(
             settings.QuickLookupHotkeyInputKind,
             settings.QuickLookupHotkeyModifiers,
-            settings.QuickLookupHotkeyVirtualKey,
-            settings.QuickLookupHotkeyGamepadButton),
+            settings.QuickLookupHotkeyVirtualKey),
         HotkeyAction.QuickTranslate => BuildTrigger(
             settings.QuickTranslateHotkeyInputKind,
             settings.QuickTranslateHotkeyModifiers,
-            settings.QuickTranslateHotkeyVirtualKey,
-            settings.QuickTranslateHotkeyGamepadButton),
+            settings.QuickTranslateHotkeyVirtualKey),
         HotkeyAction.Pin => BuildTrigger(
             settings.PinClipboardHotkeyInputKind,
             settings.PinClipboardHotkeyModifiers,
-            settings.PinClipboardHotkeyVirtualKey,
-            settings.PinClipboardHotkeyGamepadButton),
+            settings.PinClipboardHotkeyVirtualKey),
         HotkeyAction.StickyNote => BuildTrigger(
             settings.StickyNoteHotkeyInputKind,
             settings.StickyNoteHotkeyModifiers,
-            settings.StickyNoteHotkeyVirtualKey,
-            settings.StickyNoteHotkeyGamepadButton),
+            settings.StickyNoteHotkeyVirtualKey),
         HotkeyAction.StickyNoteNew => BuildTrigger(
             settings.StickyNoteNewHotkeyInputKind,
             settings.StickyNoteNewHotkeyModifiers,
-            settings.StickyNoteNewHotkeyVirtualKey,
-            settings.StickyNoteNewHotkeyGamepadButton),
+            settings.StickyNoteNewHotkeyVirtualKey),
         _ => throw new ArgumentOutOfRangeException(nameof(action), action, null),
     };
 
@@ -195,15 +178,10 @@ public static class HotkeyBindings
     private static ShortcutTrigger BuildTrigger(
         ShortcutInputKind kind,
         uint modifiers,
-        uint virtualKey,
-        GamepadShortcutButton gamepadButton) => kind switch
+        uint virtualKey) => kind switch
     {
         _ when kind.IsMouse() => ShortcutTrigger.Mouse(kind),
         _ when kind.IsKeySequence() => ShortcutTrigger.KeySequence(kind),
-        ShortcutInputKind.Gamepad when gamepadButton != GamepadShortcutButton.None =>
-            ShortcutTrigger.Gamepad(gamepadButton),
-        // A malformed/old setting that says Gamepad but has no button is safer as the keyboard it
-        // already has stored than as a trigger that can never fire.
         _ => ShortcutTrigger.Keyboard(modifiers, virtualKey),
     };
 

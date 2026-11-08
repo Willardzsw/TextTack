@@ -150,6 +150,17 @@ internal static class DirectMlDevice
     [DllImport("kernel32.dll", CharSet = CharSet.Unicode, ExactSpelling = true)]
     private static extern uint GetModuleFileNameW(IntPtr module, [Out] char[] fileName, int size);
 
+    /// <summary>Below this much memory of its own, a GPU is taken to be integrated (核顯).</summary>
+    internal const ulong IntegratedBelow = 1UL << 30;
+
+    /// <summary>
+    /// Whether the adapter is an integrated GPU, which shares the system's memory and keeps almost
+    /// none of its own (an Intel Iris Xe reports 128 MB). For OCR these are usually slower than the
+    /// CPU: measured on an Iris Xe, 33 s for the first run and about 3.5 s for every new picture
+    /// size, against 0.04–0.3 s on the CPU.
+    /// </summary>
+    internal static bool IsIntegrated(Adapter adapter) => adapter.DedicatedMemory < IntegratedBelow;
+
     internal static bool IsSoftware(Adapter adapter) =>
         adapter.Software || (adapter.VendorId == MicrosoftVendor && adapter.DeviceId == BasicRenderDevice);
 

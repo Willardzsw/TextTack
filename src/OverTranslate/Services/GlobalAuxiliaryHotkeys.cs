@@ -6,11 +6,11 @@ using OverTranslate.Models;
 namespace OverTranslate.Services;
 
 /// <summary>
-/// Observes non-keyboard shortcut inputs. It never swallows the input: the mouse and controller
-/// buttons continue to reach the foreground application/game after OverTranslate reacts to them.
+/// Observes non-keyboard shortcut inputs. It never swallows the input: the mouse buttons and keys
+/// continue to reach the foreground application after OverTranslate reacts to them.
 /// </summary>
 /// <remarks>
-/// The hook and the controller poll live on a private message-pumping thread, and the hook callback
+/// The hooks live on a private message-pumping thread, and the hook callback
 /// does nothing but hand the action over to the interface. Both follow from what a WH_MOUSE_LL
 /// callback costs: Windows holds every mouse event in the system — including the ones the game the
 /// user is playing is waiting for — until the callback returns, and a callback that outstays
@@ -20,7 +20,7 @@ namespace OverTranslate.Services;
 /// Running the action inside the callback is what made that reachable rather than theoretical: the
 /// realtime shortcut builds a control bar and one overlay window per region before it returns.
 /// Posting the action to the dispatcher answers that; keeping the hook itself off the dispatcher is
-/// <see cref="HookThread"/>'s job, and the controller poll comes off the dispatcher with it.
+/// <see cref="HookThread"/>'s job.
 ///
 /// The key sequences (Ctrl twice, Ctrl+C+C) are watched by a keyboard hook under the same rules,
 /// installed only while one of them is bound: every key on the system passes through it, so nobody
@@ -49,17 +49,11 @@ internal sealed class GlobalAuxiliaryHotkeys : IDisposable
     private const int Xbutton1 = 0x0001;
     private const int Xbutton2 = 0x0002;
 
-    // Fast enough that a button press does not feel late, slow enough to stay invisible beside a
-    // game. On the hook thread, so it neither waits for the interface nor holds it up.
-    private static readonly TimeSpan GamepadPollInterval = TimeSpan.FromMilliseconds(35);
-
     // Replaced wholesale rather than mutated, so the hook thread can read it without a lock while
     // the interface is saving new settings.
     private Dictionary<ShortcutTrigger, HotkeyAction> _bindings = [];
 
     // Everything below is touched only on the hook thread.
-    private readonly ushort[] _previousGamepadButtons = new ushort[4];
-    private DispatcherTimer? _gamepadTimer;
     private LowLevelMouseProc? _mouseProc;
     private IntPtr _mouseHook;
     private LowLevelKeyboardProc? _keyboardProc;
@@ -102,12 +96,11 @@ internal sealed class GlobalAuxiliaryHotkeys : IDisposable
         // mouse hook can say one happened.
         var needsMouse = map.Keys.Any(trigger => trigger.IsMouse) ||
                          map.ContainsKey(ShortcutTrigger.KeySequence(ShortcutInputKind.CtrlDoubleTap));
-        var needsGamepad = map.Keys.Any(trigger => trigger.Kind == ShortcutInputKind.Gamepad);
 
         // Nothing to observe: the thread is not merely idled but ended, because a message loop kept
         // alive for a set of bindings that no longer exists is a thread nobody would think to look
         // for while wondering what the process is doing.
-        if (!needsMouse && !needsGamepad && !needsKeys)
+        if (!needsMouse && !needsKeys)
         {
             StopHookThread();
             return;
@@ -117,7 +110,7 @@ internal sealed class GlobalAuxiliaryHotkeys : IDisposable
 
         // Invoke rather than BeginInvoke: this runs when settings are saved, at human pace, and the
         // caller is entitled to have the shortcuts live by the time it returns.
-        _hookThread.Invoke(() => ApplyOnHookThread(needsMouse, needsGamepad, needsKeys));
+        _hookThread.Invoke(() => ApplyOnHookThread(needsMouse, needsKeys));
     }
 
     public void Dispose()
@@ -132,41 +125,17 @@ internal sealed class GlobalAuxiliaryHotkeys : IDisposable
         {
             UninstallMouseHook();
             UninstallKeyboardHook();
-            _gamepadTimer?.Stop();
-            _gamepadTimer = null;
-            Array.Clear(_previousGamepadButtons, 0, _previousGamepadButtons.Length);
         });
     }
 
     /// <summary>Brings the hooks into line with the bindings. Runs on the hook thread.</summary>
-    private void ApplyOnHookThread(bool needsMouse, bool needsGamepad, bool needsKeys)
+    private void ApplyOnHookThread(bool needsMouse, bool needsKeys)
     {
         if (needsMouse) InstallMouseHook();
         else UninstallMouseHook();
 
         if (needsKeys) InstallKeyboardHook();
         else UninstallKeyboardHook();
-
-        // Created here rather than in the constructor: a DispatcherTimer binds to the thread that
-        // makes it, and this one has to tick on the hook thread.
-        _gamepadTimer ??= CreateGamepadTimer();
-
-        if (needsGamepad)
-        {
-            SnapshotGamepads();
-            _gamepadTimer.Start();
-        }
-        else
-        {
-            _gamepadTimer.Stop();
-        }
-    }
-
-    private DispatcherTimer CreateGamepadTimer()
-    {
-        var timer = new DispatcherTimer { Interval = GamepadPollInterval };
-        timer.Tick += (_, _) => PollGamepads();
-        return timer;
     }
 
     private void InstallMouseHook()
@@ -308,42 +277,9 @@ internal sealed class GlobalAuxiliaryHotkeys : IDisposable
         };
     }
 
-    private void SnapshotGamepads()
-    {
-        for (int i = 0; i < _previousGamepadButtons.Length; i++)
-            _previousGamepadButtons[i] = GamepadInput.TryGetButtons(i, out var buttons) ? buttons : (ushort)0;
-    }
-
-    private void PollGamepads()
-    {
-        var bindings = Volatile.Read(ref _bindings);
-
-        for (int i = 0; i < _previousGamepadButtons.Length; i++)
-        {
-            if (!GamepadInput.TryGetButtons(i, out var current))
-            {
-                _previousGamepadButtons[i] = 0;
-                continue;
-            }
-
-            ushort pressed = (ushort)(current & ~_previousGamepadButtons[i]);
-            _previousGamepadButtons[i] = current;
-            if (pressed == 0) continue;
-
-            // More than one physical button may be pressed in one poll. Fire each supported edge;
-            // conflict resolution ensures one button maps to at most one app action.
-            foreach (var button in GamepadInput.SupportedButtons)
-            {
-                if ((pressed & (ushort)button) == 0) continue;
-                if (bindings.TryGetValue(ShortcutTrigger.Gamepad(button), out var action))
-                    Raise(action, null);
-            }
-        }
-    }
-
     /// <summary>
     /// Hands an action to the interface. The subscribers open windows and start sessions, so they
-    /// run on the dispatcher — and asynchronously, so neither the hook callback nor the poll waits
+    /// run on the dispatcher — and asynchronously, so the hook callback does not wait
     /// for any of it.
     /// </summary>
     private void Raise(HotkeyAction action, uint? clipboardBefore)
