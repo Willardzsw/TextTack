@@ -43,7 +43,9 @@ public partial class MainWindow : Window
     // colour and the widths are preferences and live in CaptureSettings.Annotation instead.
     private Models.AnnotationTool _annotationTool = AnnotationPanelWindow.DefaultTool;
     private GlobalEscapeHook? _escapeHook; // lives for the whole capture session, see CloseAll
-    private CaptureCopyHook? _copyKeys;    // Ctrl+C = 截圖, while the toolbar is up
+    private CaptureKeyHook? _copyKeys;     // Ctrl+C = 截圖, while the toolbar is up
+    private CaptureKeyHook? _captureKeys;  // F5 = 重新截圖, Ctrl+A = 全螢幕, for the whole capture
+    private bool _refreshingCapture;
     private SystemRecoveryYield? _recoveryYield; // same lifetime; lets Task Manager out from under the layers
     private CancellationTokenSource? _sessionCts; // cancelled on teardown so abandoned work stops
     private EventHandler? _overlayClosedHandler; // tracked so we can detach before re-translate
@@ -862,10 +864,13 @@ public partial class MainWindow : Window
                 _lastSelPhysWidth  = selection.Width;
                 _lastSelPhysHeight = selection.Height;
                 _toolbarWindow?.FollowSelection(selection);
-                // OCR geometry belongs to the old crop until the user recognises this one.
+                // OCR geometry belongs to the old crop until the user recognises this one. Cleared
+                // off the overlay only when there was some: the overlay is a transparent window the
+                // size of the desktop, and redrawing it for nothing on every move was a cost.
+                if (_lastOcrBlocks.Count > 0)
+                    _overlayWindow?.ShowOcrDebug([], selection.Left, selection.Top);
                 _lastOcrBlocks = [];
                 _ocrReuse.Clear();
-                _overlayWindow?.ShowOcrDebug([], selection.Left, selection.Top);
 
                 // The marks stay where they were drawn; what moves is the window onto them. See
                 // OverlayWindow.SetAnnotationBounds for why that is the way round it is.
@@ -887,10 +892,13 @@ public partial class MainWindow : Window
             {
                 if (ReferenceEquals(_captureWindow, captureWindow)) PinSelection();
             };
-            captureWindow.CancelRequested += (_, _) =>
+            // 右鍵: the box goes and the frozen picture stays for another; with no box, the capture
+            // ends (the window closes itself for that).
+            captureWindow.ReselectRequested += (_, _) =>
             {
-                if (ReferenceEquals(_captureWindow, captureWindow)) CloseAll("right click");
+                if (ReferenceEquals(_captureWindow, captureWindow)) ReselectInCapture(captureWindow);
             };
+            captureWindow.RefreshRequested += (_, _) => RefreshCaptureScreenshot();
 
             captureWindow.Show();
 
@@ -908,6 +916,9 @@ public partial class MainWindow : Window
             // than the stuck overlay it exists to prevent.
             DisposeSessionHooks();
             _escapeHook = GlobalEscapeHook.Install(() => CloseAll("esc hook"));
+            _captureKeys = CaptureKeyHook.Install(
+                new CaptureKeyHook.Binding(CaptureKeyHook.VK_F5, false, RefreshCaptureScreenshot),
+                new CaptureKeyHook.Binding(CaptureKeyHook.VK_A, true, () => _captureWindow?.SelectScreenUnderPointer()));
 
             // Paired with the Esc hook and for the same reason: these windows cover the screen, so
             // both ways out of a session that has gone wrong have to be set up before it can.
@@ -916,16 +927,32 @@ public partial class MainWindow : Window
             CancelSession();
             _sessionCts = new CancellationTokenSource();
 
+            await AwaitSelectionAsync(captureWindow);
+        }
+        catch (Exception ex)
+        {
+            Log.Error(ex, "Capture session setup failed — tearing down overlay windows");
+            CloseAll("setup failed");
+            screenshot.Dispose();
+        }
+    }
+
+    /// <summary>
+    /// Waits for a box on the frozen picture and puts the toolbar and the overlay up for it — the
+    /// first time, and again each time a right-click has taken the box away.
+    /// </summary>
+    private async Task AwaitSelectionAsync(ScreenCaptureWindow captureWindow)
+    {
+        try
+        {
             bool selected = await captureWindow.WaitForSelectionAsync();
+            if (!ReferenceEquals(_captureWindow, captureWindow)) return;
             if (!selected || !captureWindow.HasSelection)
             {
-                // Also reached when the capture window cancelled itself (its own Esc fallback),
-                // which never goes through CloseAll — so the session is torn down here too.
-                DisposeSessionHooks();
-                CancelSession();
-                captureWindow.Close();
-                _captureWindow = null;
-                screenshot.Dispose();
+                // Also reached when the capture window cancelled itself (its own Esc fallback, or a
+                // right-click with no box), which never goes through CloseAll — so the session is
+                // torn down here too, the shell and the realtime layers given back with it.
+                CloseAll("selection cancelled");
                 return;
             }
 
@@ -944,7 +971,98 @@ public partial class MainWindow : Window
         {
             Log.Error(ex, "Capture session setup failed — tearing down overlay windows");
             CloseAll("setup failed");
-            screenshot.Dispose();
+        }
+    }
+
+    /// <summary>
+    /// 右鍵 on a drawn box: the toolbar, the overlay and their marks go, the frozen picture stays,
+    /// and the capture waits for a new box — Snipaste's way. A second right-click, with no box,
+    /// ends the capture.
+    /// </summary>
+    private void ReselectInCapture(ScreenCaptureWindow captureWindow)
+    {
+        if (!captureWindow.IsEditable) return;
+        Log.Info("Capture box dropped by right click; waiting for a new one");
+
+        _selectionSessionId++;
+        CancelSession();
+        _sessionCts = new CancellationTokenSource();
+        _ocrReuse.Clear();
+        _tts.Stop();
+        _copyKeys?.Dispose();
+        _copyKeys = null;
+
+        CloseAnnotationPanel();
+        if (_overlayWindow != null && _overlayClosedHandler != null)
+            _overlayWindow.Closed -= _overlayClosedHandler;
+        CloseWindow(_overlayWindow, w => w.CloseOverlay(), nameof(OverlayWindow));
+        _overlayWindow = null;
+        CloseWindow(_toolbarWindow, w => w.Close(), nameof(ToolbarWindow));
+        _toolbarWindow = null;
+        _lastOcrBlocks = [];
+        _lastTranslatedBlocks = [];
+        _lastColoredBlocks = [];
+
+        captureWindow.ClearSelection();
+        captureWindow.Activate();
+        _ = AwaitSelectionAsync(captureWindow);
+    }
+
+    /// <summary>
+    /// F5 / 重新截圖: a fresh picture of the desktop under the capture, the box kept where it is.
+    /// </summary>
+    /// <remarks>
+    /// The session's own windows are cloaked for the moment it takes — out of the compositor, so out
+    /// of the picture, without the activation and z-order changes hiding them would bring. Only while
+    /// the box is still the user's: a translation is painted onto the picture it was read from.
+    /// </remarks>
+    private async void RefreshCaptureScreenshot()
+    {
+        if (_refreshingCapture || _captureWindow is not { } captureWindow || !captureWindow.IsEditable) return;
+        _refreshingCapture = true;
+
+        var handles = new[] { (Window?)captureWindow, _overlayWindow, _toolbarWindow, _annotationPanel }
+            .OfType<Window>()
+            .Select(w => new System.Windows.Interop.WindowInteropHelper(w).Handle)
+            .Where(h => h != IntPtr.Zero)
+            .ToList();
+        try
+        {
+            foreach (var h in handles) WindowScreenPresence.SetCloaked(h, cloaked: true);
+            // A frame or two for the compositor to put up the desktop without them.
+            await Task.Delay(120);
+            if (!ReferenceEquals(_captureWindow, captureWindow)) return;
+
+            var bounds = captureWindow.PhysicalBounds;
+            var shot = new Bitmap(bounds.Width, bounds.Height);
+            try
+            {
+                using var g = Graphics.FromImage(shot);
+                g.CopyFromScreen(bounds.Left, bounds.Top, 0, 0, bounds.Size, CopyPixelOperation.SourceCopy);
+            }
+            catch
+            {
+                shot.Dispose();
+                throw;
+            }
+            captureWindow.ReplaceScreenshot(shot);
+
+            // What was read and drawn belonged to the old picture.
+            _ocrReuse.Clear();
+            if (_lastOcrBlocks.Count > 0)
+                _overlayWindow?.ShowOcrDebug([], _lastSelPhysLeft, _lastSelPhysTop);
+            _lastOcrBlocks = [];
+            _overlayWindow?.SetAnnotationBackdrop(captureWindow.ScreenshotSource);
+            Log.Info("Capture screenshot refreshed");
+        }
+        catch (Exception ex)
+        {
+            Log.Warn(ex, "Refreshing the capture screenshot failed; the old one stays");
+        }
+        finally
+        {
+            foreach (var h in handles) WindowScreenPresence.SetCloaked(h, cloaked: false);
+            _refreshingCapture = false;
         }
     }
 
@@ -1002,10 +1120,10 @@ public partial class MainWindow : Window
 
         // Ctrl+C copies the screenshot like the toolbar's 截圖, following 截圖後自動關閉.
         _copyKeys?.Dispose();
-        _copyKeys = CaptureCopyHook.Install(() =>
+        _copyKeys = CaptureKeyHook.Install(new CaptureKeyHook.Binding(CaptureKeyHook.VK_C, true, () =>
         {
             if (ReferenceEquals(_toolbarWindow, toolbar)) CopyScreenshot(forceClose: false);
-        });
+        }));
         toolbar.SetTranslationState(hasTranslated);
         toolbar.SetToggleEnabled(blocks.Count > 0);
         toolbar.SetSpeakableText(SourceTextForSpeech().Length > 0);
@@ -1673,14 +1791,21 @@ public partial class MainWindow : Window
         _overlayWindow?.FinishText();
         var bubbles = _overlayWindow?.RenderOverlayForSelection(
             _lastSelPhysLeft, _lastSelPhysTop, w, h);
-        if (bubbles is null) return background;
+
+        // 圓角: the corners cut away, transparent, the way the box showed them.
+        double corner = SettingsService.Instance.Current.Capture.RoundedCorners
+            ? Math.Min(_captureWindow!.CornerRadiusPixels, Math.Min(w, h) / 2.0)
+            : 0;
+        if (bubbles is null && corner <= 0) return background;
 
         var dv = new System.Windows.Media.DrawingVisual();
         using (var dc = dv.RenderOpen())
         {
             var bounds = new System.Windows.Rect(0, 0, w, h);
+            if (corner > 0) dc.PushClip(new System.Windows.Media.RectangleGeometry(bounds, corner, corner));
             dc.DrawImage(background, bounds);
-            dc.DrawImage(bubbles, bounds);
+            if (bubbles is not null) dc.DrawImage(bubbles, bounds);
+            if (corner > 0) dc.Pop();
         }
         var composed = new System.Windows.Media.Imaging.RenderTargetBitmap(
             w, h, 96, 96, System.Windows.Media.PixelFormats.Pbgra32);
@@ -1706,7 +1831,7 @@ public partial class MainWindow : Window
                 return;
             }
 
-            System.Windows.Clipboard.SetImage(result);
+            ClipboardImage.Set(result, SettingsService.Instance.Current.Capture.RoundedCorners);
             _toolbarWindow?.ShowScreenshotCopied();
 
             var settings = SettingsService.Instance.Current;
@@ -2038,6 +2163,9 @@ public partial class MainWindow : Window
 
         _copyKeys?.Dispose();
         _copyKeys = null;
+
+        _captureKeys?.Dispose();
+        _captureKeys = null;
 
         _recoveryYield?.Dispose();
         _recoveryYield = null;

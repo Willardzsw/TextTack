@@ -222,6 +222,24 @@
          no arguments, which does not exist, and the first capture after launch died building it. -->
     <x:Static x:Key="S.Capture.PressPrefix" Member="sys:String.Empty"/>
     <sys:String x:Key="S.Capture.CancelSuffix">키로 취소</sys:String>
+    <sys:String x:Key="S.Capture.RefreshHint">다시 캡처</sys:String>
+    <sys:String x:Key="S.Capture.SelectAllHint">전체 화면 선택</sys:String>
+    <sys:String x:Key="S.Capture.SizeTip">클릭하여 위치와 크기 입력</sys:String>
+    <sys:String x:Key="S.Capture.UnitTip">px / dip 전환 (dip는 화면 배율을 뺀 값)</sys:String>
+    <sys:String x:Key="S.Capture.CornerSquareTip">직각 모서리 (클릭하면 둥글게)</sys:String>
+    <sys:String x:Key="S.Capture.CornerRoundTip">둥근 모서리: 복사·저장·고정한 이미지의 네 모서리가 투명 (클릭하면 직각)</sys:String>
+    <sys:String x:Key="S.Capture.AspectOffTip">가로세로 비율 고정</sys:String>
+    <sys:String x:Key="S.Capture.AspectOnTip">가로세로 비율 고정됨 (클릭하여 해제)</sys:String>
+    <sys:String x:Key="S.Capture.RefreshTip">다시 캡처 (F5)</sys:String>
+    <sys:String x:Key="S.Capture.RegionTitle">캡처 영역 조정</sys:String>
+    <sys:String x:Key="S.Capture.RegionPosition">왼쪽 위:</sys:String>
+    <sys:String x:Key="S.Capture.RegionSize">크기:</sys:String>
+    <sys:String x:Key="S.Capture.RegionPresets">프리셋</sys:String>
+    <sys:String x:Key="S.Capture.RegionAddPreset">프리셋에 추가</sys:String>
+    <sys:String x:Key="S.Capture.RegionEditPresets">프리셋 편집…</sys:String>
+    <sys:String x:Key="S.Capture.RegionOk">확인</sys:String>
+    <sys:String x:Key="S.Capture.PresetsTitle">프리셋 편집</sys:String>
+    <sys:String x:Key="S.Capture.PresetsHint">한 줄에 하나씩, 예: 640x480</sys:String>
     <sys:String x:Key="S.Overlay.Recognising">인식 중</sys:String>
 
     <!-- ── Secret box ── -->
@@ -712,7 +730,7 @@
     <sys:String x:Key="S.Toolbar.DoubleClickFinish">더블클릭으로 완료</sys:String>
     <sys:String x:Key="S.Toolbar.DoubleClickFinishTip">선택 영역 안을 더블클릭하면 스크린샷을 복사하고 종료합니다</sys:String>
     <sys:String x:Key="S.Toolbar.RightClickCancel">우클릭으로 취소</sys:String>
-    <sys:String x:Key="S.Toolbar.RightClickCancelTip">마우스 오른쪽 버튼을 누르면 바로 종료합니다</sys:String>
+    <sys:String x:Key="S.Toolbar.RightClickCancelTip">영역이 있으면 오른쪽 클릭으로 영역을 지우고 다시 선택, 영역이 없으면 오른쪽 클릭으로 캡처 종료</sys:String>
     <sys:String x:Key="S.Toolbar.Pin">고정</sys:String>
     <sys:String x:Key="S.Toolbar.PinHint">선택 영역을 화면 맨 위에 고정하고 종료합니다</sys:String>
     <sys:String x:Key="S.Settings.PinHotkey">고정(클립보드)</sys:String>

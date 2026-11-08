@@ -222,6 +222,24 @@
          no arguments, which does not exist, and the first capture after launch died building it. -->
     <x:Static x:Key="S.Capture.PressPrefix" Member="sys:String.Empty"/>
     <sys:String x:Key="S.Capture.CancelSuffix">でキャンセル</sys:String>
+    <sys:String x:Key="S.Capture.RefreshHint">撮り直す</sys:String>
+    <sys:String x:Key="S.Capture.SelectAllHint">画面全体を選択</sys:String>
+    <sys:String x:Key="S.Capture.SizeTip">クリックして位置とサイズを入力</sys:String>
+    <sys:String x:Key="S.Capture.UnitTip">px / dip を切り替え（dip は表示スケールを除いた値）</sys:String>
+    <sys:String x:Key="S.Capture.CornerSquareTip">角を直角に（クリックで角丸）</sys:String>
+    <sys:String x:Key="S.Capture.CornerRoundTip">角丸：コピー・保存・ピン留めの画像の四隅を透明に（クリックで直角）</sys:String>
+    <sys:String x:Key="S.Capture.AspectOffTip">縦横比を固定</sys:String>
+    <sys:String x:Key="S.Capture.AspectOnTip">縦横比を固定中（クリックで解除）</sys:String>
+    <sys:String x:Key="S.Capture.RefreshTip">撮り直す (F5)</sys:String>
+    <sys:String x:Key="S.Capture.RegionTitle">キャプチャ範囲の調整</sys:String>
+    <sys:String x:Key="S.Capture.RegionPosition">左上:</sys:String>
+    <sys:String x:Key="S.Capture.RegionSize">サイズ:</sys:String>
+    <sys:String x:Key="S.Capture.RegionPresets">プリセット</sys:String>
+    <sys:String x:Key="S.Capture.RegionAddPreset">プリセットに追加</sys:String>
+    <sys:String x:Key="S.Capture.RegionEditPresets">プリセットを編集…</sys:String>
+    <sys:String x:Key="S.Capture.RegionOk">OK</sys:String>
+    <sys:String x:Key="S.Capture.PresetsTitle">プリセットを編集</sys:String>
+    <sys:String x:Key="S.Capture.PresetsHint">1 行に 1 サイズ。例：640x480</sys:String>
     <sys:String x:Key="S.Overlay.Recognising">認識中</sys:String>
 
     <!-- ── Secret box ── -->
@@ -712,7 +730,7 @@
     <sys:String x:Key="S.Toolbar.DoubleClickFinish">ダブルクリックで完了</sys:String>
     <sys:String x:Key="S.Toolbar.DoubleClickFinishTip">選択範囲内をダブルクリックすると、スクリーンショットをコピーして終了します</sys:String>
     <sys:String x:Key="S.Toolbar.RightClickCancel">右クリックでキャンセル</sys:String>
-    <sys:String x:Key="S.Toolbar.RightClickCancelTip">右クリックでそのまま終了します</sys:String>
+    <sys:String x:Key="S.Toolbar.RightClickCancelTip">範囲があるときは右クリックで範囲を消して選び直し、範囲がないときは右クリックでキャプチャを終了</sys:String>
     <sys:String x:Key="S.Toolbar.Pin">ピン留め</sys:String>
     <sys:String x:Key="S.Toolbar.PinHint">選択範囲を画面の最前面にピン留めして終了します</sys:String>
     <sys:String x:Key="S.Settings.PinHotkey">ピン留め（クリップボード）</sys:String>

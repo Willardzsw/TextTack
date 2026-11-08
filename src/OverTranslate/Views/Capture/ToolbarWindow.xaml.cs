@@ -199,21 +199,29 @@ public partial class ToolbarWindow : Window
         double margin = 4 * scale;
         double gap    = 6 * scale;
 
+        // The window is larger than the bar by the transparent room its shadow is drawn in. The gap
+        // is measured to the bar itself, so it is the distance the user sees.
+        double roomTop    = ShadowRoom.Margin.Top * scale;
+        double roomBottom = ShadowRoom.Margin.Bottom * scale;
+
+        // Above the box, the size bar is there already; the toolbar goes above that.
+        double reserve = ScreenCaptureWindow.SizeBarReserveDip * scale;
+
         // Math.Clamp throws when the toolbar is wider than the monitor it must fit on.
         double minLeft = wa.Left + margin;
         double maxLeft = Math.Max(minLeft, wa.Right - tbW - margin);
         double left = Math.Clamp(_selPhysLeft + (_selPhysWidth - tbW) / 2, minLeft, maxLeft);
 
-        double yBelow = _selPhysTop + _selPhysHeight + gap;
-        double yAbove = _selPhysTop - tbH - gap;
+        double yBelow = _selPhysTop + _selPhysHeight + gap - roomTop;
+        double yAbove = _selPhysTop - reserve - gap - (tbH - roomBottom);
 
         double top;
-        if (yBelow + tbH <= wa.Bottom)
+        if (yBelow + tbH - roomBottom <= wa.Bottom)
             top = yBelow;
-        else if (yAbove >= wa.Top)
+        else if (yAbove + roomTop >= wa.Top)
             top = yAbove;
         else
-            top = _selPhysTop + _selPhysHeight - tbH - 2 * scale;
+            top = _selPhysTop + _selPhysHeight - tbH + roomBottom - 2 * scale;
 
         // The labels grow away from the selection, so they never cover what is being read.
         _labelsPreferAbove = top == yAbove;

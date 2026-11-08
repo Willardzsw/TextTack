@@ -228,6 +228,24 @@
     <!-- Split around the Esc key glyph; the two halves keep their order in both languages. -->
     <sys:String x:Key="S.Capture.PressPrefix">按</sys:String>
     <sys:String x:Key="S.Capture.CancelSuffix">取消</sys:String>
+    <sys:String x:Key="S.Capture.RefreshHint">重新截圖</sys:String>
+    <sys:String x:Key="S.Capture.SelectAllHint">選取整個螢幕</sys:String>
+    <sys:String x:Key="S.Capture.SizeTip">點擊輸入位置和大小</sys:String>
+    <sys:String x:Key="S.Capture.UnitTip">切換 px / dip（dip 按螢幕縮放換算）</sys:String>
+    <sys:String x:Key="S.Capture.CornerSquareTip">直角（點擊改為圓角）</sys:String>
+    <sys:String x:Key="S.Capture.CornerRoundTip">圓角：複製、儲存和貼圖的圖片四角透明（點擊改為直角）</sys:String>
+    <sys:String x:Key="S.Capture.AspectOffTip">鎖定長寬比</sys:String>
+    <sys:String x:Key="S.Capture.AspectOnTip">已鎖定長寬比（點擊解除）</sys:String>
+    <sys:String x:Key="S.Capture.RefreshTip">重新截圖 (F5)</sys:String>
+    <sys:String x:Key="S.Capture.RegionTitle">調整截圖區域</sys:String>
+    <sys:String x:Key="S.Capture.RegionPosition">左上角:</sys:String>
+    <sys:String x:Key="S.Capture.RegionSize">大小:</sys:String>
+    <sys:String x:Key="S.Capture.RegionPresets">預設</sys:String>
+    <sys:String x:Key="S.Capture.RegionAddPreset">加入預設</sys:String>
+    <sys:String x:Key="S.Capture.RegionEditPresets">編輯預設值…</sys:String>
+    <sys:String x:Key="S.Capture.RegionOk">確定</sys:String>
+    <sys:String x:Key="S.Capture.PresetsTitle">編輯預設值</sys:String>
+    <sys:String x:Key="S.Capture.PresetsHint">每行一個尺寸，例如 640x480。</sys:String>
     <sys:String x:Key="S.Overlay.Recognising">辨識中</sys:String>
 
     <!-- ── Secret box ── -->
@@ -731,7 +749,7 @@
     <sys:String x:Key="S.Toolbar.DoubleClickFinish">雙擊完成截圖</sys:String>
     <sys:String x:Key="S.Toolbar.DoubleClickFinishTip">在框選範圍內雙擊，複製截圖並結束截圖翻譯</sys:String>
     <sys:String x:Key="S.Toolbar.RightClickCancel">右鍵取消截圖</sys:String>
-    <sys:String x:Key="S.Toolbar.RightClickCancelTip">按滑鼠右鍵直接結束截圖翻譯</sys:String>
+    <sys:String x:Key="S.Toolbar.RightClickCancelTip">有選框時按右鍵清除選框、重新選取；沒有選框時按右鍵結束截圖</sys:String>
     <sys:String x:Key="S.Toolbar.Pin">貼圖</sys:String>
     <sys:String x:Key="S.Toolbar.PinHint">把框選範圍貼在螢幕最上層，並結束截圖翻譯</sys:String>
     <sys:String x:Key="S.Settings.PinHotkey">貼圖（剪貼簿）</sys:String>

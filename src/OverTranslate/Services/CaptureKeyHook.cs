@@ -4,16 +4,17 @@ using NLog;
 namespace OverTranslate.Services;
 
 /// <summary>
-/// Ctrl+C while a capture's toolbar is up: copies the screenshot, the same as the toolbar's 截圖
-/// button, including whether 截圖後自動關閉 then ends the capture.
+/// Keys of a capture in progress: Ctrl+C copies the screenshot while the toolbar is up (the same as
+/// its 截圖 button, 截圖後自動關閉 included); F5 takes a fresh screenshot and Ctrl+A selects the
+/// whole screen for as long as the capture is up.
 /// </summary>
 /// <remarks>
 /// A process-wide low-level hook for the reason <see cref="AnnotationShortcutHook"/> is one: none of
 /// the capture's windows take the keyboard focus, so no ordinary key handler would see the key. It
-/// lives only as long as the toolbar, and the key is swallowed so the application behind the capture
-/// does not copy something of its own as well. Typing into one of our boxes keeps Ctrl+C the box's.
+/// lives only as long as what it serves, and its keys are swallowed so the application behind the
+/// capture does not act on them as well. Typing into one of our boxes keeps the keys the box's.
 /// </remarks>
-internal sealed class CaptureCopyHook : IDisposable
+internal sealed class CaptureKeyHook : IDisposable
 {
     private static readonly Logger Log = LogManager.GetCurrentClassLogger();
 
@@ -24,7 +25,12 @@ internal sealed class CaptureCopyHook : IDisposable
     private const int VK_MENU = 0x12;
     private const int VK_LWIN = 0x5B;
     private const int VK_RWIN = 0x5C;
-    private const int VK_C = 0x43;
+    public const int VK_C = 0x43;
+    public const int VK_A = 0x41;
+    public const int VK_F5 = 0x74;
+
+    /// <summary>One key this hook takes: the virtual key, whether Ctrl is part of it, what it does.</summary>
+    public readonly record struct Binding(int VirtualKey, bool Ctrl, Action Action);
 
     [DllImport("user32.dll", SetLastError = true)]
     private static extern IntPtr SetWindowsHookEx(int idHook, LowLevelKeyboardProc lpfn, IntPtr hMod, uint dwThreadId);
@@ -45,29 +51,29 @@ internal sealed class CaptureCopyHook : IDisposable
 
     // Kept in a field: Windows holds a raw pointer to this delegate.
     private readonly LowLevelKeyboardProc _proc;
-    private readonly Action _onCopy;
+    private readonly Binding[] _bindings;
     private IntPtr _hookId;
 
     // Its own thread, as GlobalEscapeHook has: a low-level hook runs on the thread that installed
     // it, so on the interface thread every key pressed anywhere on the desktop waited for whatever
     // the capture's interface was busy with — a stutter in other programs on a slow machine.
-    private readonly HookThread _thread = new("OverTranslate capture copy hook");
+    private readonly HookThread _thread = new("OverTranslate capture key hook");
 
-    private CaptureCopyHook(Action onCopy)
+    private CaptureKeyHook(Binding[] bindings)
     {
-        _onCopy = onCopy;
+        _bindings = bindings;
         _proc = HookCallback;
     }
 
-    public static CaptureCopyHook Install(Action onCopy)
+    public static CaptureKeyHook Install(params Binding[] bindings)
     {
-        var hook = new CaptureCopyHook(onCopy);
+        var hook = new CaptureKeyHook(bindings);
         hook._thread.Start();
         hook._thread.Invoke(() =>
         {
             hook._hookId = SetWindowsHookEx(WH_KEYBOARD_LL, hook._proc, GetModuleHandle(null), 0);
             if (hook._hookId == IntPtr.Zero)
-                Log.Warn("Capture Ctrl+C hook install failed (win32 error {Error}) — 截圖 stays on the toolbar only",
+                Log.Warn("Capture key hook install failed (win32 error {Error}) — its keys stay on the buttons only",
                     Marshal.GetLastWin32Error());
         });
         return hook;
@@ -79,14 +85,22 @@ internal sealed class CaptureCopyHook : IDisposable
 
     private IntPtr HookCallback(int nCode, IntPtr wParam, IntPtr lParam)
     {
-        if (nCode < 0 || wParam != (IntPtr)WM_KEYDOWN || Marshal.ReadInt32(lParam) != VK_C ||
-            !IsDown(VK_CONTROL) || IsDown(VK_SHIFT) || IsDown(VK_MENU) || IsDown(VK_LWIN) || IsDown(VK_RWIN) ||
-            TypingWindows.HaveForeground)
+        if (nCode < 0 || wParam != (IntPtr)WM_KEYDOWN)
             return CallNextHookEx(_hookId, nCode, wParam, lParam);
 
-        // Post, never wait: a hook that outruns LowLevelHooksTimeout is dropped by Windows.
-        System.Windows.Application.Current?.Dispatcher.BeginInvoke(_onCopy);
-        return (IntPtr)1;
+        int vk = Marshal.ReadInt32(lParam);
+        foreach (var binding in _bindings)
+        {
+            if (binding.VirtualKey != vk) continue;
+            if (IsDown(VK_CONTROL) != binding.Ctrl || IsDown(VK_SHIFT) || IsDown(VK_MENU) ||
+                IsDown(VK_LWIN) || IsDown(VK_RWIN) || TypingWindows.HaveForeground)
+                break;
+
+            // Post, never wait: a hook that outruns LowLevelHooksTimeout is dropped by Windows.
+            System.Windows.Application.Current?.Dispatcher.BeginInvoke(binding.Action);
+            return (IntPtr)1;
+        }
+        return CallNextHookEx(_hookId, nCode, wParam, lParam);
     }
 
     public void Dispose()

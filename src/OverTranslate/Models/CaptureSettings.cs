@@ -74,6 +74,21 @@ public class CaptureSettings
     /// </summary>
     public PinSelectionTrigger PinSelectionTrigger { get; set; } = PinSelectionTrigger.MiddleClick;
 
+    /// <summary>Whether the size bar over the box counts in dip (the monitor's scaling taken out) rather than px.</summary>
+    public bool SizeInDip { get; set; } = false;
+
+    /// <summary>
+    /// Whether the box has rounded corners — and so the copied, saved and pinned pictures, whose
+    /// corners are cut transparent. Recognition and translation still read the whole rectangle.
+    /// </summary>
+    public bool RoundedCorners { get; set; } = false;
+
+    /// <summary>Whether dragging a corner of the box keeps its width-to-height ratio.</summary>
+    public bool LockAspectRatio { get; set; } = false;
+
+    /// <summary>The sizes 調整截圖區域 offers under 預設, each as "寬x高".</summary>
+    public List<string> SizePresets { get; set; } = ["100x100", "500x500", "640x480", "1024x768"];
+
     /// <summary>Whether 偵錯輔助 in the 設定 menu was left unfolded.</summary>
     /// <remarks>
     /// Folded by default: the boxes are for reporting a problem, and unfolded they took half the

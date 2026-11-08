@@ -20,23 +20,35 @@ public partial class ScreenCaptureWindow : Window
     private const int HTTRANSPARENT = -1;
     private static readonly Uri CrosshairCursorUri = new("pack://application:,,,/Resources/Cursors/capture_crosshair.cur", UriKind.Absolute);
 
-    /// <summary>Corner radius of the frame, and of the hole cut for it in the dim layer.</summary>
-    private const double FrameCorner = 3;
+    /// <summary>Corner radius, in DIP, of a box set to 圓角 — and of the picture it gives.</summary>
+    public const double RoundedCornerDip = 8;
 
     /// <summary>
-    /// Dashes while the box is being drawn, a solid edge once it is settled — the same distinction
-    /// the realtime edit layer draws, and the same reason: a dashed edge reads as "still happening",
-    /// so keeping it after the button is released would leave the selection looking unfinished.
+    /// Corner radius of the frame and of the uncovered area under it: square or rounded as the size
+    /// bar says, so what is framed is the shape the copied picture will have.
     /// </summary>
-    private static readonly DoubleCollection PreviewDashes = Freeze([4, 3]);
+    private static double FrameCorner =>
+        SettingsService.Instance.Current.Capture.RoundedCorners ? RoundedCornerDip : 0;
+
+    /// <summary>The frozen picture, mapped back over the box — see SelectionBright in the XAML.</summary>
+    private ImageBrush? _brightBrush;
+
+    /// <summary>Width over height the box keeps while 鎖定長寬比 is on, taken when it was last set.</summary>
+    private double _aspectRatio = 1;
+
+    /// <summary>A move or resize waiting to be announced with the next frame — see RaiseAdjusted.</summary>
+    private bool _adjustPending;
+
+    /// <summary>Whether a right press was taken by this window, so its release is swallowed too.</summary>
+    private bool _rightPressed;
 
     private HwndSource? _hwndSource;
     private bool _inBackgroundMode;
     private bool _cloaked;
 
-    private readonly Bitmap _screenshot;
+    private Bitmap _screenshot;
     private readonly System.Drawing.Rectangle _physBounds;
-    private readonly TaskCompletionSource<bool> _selectionTcs = new();
+    private TaskCompletionSource<bool> _selectionTcs = new();
 
     private WPoint _startPoint;
     private Rect _selectionWpfRect;
@@ -58,6 +70,12 @@ public partial class ScreenCaptureWindow : Window
     public Rect Selection { get; private set; }
     public Bitmap? CroppedBitmap { get; private set; }
     public bool HasSelection => _hasSelection;
+
+    /// <summary>Whether the box is the user's to change: drawn or not, and no translation holding it.</summary>
+    public bool IsEditable => !_processingStarted;
+
+    /// <summary>The desktop rectangle, in physical pixels, the frozen picture was taken of.</summary>
+    public System.Drawing.Rectangle PhysicalBounds => _physBounds;
 
     /// <summary>
     /// The frozen desktop as this window shows it: pixel (0,0) at the window's DIP (0,0), at the
@@ -85,6 +103,7 @@ public partial class ScreenCaptureWindow : Window
 
         Closed += (_, _) =>
         {
+            CompositionTarget.Rendering -= AnnounceAdjusted;
             _selectionTcs.TrySetResult(false);
             CroppedBitmap?.Dispose();
             CroppedBitmap = null;
@@ -109,8 +128,8 @@ public partial class ScreenCaptureWindow : Window
             (r.Left - _physBounds.Left) / _dpiX, (r.Top - _physBounds.Top) / _dpiY,
             r.Width / _dpiX, r.Height / _dpiY);
         _hasSelection = true;
+        _aspectRatio = AspectOf(_selectionWpfRect);
         HintHost.Visibility = Visibility.Collapsed;
-        SelectionRect.StrokeDashArray = null;
         UpdateSelectionMetadata();
         UpdateSelectionVisuals();
         _selectionTcs.TrySetResult(true);
@@ -206,6 +225,13 @@ public partial class ScreenCaptureWindow : Window
         // 5120px-wide capture claims to be 5120 DIP while the window is only ~4130 DIP, and that
         // mismatch is paid for on every render of the largest visual in the app.
         ScreenshotImage.Source = BitmapToDisplaySource(_screenshot, 96.0 * _dpiX);
+        _brightBrush = new ImageBrush(ScreenshotImage.Source)
+        {
+            ViewboxUnits = BrushMappingMode.Absolute,
+            Stretch = Stretch.Fill,
+        };
+        SelectionBright.Fill = _brightBrush;
+        RenderSizeBarOptions();
 
         // Filled as soon as the DPI is known, so the cards take part in the window's first layout
         // pass and are already painted when it becomes visible. (They used to be deferred to
@@ -267,7 +293,6 @@ public partial class ScreenCaptureWindow : Window
         _startPoint  = e.GetPosition(this);
         _isDragging  = true;
         HintHost.Visibility      = Visibility.Collapsed;
-        SelectionRect.StrokeDashArray = PreviewDashes;
         SetFrameVisibility(true);
         CaptureMouse();
         DrawRect(_startPoint, _startPoint);
@@ -280,11 +305,15 @@ public partial class ScreenCaptureWindow : Window
     public event EventHandler? FinishRequested;
 
     /// <summary>
-    /// Raised when a right-click asks for the whole capture to end. Only raised while 右鍵取消 is
-    /// on. Raised rather than closing here, because once there is a selection the session also owns
-    /// a toolbar and an overlay that have to go with it.
+    /// Raised when a right-click on a drawn box asks for it to go, the picture staying frozen for
+    /// another one (Snipaste's way). Only raised while 右鍵取消 is on. Raised rather than handled
+    /// here, because the session also owns a toolbar and an overlay that have to go with the box;
+    /// it calls <see cref="ClearSelection"/> once they have.
     /// </summary>
-    public event EventHandler? CancelRequested;
+    public event EventHandler? ReselectRequested;
+
+    /// <summary>Raised by the size bar's 重新截圖 button, the same as F5.</summary>
+    public event EventHandler? RefreshRequested;
 
     /// <summary>Raised when the 貼圖 gesture set for captures asks for the selection to be pinned.</summary>
     public event EventHandler? PinRequested;
@@ -307,6 +336,7 @@ public partial class ScreenCaptureWindow : Window
         // A double-click on the box itself, while it is still the user's to edit. Asked in the
         // preview pass because the move thumb under the pointer takes the ordinary press for itself.
         if (e.ClickCount == 2 && _hasSelection && !_processingStarted && !_annotationHoldsSelection &&
+            !SizeBar.IsMouseOver &&
             SettingsService.Instance.Current.Capture.DoubleClickToFinish &&
             _selectionWpfRect.Contains(e.GetPosition(this)))
         {
@@ -318,6 +348,9 @@ public partial class ScreenCaptureWindow : Window
         base.OnPreviewMouseLeftButtonDown(e);
     }
 
+    // The press is only taken; what it does happens on the release. Closing on the press left the
+    // release with nowhere to go but the desktop under the capture, which then opened its own
+    // context menu as the capture vanished.
     protected override void OnMouseRightButtonDown(MouseButtonEventArgs e)
     {
         if (_processingStarted) return;
@@ -325,6 +358,7 @@ public partial class ScreenCaptureWindow : Window
         if (!SettingsService.Instance.Current.Capture.RightClickToCancel) return;
 
         e.Handled = true;
+        _rightPressed = true;
 
         // A box still being dragged out is dropped and nothing else: the right button pressed
         // mid-drag is a change of mind about that box.
@@ -336,17 +370,60 @@ public partial class ScreenCaptureWindow : Window
             SetHandlesVisibility(false);
             UpdateDimLayer();
             HintHost.Visibility = Visibility.Visible;
+            _rightPressed = false;
+            _swallowRightUp = true;
+        }
+    }
+
+    // Set when the press already did its work (a drag dropped), so its release does nothing more.
+    private bool _swallowRightUp;
+
+    protected override void OnMouseRightButtonUp(MouseButtonEventArgs e)
+    {
+        base.OnMouseRightButtonUp(e);
+        if (_swallowRightUp)
+        {
+            _swallowRightUp = false;
+            e.Handled = true;
             return;
         }
+        if (!_rightPressed) return;
+        _rightPressed = false;
+        e.Handled = true;
+        if (_processingStarted) return;
 
+        // A drawn box goes and the picture stays for another one; with none drawn, the capture ends.
         if (_hasSelection)
         {
-            CancelRequested?.Invoke(this, EventArgs.Empty);
+            ReselectRequested?.Invoke(this, EventArgs.Empty);
             return;
         }
 
         _selectionTcs.TrySetResult(false);
         Close();
+    }
+
+    /// <summary>
+    /// Takes the box away and starts over on the same frozen picture, as before the first drag.
+    /// </summary>
+    /// <remarks>
+    /// The session has closed the toolbar and the overlay by now; their marks went with the overlay,
+    /// so the layers hung here go too. A fresh wait is set up for <see cref="WaitForSelectionAsync"/>.
+    /// </remarks>
+    public void ClearSelection()
+    {
+        if (_processingStarted) return;
+        _hasSelection = false;
+        _isDragging = false;
+        _annotationHoldsSelection = false;
+        OverlayContentHost.Children.Clear();
+        CroppedBitmap?.Dispose();
+        CroppedBitmap = null;
+        SetFrameVisibility(false);
+        SetHandlesVisibility(false);
+        UpdateDimLayer();
+        HintHost.Visibility = Visibility.Visible;
+        _selectionTcs = new TaskCompletionSource<bool>();
     }
 
     protected override void OnMouseMove(MouseEventArgs e)
@@ -376,7 +453,7 @@ public partial class ScreenCaptureWindow : Window
         }
 
         _hasSelection = true;
-        SelectionRect.StrokeDashArray = null;
+        _aspectRatio = AspectOf(rect);
         UpdateSelectionMetadata();
         UpdateSelectionVisuals();
 
@@ -464,19 +541,13 @@ public partial class ScreenCaptureWindow : Window
         SetFrameVisibility(false);
         SetHandlesVisibility(false);
 
-        // Square-cornered from here on, unlike the hole under the frame: the rounded one matched the
-        // frame's corners, and the frame has just gone. What is left is the area the translation is
-        // painted into, and that is a plain rectangle.
-        var outer = new RectangleGeometry(new Rect(0, 0, ActualWidth, ActualHeight));
-        var inner = new RectangleGeometry(_selectionWpfRect);
-        var group = new GeometryGroup { FillRule = FillRule.EvenOdd };
-        group.Children.Add(outer);
-        group.Children.Add(inner);
-        DimPath.Data = group;
-
         Cursor = null;
         _inBackgroundMode = true;
         _hwndSource?.AddHook(WndProc);
+
+        // Square-cornered from here on: the rounded area matched the frame's corners, and the frame
+        // has just gone. What is left is the area the translation is painted into, a plain rectangle.
+        UpdateDimLayer();
     }
 
     private static System.Windows.Input.Cursor LoadCrosshairCursor()
@@ -494,20 +565,27 @@ public partial class ScreenCaptureWindow : Window
         _selectionWpfRect = r;
         PlaceFrame(r);
         UpdateDimLayer();
+        UpdateSizeBar();
     }
 
-    // The tint and the edge are two elements — see the XAML — and are always given the same box.
+    // The tint, the edge and the line outside it — see the XAML — are always given the same box.
     private void PlaceFrame(Rect r)
     {
-        PlacePart(SelectionFill, r);
-        PlacePart(SelectionRect, r);
+        double corner = FrameCorner;
+        PlacePart(SelectionFill, r, corner);
+        PlacePart(SelectionRect, r, corner);
+        var outside = r;
+        outside.Inflate(1, 1);
+        PlacePart(SelectionOutline, outside, corner > 0 ? corner + 1 : 0);
 
-        static void PlacePart(System.Windows.Shapes.Rectangle part, Rect r)
+        static void PlacePart(System.Windows.Shapes.Rectangle part, Rect r, double corner)
         {
             System.Windows.Controls.Canvas.SetLeft(part, r.X);
             System.Windows.Controls.Canvas.SetTop(part,  r.Y);
             part.Width  = r.Width;
             part.Height = r.Height;
+            part.RadiusX = corner;
+            part.RadiusY = corner;
         }
     }
 
@@ -516,30 +594,32 @@ public partial class ScreenCaptureWindow : Window
         var visibility = visible ? Visibility.Visible : Visibility.Collapsed;
         SelectionFill.Visibility = visibility;
         SelectionRect.Visibility = visibility;
+        SelectionOutline.Visibility = visibility;
+        UpdateSizeBar();
     }
 
     /// <summary>
-    /// Dims everything except the box being framed. The hole follows the frame's rounded corners, so
-    /// the two read as one shape rather than as a rectangle sitting inside a slightly larger one.
+    /// Uncovers the box being framed: the frozen picture laid back over the dim, exactly there.
     /// </summary>
     /// <remarks>
-    /// Rebuilt on every move of the pointer, which is two rectangles and a group — cheap next to the
-    /// full-screen screenshot this window is already compositing on each frame.
+    /// Only this rectangle and its brush change as the pointer moves, so WPF repaints the box's old
+    /// and new places and nothing else — see DimLayer in the XAML for what this replaced.
     /// </remarks>
     private void UpdateDimLayer()
     {
-        var outer = new RectangleGeometry(new Rect(0, 0, ActualWidth, ActualHeight));
+        var r = _selectionWpfRect;
+        bool show = (_isDragging || _hasSelection) && r.Width > 0 && r.Height > 0 && _brightBrush is not null;
+        SelectionBright.Visibility = show ? Visibility.Visible : Visibility.Collapsed;
+        if (!show) return;
 
-        if (!_isDragging && !_hasSelection)
-        {
-            DimPath.Data = outer;
-            return;
-        }
-
-        var group = new GeometryGroup { FillRule = FillRule.EvenOdd };
-        group.Children.Add(outer);
-        group.Children.Add(new RectangleGeometry(_selectionWpfRect, FrameCorner, FrameCorner));
-        DimPath.Data = group;
+        _brightBrush!.Viewbox = r;
+        System.Windows.Controls.Canvas.SetLeft(SelectionBright, r.X);
+        System.Windows.Controls.Canvas.SetTop(SelectionBright, r.Y);
+        SelectionBright.Width = r.Width;
+        SelectionBright.Height = r.Height;
+        double corner = _inBackgroundMode ? 0 : FrameCorner;
+        SelectionBright.RadiusX = corner;
+        SelectionBright.RadiusY = corner;
     }
 
     private void UpdateSelectionMetadata()
@@ -597,6 +677,7 @@ public partial class ScreenCaptureWindow : Window
 
         SetHandlesVisibility(_hasSelection && !_processingStarted && !_annotationHoldsSelection);
         UpdateDimLayer();
+        UpdateSizeBar();
     }
 
     private void SetHandlesVisibility(bool visible)
@@ -658,7 +739,7 @@ public partial class ScreenCaptureWindow : Window
         _selectionWpfRect = new Rect(x, y, _selectionWpfRect.Width, _selectionWpfRect.Height);
         UpdateSelectionMetadata();
         UpdateSelectionVisuals();
-        SelectionAdjusted?.Invoke(this, Selection);
+        RaiseAdjusted();
     }
 
     private void TopLeftHandle_DragDelta(object sender, DragDeltaEventArgs e) =>
@@ -697,21 +778,61 @@ public partial class ScreenCaptureWindow : Window
         movingPoint.X = Math.Clamp(movingPoint.X, 0, ActualWidth);
         movingPoint.Y = Math.Clamp(movingPoint.Y, 0, ActualHeight);
 
+        if (SettingsService.Instance.Current.Capture.LockAspectRatio)
+            movingPoint = KeepAspect(fixedPoint, movingPoint, _aspectRatio, ActualWidth, ActualHeight);
+
         _selectionWpfRect = Normalize(movingPoint, fixedPoint);
         UpdateSelectionMetadata();
         UpdateSelectionVisuals();
-        SelectionAdjusted?.Invoke(this, Selection);
+        RaiseAdjusted();
+    }
+
+    /// <summary>
+    /// Where the dragged corner goes for the box to keep <paramref name="ratio"/>: the side that
+    /// moved further leads and the other follows, both shrunk back if that would leave the desktop.
+    /// </summary>
+    internal static WPoint KeepAspect(WPoint fixedPoint, WPoint moving, double ratio, double maxX, double maxY)
+    {
+        if (!(ratio > 0) || double.IsInfinity(ratio)) return moving;
+        double dx = moving.X - fixedPoint.X, dy = moving.Y - fixedPoint.Y;
+        double sx = dx < 0 ? -1 : 1, sy = dy < 0 ? -1 : 1;
+        double w = Math.Abs(dx), h = Math.Abs(dy);
+        if (w / ratio >= h) h = w / ratio; else w = h * ratio;
+
+        // Room in the direction the corner is going.
+        double roomX = sx > 0 ? maxX - fixedPoint.X : fixedPoint.X;
+        double roomY = sy > 0 ? maxY - fixedPoint.Y : fixedPoint.Y;
+        if (w > roomX) { w = roomX; h = w / ratio; }
+        if (h > roomY) { h = roomY; w = h * ratio; }
+        return new WPoint(fixedPoint.X + sx * w, fixedPoint.Y + sy * h);
+    }
+
+    private static double AspectOf(Rect r) => r.Height > 0 ? r.Width / r.Height : 1;
+
+    /// <summary>
+    /// Tells the session the box moved, once per frame however many pointer moves that frame had:
+    /// what follows the box — the toolbar, the overlay's bounds, the 標記 panel — moves windows, and
+    /// a mouse reporting several hundred times a second was making it do so far more often than
+    /// anything is drawn.
+    /// </summary>
+    private void RaiseAdjusted()
+    {
+        if (_adjustPending) return;
+        _adjustPending = true;
+        CompositionTarget.Rendering += AnnounceAdjusted;
+    }
+
+    private void AnnounceAdjusted(object? sender, EventArgs e)
+    {
+        CompositionTarget.Rendering -= AnnounceAdjusted;
+        if (!_adjustPending) return;
+        _adjustPending = false;
+        if (_hasSelection) SelectionAdjusted?.Invoke(this, Selection);
     }
 
     private static Rect Normalize(WPoint a, WPoint b) =>
         new(Math.Min(a.X, b.X), Math.Min(a.Y, b.Y),
             Math.Abs(b.X - a.X), Math.Abs(b.Y - a.Y));
-
-    private static DoubleCollection Freeze(DoubleCollection dashes)
-    {
-        dashes.Freeze();
-        return dashes;
-    }
 
     private static BitmapSource BitmapToDisplaySource(Bitmap bmp, double dpi = 96) =>
         BitmapInterop.ToBitmapSource(bmp, dpi);

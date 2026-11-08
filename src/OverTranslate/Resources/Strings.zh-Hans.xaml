@@ -218,6 +218,24 @@
     <sys:String x:Key="S.Capture.DragPrompt">拖动选取翻译区域</sys:String>
     <sys:String x:Key="S.Capture.PressPrefix">按</sys:String>
     <sys:String x:Key="S.Capture.CancelSuffix">取消</sys:String>
+    <sys:String x:Key="S.Capture.RefreshHint">重新截图</sys:String>
+    <sys:String x:Key="S.Capture.SelectAllHint">选择整个屏幕</sys:String>
+    <sys:String x:Key="S.Capture.SizeTip">点击输入位置和大小</sys:String>
+    <sys:String x:Key="S.Capture.UnitTip">切换 px / dip（dip 按屏幕缩放换算）</sys:String>
+    <sys:String x:Key="S.Capture.CornerSquareTip">直角（点击改为圆角）</sys:String>
+    <sys:String x:Key="S.Capture.CornerRoundTip">圆角：复制、保存和贴图的图片四角透明（点击改为直角）</sys:String>
+    <sys:String x:Key="S.Capture.AspectOffTip">锁定长宽比</sys:String>
+    <sys:String x:Key="S.Capture.AspectOnTip">已锁定长宽比（点击解除）</sys:String>
+    <sys:String x:Key="S.Capture.RefreshTip">重新截图 (F5)</sys:String>
+    <sys:String x:Key="S.Capture.RegionTitle">调整截图区域</sys:String>
+    <sys:String x:Key="S.Capture.RegionPosition">左上角:</sys:String>
+    <sys:String x:Key="S.Capture.RegionSize">大小:</sys:String>
+    <sys:String x:Key="S.Capture.RegionPresets">预设</sys:String>
+    <sys:String x:Key="S.Capture.RegionAddPreset">添加到预设</sys:String>
+    <sys:String x:Key="S.Capture.RegionEditPresets">编辑预设值…</sys:String>
+    <sys:String x:Key="S.Capture.RegionOk">确定</sys:String>
+    <sys:String x:Key="S.Capture.PresetsTitle">编辑预设值</sys:String>
+    <sys:String x:Key="S.Capture.PresetsHint">每行一个尺寸，例如 640x480。</sys:String>
     <sys:String x:Key="S.Overlay.Recognising">识别中</sys:String>
 
     <!-- ── Secret box ── -->
@@ -708,7 +726,7 @@
     <sys:String x:Key="S.Toolbar.DoubleClickFinish">双击完成截图</sys:String>
     <sys:String x:Key="S.Toolbar.DoubleClickFinishTip">在框选范围内双击，复制截图并结束截图翻译</sys:String>
     <sys:String x:Key="S.Toolbar.RightClickCancel">右键取消截图</sys:String>
-    <sys:String x:Key="S.Toolbar.RightClickCancelTip">按鼠标右键直接结束截图翻译</sys:String>
+    <sys:String x:Key="S.Toolbar.RightClickCancelTip">有选框时按右键清除选框、重新选择；没有选框时按右键结束截图</sys:String>
     <sys:String x:Key="S.Toolbar.Pin">贴图</sys:String>
     <sys:String x:Key="S.Toolbar.PinHint">把框选范围贴在屏幕最上层，并结束截图翻译</sys:String>
     <sys:String x:Key="S.Settings.PinHotkey">贴图（剪贴板）</sys:String>

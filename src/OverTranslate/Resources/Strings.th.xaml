@@ -213,6 +213,24 @@
     <sys:String x:Key="S.Capture.DragPrompt">ลากเพื่อเลือกพื้นที่ที่จะแปล</sys:String>
     <sys:String x:Key="S.Capture.PressPrefix">กด</sys:String>
     <sys:String x:Key="S.Capture.CancelSuffix">เพื่อยกเลิก</sys:String>
+    <sys:String x:Key="S.Capture.RefreshHint">จับภาพใหม่</sys:String>
+    <sys:String x:Key="S.Capture.SelectAllHint">เลือกทั้งหน้าจอ</sys:String>
+    <sys:String x:Key="S.Capture.SizeTip">คลิกเพื่อป้อนตำแหน่งและขนาด</sys:String>
+    <sys:String x:Key="S.Capture.UnitTip">สลับ px / dip (dip คือค่าที่ไม่รวมการย่อขยายหน้าจอ)</sys:String>
+    <sys:String x:Key="S.Capture.CornerSquareTip">มุมฉาก (คลิกเพื่อเป็นมุมมน)</sys:String>
+    <sys:String x:Key="S.Capture.CornerRoundTip">มุมมน: ภาพที่คัดลอก บันทึก และปักหมุดจะมีมุมโปร่งใส (คลิกเพื่อเป็นมุมฉาก)</sys:String>
+    <sys:String x:Key="S.Capture.AspectOffTip">ล็อกอัตราส่วน</sys:String>
+    <sys:String x:Key="S.Capture.AspectOnTip">ล็อกอัตราส่วนอยู่ (คลิกเพื่อปลดล็อก)</sys:String>
+    <sys:String x:Key="S.Capture.RefreshTip">จับภาพใหม่ (F5)</sys:String>
+    <sys:String x:Key="S.Capture.RegionTitle">ปรับพื้นที่จับภาพ</sys:String>
+    <sys:String x:Key="S.Capture.RegionPosition">มุมซ้ายบน:</sys:String>
+    <sys:String x:Key="S.Capture.RegionSize">ขนาด:</sys:String>
+    <sys:String x:Key="S.Capture.RegionPresets">ค่าที่ตั้งไว้</sys:String>
+    <sys:String x:Key="S.Capture.RegionAddPreset">เพิ่มเป็นค่าที่ตั้งไว้</sys:String>
+    <sys:String x:Key="S.Capture.RegionEditPresets">แก้ไขค่าที่ตั้งไว้…</sys:String>
+    <sys:String x:Key="S.Capture.RegionOk">ตกลง</sys:String>
+    <sys:String x:Key="S.Capture.PresetsTitle">แก้ไขค่าที่ตั้งไว้</sys:String>
+    <sys:String x:Key="S.Capture.PresetsHint">หนึ่งขนาดต่อบรรทัด เช่น 640x480</sys:String>
     <sys:String x:Key="S.Overlay.Recognising">กำลังอ่าน</sys:String>
 
     <!-- ── Secret box ── -->
@@ -705,7 +723,7 @@
     <sys:String x:Key="S.Toolbar.DoubleClickFinish">ดับเบิลคลิกเพื่อจบ</sys:String>
     <sys:String x:Key="S.Toolbar.DoubleClickFinishTip">ดับเบิลคลิกในส่วนที่เลือกเพื่อคัดลอกภาพหน้าจอและจบการจับภาพ</sys:String>
     <sys:String x:Key="S.Toolbar.RightClickCancel">คลิกขวาเพื่อยกเลิก</sys:String>
-    <sys:String x:Key="S.Toolbar.RightClickCancelTip">คลิกขวาเพื่อจบการจับภาพทันที</sys:String>
+    <sys:String x:Key="S.Toolbar.RightClickCancelTip">เมื่อมีกรอบ คลิกขวาเพื่อล้างกรอบและเลือกใหม่ เมื่อไม่มีกรอบ คลิกขวาเพื่อจบการจับภาพ</sys:String>
     <sys:String x:Key="S.Toolbar.Pin">ปักหมุด</sys:String>
     <sys:String x:Key="S.Toolbar.PinHint">ปักหมุดส่วนที่เลือกไว้บนสุดของหน้าจอและจบการจับภาพ</sys:String>
     <sys:String x:Key="S.Settings.PinHotkey">ปักหมุดคลิปบอร์ด</sys:String>

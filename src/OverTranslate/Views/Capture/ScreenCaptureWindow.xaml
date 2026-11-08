@@ -6,17 +6,57 @@
         Background="Black"
         Topmost="True"
         ShowInTaskbar="False">
+    <Window.Resources>
+        <Style x:Key="SizeBarButton" TargetType="Button">
+            <Setter Property="Foreground" Value="{DynamicResource AppTextPrimary}"/>
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="Padding" Value="8,3"/>
+            <Setter Property="MinHeight" Value="28"/>
+            <Setter Property="Focusable" Value="False"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="Bg" Background="{TemplateBinding Background}" CornerRadius="6"
+                                Padding="{TemplateBinding Padding}">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"
+                                              TextElement.Foreground="{TemplateBinding Foreground}"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Bg" Property="Background" Value="{DynamicResource AppButtonHoverBg}"/>
+                            </Trigger>
+                            <Trigger Property="IsPressed" Value="True">
+                                <Setter TargetName="Bg" Property="Background" Value="{DynamicResource AppButtonPressedBg}"/>
+                            </Trigger>
+                            <Trigger Property="Tag" Value="On">
+                                <Setter TargetName="Bg" Property="Background" Value="{DynamicResource AppAccent}"/>
+                                <Setter Property="Foreground" Value="{DynamicResource AppAccentFg}"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+    </Window.Resources>
     <Grid>
         <!-- Frozen screenshot as background -->
         <Image x:Name="ScreenshotImage" Stretch="Fill"/>
 
-        <!-- Semi-transparent dim layer, with a hole cut for the selection from the first pixel of
-             the drag onwards: what the user is framing is the one thing on screen they need to see
-             clearly, and the frame's own fill is deliberately light enough not to tint it. -->
-        <Path x:Name="DimPath" Fill="#80000000"/>
+        <!-- The dim, over everything and never changed. The selection is uncovered by laying the
+             same frozen picture back over it (SelectionBright) rather than by cutting a hole in
+             this: a hole is a new full-screen shape on every move of the pointer, and WPF then
+             repaints the whole desktop for each one — the stutter, at two monitors' worth of
+             pixels per frame. Laid back over, only the box's old and new places are repainted. -->
+        <Rectangle x:Name="DimLayer" Fill="#80000000"/>
 
         <!-- Absolute-positioned canvas for selection rect -->
         <Canvas x:Name="OverlayCanvas">
+            <!-- The frozen picture again, showing through the dim exactly where the box is. Its
+                 brush maps the box onto the same place in the picture, one to one. -->
+            <Rectangle x:Name="SelectionBright"
+                       Visibility="Collapsed"
+                       RenderOptions.BitmapScalingMode="NearestNeighbor"/>
+
             <!-- The tint over the framed content, light enough to read as a wash rather than as a
                  filter — the whole point of cutting the dim away here is that this area is legible. -->
             <Rectangle x:Name="SelectionFill"
@@ -38,21 +78,20 @@
                  were two different colours. -->
             <Canvas x:Name="OverlayContentHost" IsHitTestVisible="False"/>
 
-            <!-- Same frame the realtime edit layer draws: a solid edge with a shadow under it, so it
-                 stays legible over a bright screenshot as well as a dark one. Carries no fill of its
-                 own, deliberately — an Effect shadows whatever silhouette its element has, and a
-                 translucent fill here would lay a soft grey wash back over the content the hole in
-                 the dim layer just uncovered. -->
+            <!-- A thin dark line just outside the frame, so the edge stays legible over a bright
+                 screenshot as well as a dark one. It stands in for the blurred shadow the frame
+                 used to carry: an Effect is re-blurred over the whole box on every move, which on a
+                 large box was most of a frame's time. -->
+            <Rectangle x:Name="SelectionOutline"
+                       Stroke="#59000000"
+                       StrokeThickness="1"
+                       Visibility="Collapsed"/>
+
+            <!-- The frame: one solid edge, drawn the same while dragging and once settled. -->
             <Rectangle x:Name="SelectionRect"
                        Stroke="#E61E90D5"
                        StrokeThickness="2"
-                       RadiusX="3"
-                       RadiusY="3"
-                       Visibility="Collapsed">
-                <Rectangle.Effect>
-                    <DropShadowEffect BlurRadius="10" ShadowDepth="0" Opacity="0.45" Color="Black"/>
-                </Rectangle.Effect>
-            </Rectangle>
+                       Visibility="Collapsed"/>
 
             <!-- Drag the middle to move the whole selection, as on the realtime edit layer. A
                  separate transparent thumb rather than the rectangle itself: the rectangle is also
@@ -129,6 +168,60 @@
                     </ControlTemplate>
                 </Thumb.Template>
             </Thumb>
+
+            <!-- The size bar over the box's top-left corner, in the app's own toolbar colours: the
+                 size first (click to type one) with px / dip beside it, then square or rounded
+                 corners, a locked aspect ratio and a fresh screenshot. While the box is being dragged
+                 out only the size shows; the rest comes once it is let go. The surface is a little
+                 see-through, the buttons on it are not. Scaled in code to the monitor it is on, the
+                 way the hint cards are. -->
+            <Grid x:Name="SizeBar"
+                  Visibility="Collapsed"
+                  Cursor="Arrow">
+                <Grid.LayoutTransform>
+                    <ScaleTransform x:Name="SizeBarScale"/>
+                </Grid.LayoutTransform>
+                <Border Background="{DynamicResource ToolbarBg}"
+                        BorderBrush="{DynamicResource ToolbarBorder}"
+                        BorderThickness="1"
+                        CornerRadius="8"
+                        Opacity="0.85"/>
+                <StackPanel Orientation="Horizontal" Margin="3">
+                    <Button x:Name="SizeBtn" Style="{StaticResource SizeBarButton}" Click="SizeBtn_Click"
+                            ToolTip="{DynamicResource S.Capture.SizeTip}">
+                        <TextBlock x:Name="SizeText" FontFamily="{DynamicResource AppFont}" FontSize="13" FontWeight="SemiBold"/>
+                    </Button>
+                    <StackPanel x:Name="SizeBarTools" Orientation="Horizontal">
+                        <!-- px and dip side by side, the one in use filled with the accent. -->
+                        <Border Background="{DynamicResource AppInputBg}" CornerRadius="6" Padding="2" Margin="2,0,0,0"
+                                VerticalAlignment="Center" ToolTip="{DynamicResource S.Capture.UnitTip}">
+                            <StackPanel Orientation="Horizontal">
+                                <Button x:Name="UnitPxBtn" Style="{StaticResource SizeBarButton}" Click="UnitPx_Click"
+                                        MinHeight="22" Padding="7,1">
+                                    <TextBlock Text="px" FontSize="11.5"/>
+                                </Button>
+                                <Button x:Name="UnitDipBtn" Style="{StaticResource SizeBarButton}" Click="UnitDip_Click"
+                                        MinHeight="22" Padding="7,1">
+                                    <TextBlock Text="dip" FontSize="11.5"/>
+                                </Button>
+                            </StackPanel>
+                        </Border>
+                        <Rectangle Width="1" Margin="4,6" Fill="{DynamicResource AppSeparator}"/>
+                        <Button x:Name="CornerBtn" Style="{StaticResource SizeBarButton}" Click="CornerBtn_Click">
+                            <Path x:Name="CornerIcon" Width="14" Height="14" StrokeThickness="1.5"
+                                  Stroke="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}"
+                                  StrokeStartLineCap="Round" StrokeEndLineCap="Round"/>
+                        </Button>
+                        <Button x:Name="AspectBtn" Style="{StaticResource SizeBarButton}" Click="AspectBtn_Click">
+                            <TextBlock x:Name="AspectIcon" FontFamily="Segoe Fluent Icons, Segoe MDL2 Assets" FontSize="13"/>
+                        </Button>
+                        <Button x:Name="RefreshBtn" Style="{StaticResource SizeBarButton}" Click="RefreshBtn_Click"
+                                ToolTip="{DynamicResource S.Capture.RefreshTip}">
+                            <TextBlock Text="&#xE72C;" FontFamily="Segoe Fluent Icons, Segoe MDL2 Assets" FontSize="13"/>
+                        </Button>
+                    </StackPanel>
+                </StackPanel>
+            </Grid>
         </Canvas>
 
         <!-- Info card, repeated once per monitor (see BuildHintSpots): on a multi-monitor desktop a
@@ -228,6 +321,34 @@
                                                FontSize="12"
                                                VerticalAlignment="Center"
                                                Text="{DynamicResource S.Capture.CancelSuffix}"/>
+                                </StackPanel>
+
+                                <!-- The capture's other keys, keycaps like ESC above. -->
+                                <StackPanel Orientation="Horizontal" Margin="0,5,0,0">
+                                    <Border Background="{DynamicResource AppButtonBg}"
+                                            BorderBrush="{DynamicResource AppButtonBorder}"
+                                            BorderThickness="1" CornerRadius="4" Padding="6,1"
+                                            Margin="0,0,5,0" VerticalAlignment="Center">
+                                        <TextBlock Foreground="{DynamicResource AppTextSecondary}"
+                                                   FontFamily="{DynamicResource AppFont}"
+                                                   FontSize="10.5" FontWeight="SemiBold" Text="F5"/>
+                                    </Border>
+                                    <TextBlock Foreground="{DynamicResource AppTextSecondary}"
+                                               FontFamily="{DynamicResource AppFont}"
+                                               FontSize="12" VerticalAlignment="Center"
+                                               Text="{DynamicResource S.Capture.RefreshHint}"/>
+                                    <Border Background="{DynamicResource AppButtonBg}"
+                                            BorderBrush="{DynamicResource AppButtonBorder}"
+                                            BorderThickness="1" CornerRadius="4" Padding="6,1"
+                                            Margin="14,0,5,0" VerticalAlignment="Center">
+                                        <TextBlock Foreground="{DynamicResource AppTextSecondary}"
+                                                   FontFamily="{DynamicResource AppFont}"
+                                                   FontSize="10.5" FontWeight="SemiBold" Text="Ctrl+A"/>
+                                    </Border>
+                                    <TextBlock Foreground="{DynamicResource AppTextSecondary}"
+                                               FontFamily="{DynamicResource AppFont}"
+                                               FontSize="12" VerticalAlignment="Center"
+                                               Text="{DynamicResource S.Capture.SelectAllHint}"/>
                                 </StackPanel>
                             </StackPanel>
                         </StackPanel>

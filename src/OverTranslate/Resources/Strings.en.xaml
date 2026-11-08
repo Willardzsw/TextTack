@@ -218,6 +218,24 @@ Actually used this time: {2}</sys:String>
     <sys:String x:Key="S.Capture.DragPrompt">Drag to select an area to translate</sys:String>
     <sys:String x:Key="S.Capture.PressPrefix">Press</sys:String>
     <sys:String x:Key="S.Capture.CancelSuffix">to cancel</sys:String>
+    <sys:String x:Key="S.Capture.RefreshHint">retake</sys:String>
+    <sys:String x:Key="S.Capture.SelectAllHint">whole screen</sys:String>
+    <sys:String x:Key="S.Capture.SizeTip">Click to type a position and size</sys:String>
+    <sys:String x:Key="S.Capture.UnitTip">Switch px / dip (dip takes the display scaling out)</sys:String>
+    <sys:String x:Key="S.Capture.CornerSquareTip">Square corners (click for rounded)</sys:String>
+    <sys:String x:Key="S.Capture.CornerRoundTip">Rounded: copied, saved and pinned pictures get transparent corners (click for square)</sys:String>
+    <sys:String x:Key="S.Capture.AspectOffTip">Lock aspect ratio</sys:String>
+    <sys:String x:Key="S.Capture.AspectOnTip">Aspect ratio locked (click to unlock)</sys:String>
+    <sys:String x:Key="S.Capture.RefreshTip">Retake screenshot (F5)</sys:String>
+    <sys:String x:Key="S.Capture.RegionTitle">Adjust capture area</sys:String>
+    <sys:String x:Key="S.Capture.RegionPosition">Top-left:</sys:String>
+    <sys:String x:Key="S.Capture.RegionSize">Size:</sys:String>
+    <sys:String x:Key="S.Capture.RegionPresets">Presets</sys:String>
+    <sys:String x:Key="S.Capture.RegionAddPreset">Add to presets</sys:String>
+    <sys:String x:Key="S.Capture.RegionEditPresets">Edit presets…</sys:String>
+    <sys:String x:Key="S.Capture.RegionOk">OK</sys:String>
+    <sys:String x:Key="S.Capture.PresetsTitle">Edit presets</sys:String>
+    <sys:String x:Key="S.Capture.PresetsHint">One size per line, for example 640x480.</sys:String>
     <sys:String x:Key="S.Overlay.Recognising">Reading</sys:String>
 
     <!-- ── Secret box ── -->
@@ -710,7 +728,7 @@ same settings, the same seed usually gives the same output.</sys:String>
     <sys:String x:Key="S.Toolbar.DoubleClickFinish">Double-click to finish</sys:String>
     <sys:String x:Key="S.Toolbar.DoubleClickFinishTip">Double-click inside the selection to copy the screenshot and end the capture</sys:String>
     <sys:String x:Key="S.Toolbar.RightClickCancel">Right-click to cancel</sys:String>
-    <sys:String x:Key="S.Toolbar.RightClickCancelTip">A right-click ends the capture straight away</sys:String>
+    <sys:String x:Key="S.Toolbar.RightClickCancelTip">Right-click clears the box so you can select again; with no box, it ends the capture</sys:String>
     <sys:String x:Key="S.Toolbar.Pin">Pin</sys:String>
     <sys:String x:Key="S.Toolbar.PinHint">Pin the selection on top of the screen and end the capture</sys:String>
     <sys:String x:Key="S.Settings.PinHotkey">Pin clipboard</sys:String>

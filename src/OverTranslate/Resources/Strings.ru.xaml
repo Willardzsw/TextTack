@@ -215,6 +215,24 @@
     <sys:String x:Key="S.Capture.DragPrompt">Выделите мышью область для перевода</sys:String>
     <sys:String x:Key="S.Capture.PressPrefix">Нажмите</sys:String>
     <sys:String x:Key="S.Capture.CancelSuffix">для отмены</sys:String>
+    <sys:String x:Key="S.Capture.RefreshHint">переснять</sys:String>
+    <sys:String x:Key="S.Capture.SelectAllHint">весь экран</sys:String>
+    <sys:String x:Key="S.Capture.SizeTip">Нажмите, чтобы ввести положение и размер</sys:String>
+    <sys:String x:Key="S.Capture.UnitTip">Переключить px / dip (dip — без масштабирования экрана)</sys:String>
+    <sys:String x:Key="S.Capture.CornerSquareTip">Прямые углы (нажмите для скруглённых)</sys:String>
+    <sys:String x:Key="S.Capture.CornerRoundTip">Скруглённые: у скопированных, сохранённых и закреплённых изображений прозрачные углы (нажмите для прямых)</sys:String>
+    <sys:String x:Key="S.Capture.AspectOffTip">Сохранять пропорции</sys:String>
+    <sys:String x:Key="S.Capture.AspectOnTip">Пропорции закреплены (нажмите, чтобы снять)</sys:String>
+    <sys:String x:Key="S.Capture.RefreshTip">Сделать снимок заново (F5)</sys:String>
+    <sys:String x:Key="S.Capture.RegionTitle">Настройка области снимка</sys:String>
+    <sys:String x:Key="S.Capture.RegionPosition">Левый верхний:</sys:String>
+    <sys:String x:Key="S.Capture.RegionSize">Размер:</sys:String>
+    <sys:String x:Key="S.Capture.RegionPresets">Шаблоны</sys:String>
+    <sys:String x:Key="S.Capture.RegionAddPreset">Добавить в шаблоны</sys:String>
+    <sys:String x:Key="S.Capture.RegionEditPresets">Изменить шаблоны…</sys:String>
+    <sys:String x:Key="S.Capture.RegionOk">OK</sys:String>
+    <sys:String x:Key="S.Capture.PresetsTitle">Изменить шаблоны</sys:String>
+    <sys:String x:Key="S.Capture.PresetsHint">Один размер на строку, например 640x480.</sys:String>
     <sys:String x:Key="S.Overlay.Recognising">Распознавание</sys:String>
 
     <!-- ── Secret box ── -->
@@ -701,7 +719,7 @@
     <sys:String x:Key="S.Toolbar.DoubleClickFinish">Двойной щелчок — готово</sys:String>
     <sys:String x:Key="S.Toolbar.DoubleClickFinishTip">Двойной щелчок внутри выделения копирует снимок и завершает захват</sys:String>
     <sys:String x:Key="S.Toolbar.RightClickCancel">Правый щелчок — отмена</sys:String>
-    <sys:String x:Key="S.Toolbar.RightClickCancelTip">Правый щелчок сразу завершает захват</sys:String>
+    <sys:String x:Key="S.Toolbar.RightClickCancelTip">Правый щелчок убирает рамку, чтобы выбрать заново; без рамки — завершает снимок</sys:String>
     <sys:String x:Key="S.Toolbar.Pin">Закрепить</sys:String>
     <sys:String x:Key="S.Toolbar.PinHint">Закрепить выделение поверх экрана и завершить захват</sys:String>
     <sys:String x:Key="S.Settings.PinHotkey">Закрепить буфер обмена</sys:String>
