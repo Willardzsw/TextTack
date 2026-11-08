@@ -285,7 +285,8 @@ internal sealed partial class CaptureRegionDialog : Window
     internal static List<string> ParsePresetList(string text) => text
         .Split('\n')
         .Select(ParsePreset)
-        .OfType<(int Width, int Height)>()
+        .Where(s => s.HasValue)
+        .Select(s => s!.Value)
         .Distinct()
         .Select(s => $"{s.Width}x{s.Height}")
         .ToList();

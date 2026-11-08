@@ -25,25 +25,54 @@ internal static class CaptureHoverRules
     }
 
     /// <summary>
-    /// The child to go down into: the smallest one containing <paramref name="p"/>, so a panel laid
-    /// behind its siblings never wins over the button on top of it. -1 when none contains it.
+    /// The elements under <paramref name="p"/>, outermost first, going down from <paramref name="root"/>
+    /// (not included).
     /// </summary>
-    public static int PickChild(IReadOnlyList<Rectangle> children, Point p)
+    /// <remarks>
+    /// <para>Where several children contain the point, each is followed and the one leading deepest
+    /// wins; on a tie, the smaller. Following only the smallest went wrong in Chromium (Chrome, Edge,
+    /// Electron apps): beside its content every window has an empty layer exactly as large, and going
+    /// into that one ended the search at the whole window.</para>
+    ///
+    /// <para><paramref name="childrenOf"/> returns null for children not read yet; the search then
+    /// goes on with what it has and sets <paramref name="incomplete"/>. At most
+    /// <paramref name="maxNodes"/> elements are looked at.</para>
+    /// </remarks>
+    public static List<T> DeepestPath<T>(
+        T root, Point p, Func<T, IReadOnlyList<T>?> childrenOf, Func<T, Rectangle> boundsOf,
+        out bool incomplete, int maxNodes = 600, int maxDepth = 48)
     {
-        int best = -1;
-        long bestArea = long.MaxValue;
-        for (int i = 0; i < children.Count; i++)
+        bool missing = false;
+        int budget = maxNodes;
+
+        List<T> Below(T node, int depth)
         {
-            var r = children[i];
-            if (r.Width <= 0 || r.Height <= 0 || !r.Contains(p)) continue;
-            long area = (long)r.Width * r.Height;
-            if (area < bestArea)
+            if (depth >= maxDepth || budget-- <= 0) return [];
+            var kids = childrenOf(node);
+            if (kids is null)
             {
-                best = i;
-                bestArea = area;
+                missing = true;
+                return [];
             }
+
+            var best = new List<T>();
+            foreach (var kid in kids
+                .Where(k => boundsOf(k) is { Width: > 0, Height: > 0 } r && r.Contains(p))
+                .OrderBy(k => (long)boundsOf(k).Width * boundsOf(k).Height))
+            {
+                var path = Below(kid, depth + 1);
+                if (path.Count + 1 > best.Count)
+                {
+                    path.Insert(0, kid);
+                    best = path;
+                }
+            }
+            return best;
         }
-        return best;
+
+        var result = Below(root, 0);
+        incomplete = missing;
+        return result;
     }
 
     /// <summary>
@@ -157,17 +186,12 @@ internal sealed class CaptureElementPicker : IDisposable
     /// <summary>Adds the known elements under <paramref name="p"/>; false where the path runs into what has not been read.</summary>
     private bool Walk(IntPtr hwnd, Point p, List<Rectangle> path)
     {
-        if (!_roots.TryGetValue(hwnd, out var node)) return false;
-        for (int depth = 0; depth < MaxDepth; depth++)
-        {
-            var kids = node.Children;
-            if (kids is null) return false;
-            int i = CaptureHoverRules.PickChild(kids.Select(k => k.Bounds).ToArray(), p);
-            if (i < 0) return true;
-            node = kids[i];
-            path.Add(node.Bounds);
-        }
-        return true;
+        if (!_roots.TryGetValue(hwnd, out var root)) return false;
+        var nodes = CaptureHoverRules.DeepestPath<Node>(
+            root, p, n => n.Children is { } kids && !n.RereadDue ? kids : null, n => n.Bounds,
+            out bool incomplete, maxDepth: MaxDepth);
+        path.AddRange(nodes.Select(n => n.Bounds));
+        return !incomplete;
     }
 
     private void Request(IntPtr hwnd, Point p)
@@ -185,31 +209,48 @@ internal sealed class CaptureElementPicker : IDisposable
 
     private void Work()
     {
+        (IntPtr Hwnd, Point Point)? job = null;
         while (!_disposed)
         {
-            _wake.WaitOne();
-            (IntPtr Hwnd, Point Point)? job;
+            // With a job kept for another look (see below), the wait is only until that look is due
+            // or the pointer goes somewhere else.
+            if (job is null) _wake.WaitOne();
             lock (_pendingLock)
             {
-                job = _pending;
+                if (_pending is not null) job = _pending;
                 _pending = null;
             }
             if (job is not { } j || _disposed) continue;
 
+            bool mayGrow = false;
             try
             {
-                if (Load(j.Hwnd, j.Point) && !_disposed)
+                bool changed = Load(j.Hwnd, j.Point, out mayGrow);
+                if (changed && !_disposed)
                     _dispatcher.BeginInvoke(() => { if (!_disposed) Updated?.Invoke(this, EventArgs.Empty); });
             }
             catch (Exception ex)
             {
                 Log.Debug(ex, "Reading elements for the capture failed");
             }
+
+            if (!mayGrow)
+            {
+                job = null;
+                continue;
+            }
+            // Chromium builds its tree only once asked, so what came back empty is asked again
+            // shortly — unless something new is asked first, which the loop then takes instead.
+            _wake.WaitOne(RereadAfterMs);
         }
     }
 
-    /// <summary>Reads, on this thread, whatever is missing along the path to <paramref name="p"/>.</summary>
-    private bool Load(IntPtr hwnd, Point p)
+    /// <summary>
+    /// Reads, on this thread, whatever is missing along the path to <paramref name="p"/>, and reads
+    /// again the empty elements due another look. <paramref name="mayGrow"/>: some element on the way
+    /// is still empty and will be due again.
+    /// </summary>
+    private bool Load(IntPtr hwnd, Point p, out bool mayGrow)
     {
         bool changed = false;
         if (!_roots.TryGetValue(hwnd, out var node))
@@ -224,19 +265,24 @@ internal sealed class CaptureElementPicker : IDisposable
             changed = true;
         }
 
-        for (int depth = 0; depth < MaxDepth && !_disposed; depth++)
+        bool grow = false;
+        CaptureHoverRules.DeepestPath<Node>(node, p, n =>
         {
-            var kids = node.Children;
-            if (kids is null)
+            if (_disposed) return [];
+            var kids = n.Children;
+            if (kids is null || n.RereadDue)
             {
-                kids = ReadChildren(node.Element);
-                node.Children = kids;
-                changed = true;
+                bool again = kids is not null;
+                kids = ReadChildren(n.Element);
+                n.ReadAt = Environment.TickCount64;
+                if (again) n.Rereads++;
+                if (!again || kids.Length > 0) changed = true;
+                n.Children = kids;
             }
-            int i = CaptureHoverRules.PickChild(kids.Select(k => k.Bounds).ToArray(), p);
-            if (i < 0) break;
-            node = kids[i];
-        }
+            if (n.MayFillIn) grow = true;
+            return kids;
+        }, n => n.Bounds, out _, maxDepth: MaxDepth);
+        mayGrow = grow && !_disposed;
         return changed;
     }
 
@@ -298,6 +344,12 @@ internal sealed class CaptureElementPicker : IDisposable
         // answer, and it is a background thread that ends with its loop.
     }
 
+    /// <summary>How long after an element came back empty it is asked again.</summary>
+    private const int RereadAfterMs = 350;
+
+    /// <summary>How many times an empty element is asked again before it is taken to be empty.</summary>
+    private const int MaxRereads = 5;
+
     private sealed class Node(Rectangle bounds, AutomationElement? element)
     {
         public Rectangle Bounds { get; } = bounds;
@@ -305,6 +357,21 @@ internal sealed class CaptureElementPicker : IDisposable
 
         /// <summary>Null until read; replaced whole, so a reader on another thread sees none or all of them.</summary>
         public volatile Node[]? Children;
+
+        /// <summary>When <see cref="Children"/> was last read (Environment.TickCount64). Written by the worker only.</summary>
+        public long ReadAt;
+
+        /// <summary>How many times it has been read again after coming back empty. Written by the worker only.</summary>
+        public int Rereads;
+
+        /// <summary>
+        /// Read and empty, but possibly only because the application had not built that part yet —
+        /// Chromium answers its first question with an empty shell and fills it in afterwards.
+        /// </summary>
+        public bool MayFillIn => Element is not null && Children is { Length: 0 } && Rereads < MaxRereads;
+
+        /// <summary>Empty, worth another look, and that look is due.</summary>
+        public bool RereadDue => MayFillIn && Environment.TickCount64 - ReadAt >= RereadAfterMs;
     }
 
     // ── Windows ──────────────────────────────────────────────────────────────
