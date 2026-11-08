@@ -1,5 +1,6 @@
 using System.Globalization;
 using System.Windows;
+using System.Windows.Controls.Primitives;
 using System.Windows.Media;
 using System.Windows.Media.Animation;
 using System.Windows.Threading;
@@ -107,6 +108,7 @@ public partial class ToolbarWindow : Window
             SettingsService.Instance.ProviderVisibilityChanged -= RebuildProviderBox;
         };
         LocationChanged += (_, _) => MorePopup.IsOpen = false;
+        MorePopup.CustomPopupPlacementCallback = PlaceMoreMenu;
         MoreBtn.MouseLeave += (_, _) => _ignoreMoreClick = false;
 
         InitializeDirectionSwitch(SettingsService.Instance.Current.Capture.VerticalText);
@@ -786,54 +788,57 @@ public partial class ToolbarWindow : Window
     private void MoreBtn_Click(object sender, RoutedEventArgs e)
     {
         if (_ignoreMoreClick) { _ignoreMoreClick = false; return; }
-        // Right edge under the button's right edge, so the menu comes out of what opened it.
-        var buttonRight = MoreBtn.TranslatePoint(new System.Windows.Point(MoreBtn.ActualWidth, 0), BarSurface).X;
-        // Measured rather than read off the markup: the panel is as wide as its longest line,
-        // which depends on the language.
-        MorePanel.Measure(new System.Windows.Size(double.PositiveInfinity, double.PositiveInfinity));
-        MorePopup.HorizontalOffset = Math.Max(0, buttonRight - MorePanel.DesiredSize.Width);
-        if (!MorePopup.IsOpen) PlaceMoreMenu();
+        // Uncapped on every opening: PlaceMoreMenu caps it again if this time there is less room.
+        if (!MorePopup.IsOpen) MoreScroll.MaxHeight = double.PositiveInfinity;
         MorePopup.IsOpen = !MorePopup.IsOpen;
     }
 
     /// <summary>
     /// Below the bar when the whole menu fits there, above it when it fits there instead, and
-    /// otherwise on the roomier side with its height capped so it scrolls.
+    /// otherwise on the roomier side with its height capped so it scrolls. Its right edge is under
+    /// the ⚙ button's, kept on the bar's monitor.
     /// </summary>
     /// <remarks>
-    /// Left to WPF, a menu taller than the room below the bar was moved to wherever it fitted on
-    /// the monitor — which, once the menu grew by two switches, could be well away from the bar it
-    /// came out of. Deciding here keeps it against the bar in every case.
+    /// <para>A placement callback rather than Placement="Bottom" plus offsets. WPF hands the callback
+    /// the popup's real size in device pixels, after its own window's DPI is applied; the room was
+    /// worked out in DIPs before, which on a capture spanning a 150% and a 100% monitor could say the
+    /// menu fitted when it did not, and WPF then moved it to wherever it fitted — far from the bar.</para>
+    /// <para>Everything here is in device pixels, relative to the bar's top-left. When the room is
+    /// short, the cap is set after this returns; the popup's size then changes and WPF calls this
+    /// again with the capped size.</para>
     /// </remarks>
-    private void PlaceMoreMenu()
+    private CustomPopupPlacement[] PlaceMoreMenu(System.Windows.Size popup, System.Windows.Size target, System.Windows.Point offset)
     {
-        const double Gap = 6, ScreenMargin = 8;
-        MoreScroll.MaxHeight = double.PositiveInfinity;
-        MorePanel.Measure(new System.Windows.Size(double.PositiveInfinity, double.PositiveInfinity));
-        double wanted = MorePanel.DesiredSize.Height;
-
+        double targetScale = BarSurface.ActualWidth > 0 ? target.Width / BarSurface.ActualWidth : 1;
+        double gap = 6 * targetScale, margin = 8 * targetScale;
+        var buttonRight = MoreBtn.TranslatePoint(new System.Windows.Point(MoreBtn.ActualWidth, 0), BarSurface).X * targetScale;
+        double x = buttonRight - popup.Width;
         double below = double.PositiveInfinity, above = 0;
         try
         {
-            var top = BarSurface.PointToScreen(new System.Windows.Point(0, 0));
-            var bottom = BarSurface.PointToScreen(new System.Windows.Point(0, BarSurface.ActualHeight));
-            var work = System.Windows.Forms.Screen.FromPoint(new System.Drawing.Point((int)top.X, (int)top.Y)).WorkingArea;
-            double scale = ScreenGeometry.ScaleAt((int)top.X, (int)top.Y);
-            below = (work.Bottom - bottom.Y) / scale - Gap - ScreenMargin;
-            above = (top.Y - work.Top) / scale - Gap - ScreenMargin;
+            var origin = BarSurface.PointToScreen(new System.Windows.Point(0, 0));
+            var work = System.Windows.Forms.Screen.FromPoint(new System.Drawing.Point((int)origin.X, (int)origin.Y)).WorkingArea;
+            below = work.Bottom - (origin.Y + target.Height) - gap - margin;
+            above = origin.Y - work.Top - gap - margin;
+            double left = work.Left + margin - origin.X;
+            double right = work.Right - margin - origin.X - popup.Width;
+            x = Math.Max(left, Math.Min(x, right));
         }
-        catch (InvalidOperationException) { /* not shown yet: let WPF place it below */ }
+        catch (InvalidOperationException) { /* not shown yet: below the bar */ }
 
-        bool useAbove = wanted > below && (wanted <= above || above > below);
-        MorePopup.Placement = useAbove
-            ? System.Windows.Controls.Primitives.PlacementMode.Top
-            : System.Windows.Controls.Primitives.PlacementMode.Bottom;
-        MorePopup.VerticalOffset = useAbove ? -Gap : Gap;
-
+        bool useAbove = popup.Height > below && (popup.Height <= above || above > below);
         double room = useAbove ? above : below;
-        // Padding and border of MorePanel sit outside the scrolling part.
-        double chrome = MorePanel.Padding.Top + MorePanel.Padding.Bottom + MorePanel.BorderThickness.Top + MorePanel.BorderThickness.Bottom;
-        if (wanted > room && room > 120) MoreScroll.MaxHeight = room - chrome;
+        if (popup.Height > room + 1 && room > 120 * targetScale && MorePanel.ActualHeight > 0)
+        {
+            // The popup's own scale, which is what turns the room back into its DIPs.
+            double popupScale = popup.Height / MorePanel.ActualHeight;
+            double chrome = MorePanel.Padding.Top + MorePanel.Padding.Bottom + MorePanel.BorderThickness.Top + MorePanel.BorderThickness.Bottom;
+            double cap = Math.Max(80, room / popupScale - chrome);
+            Dispatcher.BeginInvoke(() => MoreScroll.MaxHeight = cap, DispatcherPriority.Render);
+        }
+
+        double y = useAbove ? -gap - popup.Height : target.Height + gap;
+        return [new CustomPopupPlacement(new System.Windows.Point(x, y), PopupPrimaryAxis.None)];
     }
 
     private void DebugScope_Changed(object sender, RoutedEventArgs e)
@@ -847,12 +852,8 @@ public partial class ToolbarWindow : Window
         SyncDebugSwitches(sender, e);
         SyncCaptureSwitches(sender, e);
 
-        // Again now that the panel is laid out in its own window: before the first opening its
-        // strings may not have resolved, and the measure in MoreBtn_Click would be short of them.
+        // The switches above may change its size; WPF repositions through PlaceMoreMenu when it does.
         MorePanel.UpdateLayout();
-        var buttonRight = MoreBtn.TranslatePoint(new System.Windows.Point(MoreBtn.ActualWidth, 0), BarSurface).X;
-        MorePopup.HorizontalOffset = Math.Max(0, buttonRight - MorePanel.ActualWidth);
-        PlaceMoreMenu();
     }
 
     private void MorePopup_Closed(object? sender, EventArgs e)

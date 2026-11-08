@@ -195,6 +195,26 @@ public class AppSettings
     /// <inheritdoc cref="TranslationWindowHotkeyEnabled"/>
     public bool StickyNoteHotkeyEnabled { get; set; } = true;
 
+    /// <summary>
+    /// 便利貼's second shortcut: a blank note under the pointer, ready to type into, whatever is on
+    /// the clipboard. Alt+F2 by default. Switched on and off with <see cref="StickyNoteHotkeyEnabled"/>.
+    /// </summary>
+    public uint StickyNoteNewHotkeyModifiers { get; set; } = 1;
+
+    /// <inheritdoc cref="StickyNoteNewHotkeyModifiers"/>
+    public uint StickyNoteNewHotkeyVirtualKey { get; set; } = 0x71;
+
+    /// <inheritdoc cref="StickyNoteNewHotkeyModifiers"/>
+    public string StickyNoteNewHotkeyDisplay { get; set; } = "Alt+F2";
+    public ShortcutInputKind StickyNoteNewHotkeyInputKind { get; set; } = ShortcutInputKind.Keyboard;
+    public GamepadShortcutButton StickyNoteNewHotkeyGamepadButton { get; set; } = GamepadShortcutButton.None;
+
+    /// <summary>
+    /// Whether a released copy asks the user's own GitHub repository for a newer release when it
+    /// starts. Never the upstream project; a source build never asks at all.
+    /// </summary>
+    public bool AutoCheckUpdates { get; set; } = true;
+
     public string SourceLanguage { get; set; } = LanguageData.DefaultOcrSourceLanguage;
     public string TargetLanguage { get; set; } = "ZH-HANT";
     public TranslationProvider Provider { get; set; } = TranslationProvider.Microsoft;

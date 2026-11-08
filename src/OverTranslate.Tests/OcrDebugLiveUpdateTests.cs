@@ -66,8 +66,9 @@ public class OcrDebugLiveUpdateTests
         var popup = document.Descendants().Single(e => (string?)e.Attribute(x + "Name") == "MorePopup");
         Assert.Equal("False", (string?)popup.Attribute("StaysOpen"));
         Assert.Equal("{Binding ElementName=BarSurface}", (string?)popup.Attribute("PlacementTarget"));
-        Assert.Equal("Bottom", (string?)popup.Attribute("Placement"));
-        Assert.Equal("6", (string?)popup.Attribute("VerticalOffset"));
+        // Placed in code (PlaceMoreMenu), in device pixels, so mixed-DPI monitors cannot move it off the bar.
+        Assert.Equal("Custom", (string?)popup.Attribute("Placement"));
+        Assert.Null(popup.Attribute("VerticalOffset"));
         Assert.DoesNotContain(popup.Descendants(), e => (string?)e.Attribute(x + "Name") == "DebugPointer");
         var more = document.Descendants().Single(e => (string?)e.Attribute(x + "Name") == "MoreBtn");
         Assert.Equal("{StaticResource ToolbarIconButton}", (string?)more.Attribute("Style"));

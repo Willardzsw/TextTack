@@ -30,6 +30,7 @@ public partial class MainWindow : Window
     private GlobalHotkey? _quickTranslateHotkey;
     private GlobalHotkey? _pinHotkey;
     private GlobalHotkey? _stickyNoteHotkey;
+    private GlobalHotkey? _stickyNoteNewHotkey;
     private GlobalAuxiliaryHotkeys? _auxiliaryHotkeys;
     private OverlayWindow? _overlayWindow;
     private ScreenCaptureWindow? _captureWindow;
@@ -42,6 +43,7 @@ public partial class MainWindow : Window
     // colour and the widths are preferences and live in CaptureSettings.Annotation instead.
     private Models.AnnotationTool _annotationTool = AnnotationPanelWindow.DefaultTool;
     private GlobalEscapeHook? _escapeHook; // lives for the whole capture session, see CloseAll
+    private CaptureCopyHook? _copyKeys;    // Ctrl+C = 截圖, while the toolbar is up
     private SystemRecoveryYield? _recoveryYield; // same lifetime; lets Task Manager out from under the layers
     private CancellationTokenSource? _sessionCts; // cancelled on teardown so abandoned work stops
     private EventHandler? _overlayClosedHandler; // tracked so we can detach before re-translate
@@ -108,6 +110,7 @@ public partial class MainWindow : Window
         Views.StickyNote.StickyNoteManager.WarmUp();
         TopmostKeeper.Start(() => _captureWindow is not null);
         ShowStartupBalloon();
+        _ = CheckForUpdateOnStartupAsync();
 
         // The one thing about a realtime session that has to reach the user outside this
         // application: the window they were watching closed, so the session is over and they are
@@ -202,6 +205,9 @@ public partial class MainWindow : Window
         _stickyNoteHotkey = new GlobalHotkey(GlobalHotkey.StickyNoteId);
         _stickyNoteHotkey.HotkeyPressed += OnStickyNoteHotkeyPressed;
 
+        _stickyNoteNewHotkey = new GlobalHotkey(GlobalHotkey.StickyNoteNewId);
+        _stickyNoteNewHotkey.HotkeyPressed += OnStickyNoteNewHotkeyPressed;
+
         var hooks = new Dictionary<HotkeyAction, GlobalHotkey>
         {
             [HotkeyAction.Capture] = _hotkey,
@@ -211,6 +217,7 @@ public partial class MainWindow : Window
             [HotkeyAction.QuickTranslate] = _quickTranslateHotkey,
             [HotkeyAction.Pin] = _pinHotkey,
             [HotkeyAction.StickyNote] = _stickyNoteHotkey,
+            [HotkeyAction.StickyNoteNew] = _stickyNoteNewHotkey,
         };
 
         var resolved = HotkeyBindings.Resolve(settings);
@@ -284,8 +291,47 @@ public partial class MainWindow : Window
             case HotkeyAction.StickyNote:
                 OnStickyNoteHotkeyPressed(this, EventArgs.Empty);
                 break;
+            case HotkeyAction.StickyNoteNew:
+                OnStickyNoteNewHotkeyPressed(this, EventArgs.Empty);
+                break;
         }
     }
+
+    /// <summary>
+    /// A released copy asks the user's own GitHub repository once per start, after the startup
+    /// notice has had its moment; a newer release is announced, and clicking the notice opens 設定.
+    /// </summary>
+    private async Task CheckForUpdateOnStartupAsync()
+    {
+        if (!AppUpdateService.CanUpdate || !SettingsService.Instance.Current.AutoCheckUpdates) return;
+        try
+        {
+            await Task.Delay(TimeSpan.FromSeconds(15));
+            var release = await AppUpdateService.CheckAsync();
+            if (release is null || _notifyIcon is null) return;
+            Views.Settings.UpdatePanel.LastFound = release;
+            _notifyIcon.BalloonTipClicked -= OnUpdateBalloonClicked;
+            _notifyIcon.BalloonTipClicked += OnUpdateBalloonClicked;
+            _notifyIcon.BalloonTipClosed += (_, _) => _notifyIcon.BalloonTipClicked -= OnUpdateBalloonClicked;
+            ShowTrayNotification(
+                LocalizationService.Get("S.Update.NotifyTitle"),
+                LocalizationService.Format("S.Update.NotifyBody", release.Version.ToString(3)));
+        }
+        catch (Exception ex)
+        {
+            // Offline, GitHub busy: nothing the user asked for failed, so the log is enough.
+            Log.Info(ex, "Startup update check failed");
+        }
+    }
+
+    private void OnUpdateBalloonClicked(object? sender, EventArgs e)
+    {
+        if (_notifyIcon is not null) _notifyIcon.BalloonTipClicked -= OnUpdateBalloonClicked;
+        OpenSettings();
+    }
+
+    /// <summary>Exits the way 結束 does, for the update script waiting on this process.</summary>
+    public void ExitForUpdate() => ExitApp();
 
     private void ShowStartupBalloon()
     {
@@ -336,6 +382,7 @@ public partial class MainWindow : Window
         _quickTranslateHotkey?.Unregister();
         _pinHotkey?.Unregister();
         _stickyNoteHotkey?.Unregister();
+        _stickyNoteNewHotkey?.Unregister();
         _auxiliaryHotkeys?.Dispose();
         _auxiliaryHotkeys = null;
         RegisterHotkey();
@@ -952,6 +999,13 @@ public partial class MainWindow : Window
         toolbar.SpeakStopRequested      += (_, _) => _tts.Stop();
         toolbar.AnnotateModeChanged     += OnAnnotateModeChanged;
         _toolbarWindow = toolbar;
+
+        // Ctrl+C copies the screenshot like the toolbar's 截圖, following 截圖後自動關閉.
+        _copyKeys?.Dispose();
+        _copyKeys = CaptureCopyHook.Install(() =>
+        {
+            if (ReferenceEquals(_toolbarWindow, toolbar)) CopyScreenshot(forceClose: false);
+        });
         toolbar.SetTranslationState(hasTranslated);
         toolbar.SetToggleEnabled(blocks.Count > 0);
         toolbar.SetSpeakableText(SourceTextForSpeech().Length > 0);
@@ -1555,6 +1609,10 @@ public partial class MainWindow : Window
             message => ShowTrayNotification(LocalizationService.Get("S.Note.Title"), message));
     });
 
+    /// <summary>新建便利貼: a blank note under the pointer, ready to type into.</summary>
+    private void OnStickyNoteNewHotkeyPressed(object? sender, EventArgs e) => Dispatcher.Invoke(() =>
+        Views.StickyNote.StickyNoteManager.CreateBlank());
+
     private void OnPinHotkeyPressed(object? sender, EventArgs e) => Dispatcher.Invoke(() =>
     {
         // Over a pin that lets clicks through, the shortcut gives it its clicks back — the one way
@@ -1975,6 +2033,9 @@ public partial class MainWindow : Window
         _escapeHook?.Dispose();
         _escapeHook = null;
 
+        _copyKeys?.Dispose();
+        _copyKeys = null;
+
         _recoveryYield?.Dispose();
         _recoveryYield = null;
     }
@@ -2075,6 +2136,7 @@ public partial class MainWindow : Window
         _trayMenu.PinPassThroughOffRequested += (_, _) => Views.Pin.PinWindow.DisableAllPassThrough();
         _trayMenu.SetNotePassThroughVisible(Views.StickyNote.StickyNoteManager.AnyPassThrough);
         _trayMenu.NotePassThroughOffRequested += (_, _) => Views.StickyNote.StickyNoteManager.DisableAllPassThrough();
+        _trayMenu.NewNoteRequested         += (_, _) => Views.StickyNote.StickyNoteManager.CreateBlank();
         _trayMenu.ExitRequested            += (_, _) => ExitApp();
         var current = SettingsService.Instance.Current;
         _trayMenu.SetFeatureToggles(OverTranslate.Models.FeatureToggles.Shown(current)
@@ -2125,6 +2187,7 @@ public partial class MainWindow : Window
         _quickTranslateHotkey?.Dispose();
         _pinHotkey?.Dispose();
         _stickyNoteHotkey?.Dispose();
+        _stickyNoteNewHotkey?.Dispose();
         Views.StickyNote.StickyNoteManager.Shutdown();
         _auxiliaryHotkeys?.Dispose();
         _auxiliaryHotkeys = null;

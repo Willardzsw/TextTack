@@ -88,7 +88,9 @@ public partial class SettingsPage : UserControl
         bool AdvertisedInShell,
         // Fully qualified: WinForms is also referenced here and has its own CheckBox.
         System.Windows.Controls.CheckBox? EnabledBox = null,
-        Action<AppSettings, bool>? SetEnabled = null);
+        Action<AppSettings, bool>? SetEnabled = null,
+        // A row with no switch of its own that goes off with another row's: 新建便利貼 with 便利貼.
+        HotkeyAction? FollowsSwitchOf = null);
 
     private HotkeyField[] _hotkeyFields = [];
 
@@ -184,6 +186,16 @@ public partial class SettingsPage : UserControl
                 AdvertisedInShell: false,
                 StickyNoteHotkeyEnabledCheckBox,
                 (s, on) => s.StickyNoteHotkeyEnabled = on),
+            new HotkeyField(
+                HotkeyAction.StickyNoteNew,
+                "S.Settings.StickyNoteNewHotkey",
+                StickyNoteNewHotkeyBox,
+                StickyNoteNewElevatedNote,
+                s => s.StickyNoteNewHotkeyDisplay,
+                s => HotkeyBindings.TriggerFor(s, HotkeyAction.StickyNoteNew),
+                ApplyStickyNoteNewTrigger,
+                AdvertisedInShell: false,
+                FollowsSwitchOf: HotkeyAction.StickyNote),
         ];
 
         PinOpsPanel.Saved += (_, _) => FlashSaved();
@@ -194,6 +206,7 @@ public partial class SettingsPage : UserControl
         };
         TrayMenuOptions.Saved += (_, _) => FlashSaved();
         StickyNoteOpsPanel.Saved += (_, _) => FlashSaved();
+        UpdateOps.Saved += (_, _) => FlashSaved();
         PinSelectionRow.Saved += (_, _) => FlashSaved();
 
         _hotkeyGamepadRecordTimer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(45) };
@@ -293,6 +306,7 @@ public partial class SettingsPage : UserControl
             foreach (var field in _hotkeyFields) ApplyHotkeyRowAvailability(field);
             MouseEnhancePanel.Reload();
             StickyNoteOpsPanel.Reload();
+            UpdateOps.Reload();
             MouseEnhanceEnabledCheckBox.IsChecked = s.MouseEnhance.Enabled;
             ShowMouseEnhanceSummary();
             TrayMenuOptions.Reload();
@@ -363,6 +377,7 @@ public partial class SettingsPage : UserControl
             _ when ReferenceEquals(sender, StickyNoteOpsToggle) => (StickyNoteOpsFold, StickyNoteOpsBody, null),
             _ when ReferenceEquals(sender, TrayMenuToggle)    => (TrayMenuFold, TrayMenuBody, null),
             _ when ReferenceEquals(sender, OcrSettingsToggle) => (OcrSettingsFold, OcrSettingsBody, null),
+            _ when ReferenceEquals(sender, UpdateToggle)      => (UpdateFold, UpdateBody, null),
             _ when ReferenceEquals(sender, ServicesToggle)    => (ServicesFold, ServicesBody, ServicesChevron),
             _ when ReferenceEquals(sender, AdvancedToggle)    => (AdvancedFold, AdvancedBody, AdvancedChevron),
             _ => ((Border?)null, (FrameworkElement?)null, (FrameworkElement?)null),
@@ -1442,10 +1457,12 @@ public partial class SettingsPage : UserControl
     /// purpose: re-recording it onto a free combination is exactly how that is fixed, and disabling
     /// the row would take the fix away along with the problem.
     /// </remarks>
-    private static void ApplyHotkeyRowAvailability(HotkeyField field)
+    private void ApplyHotkeyRowAvailability(HotkeyField field)
     {
-        // No tick means the row cannot be switched off at all — the capture shortcut.
-        var on = field.EnabledBox is not { } box || box.IsChecked == true;
+        // No tick means the row cannot be switched off at all — the capture shortcut — unless it
+        // follows another row's tick.
+        var tick = field.EnabledBox ?? (field.FollowsSwitchOf is { } leader ? FieldFor(leader)?.EnabledBox : null);
+        var on = tick is not { } box || box.IsChecked == true;
 
         field.Box.IsEnabled = on;
 
@@ -1471,6 +1488,11 @@ public partial class SettingsPage : UserControl
 
         Persist(s => setEnabled(s, box.IsChecked == true));
         ApplyHotkeyRowAvailability(field);
+        foreach (var follower in _hotkeyFields.Where(f => f.FollowsSwitchOf == field.Action))
+        {
+            if (ReferenceEquals(_recording, follower)) StopRecording();
+            ApplyHotkeyRowAvailability(follower);
+        }
 
         // The global hooks are bound from these settings, so the tick means nothing until they are
         // rebound — without this the shortcut keeps working until the application is restarted, and
@@ -1561,6 +1583,22 @@ public partial class SettingsPage : UserControl
         else if (trigger.Kind == ShortcutInputKind.Gamepad)
         {
             s.StickyNoteHotkeyGamepadButton = trigger.GamepadButton;
+        }
+    }
+
+    private static void ApplyStickyNoteNewTrigger(AppSettings s, ShortcutTrigger trigger, string display)
+    {
+        s.StickyNoteNewHotkeyInputKind = trigger.Kind;
+        s.StickyNoteNewHotkeyDisplay = display;
+        if (trigger.Kind == ShortcutInputKind.Keyboard)
+        {
+            s.StickyNoteNewHotkeyModifiers = trigger.Modifiers;
+            s.StickyNoteNewHotkeyVirtualKey = trigger.VirtualKey;
+            s.StickyNoteNewHotkeyGamepadButton = GamepadShortcutButton.None;
+        }
+        else if (trigger.Kind == ShortcutInputKind.Gamepad)
+        {
+            s.StickyNoteNewHotkeyGamepadButton = trigger.GamepadButton;
         }
     }
 

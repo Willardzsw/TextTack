@@ -562,8 +562,10 @@
                              Its right edge is lined up under the button that opens it (MoreBtn_Click), so
                              it reads as coming out of that button rather than out of the bar. No close
                              button: it closes on a click anywhere else and on Esc, like any menu. -->
+                        <!-- Placed by PlaceMoreMenu (Placement="Custom"), in device pixels, so a monitor
+                             with another scale cannot push it away from the bar. -->
                         <Popup x:Name="MorePopup" PlacementTarget="{Binding ElementName=BarSurface}"
-                               Placement="Bottom" VerticalOffset="6"
+                               Placement="Custom"
                                AllowsTransparency="True" StaysOpen="False"
                                Opened="MorePopup_Opened" Closed="MorePopup_Closed">
                             <!-- At least 280 and otherwise as wide as its longest line: the switch names are one line

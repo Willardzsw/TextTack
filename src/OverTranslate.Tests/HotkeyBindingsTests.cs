@@ -22,6 +22,7 @@ public class HotkeyBindingsTests
                 HotkeyAction.QuickTranslate,
                 HotkeyAction.Pin,
                 HotkeyAction.StickyNote,
+                HotkeyAction.StickyNoteNew,
             ],
             active.Select(binding => binding.Action));
     }

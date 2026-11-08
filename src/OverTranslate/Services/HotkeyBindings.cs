@@ -12,6 +12,7 @@ public enum HotkeyAction
     QuickTranslate,
     Pin,
     StickyNote,
+    StickyNoteNew,
 }
 
 /// <summary>
@@ -146,6 +147,11 @@ public static class HotkeyBindings
             settings.StickyNoteHotkeyModifiers,
             settings.StickyNoteHotkeyVirtualKey,
             settings.StickyNoteHotkeyGamepadButton),
+        HotkeyAction.StickyNoteNew => BuildTrigger(
+            settings.StickyNoteNewHotkeyInputKind,
+            settings.StickyNoteNewHotkeyModifiers,
+            settings.StickyNoteNewHotkeyVirtualKey,
+            settings.StickyNoteNewHotkeyGamepadButton),
         _ => throw new ArgumentOutOfRangeException(nameof(action), action, null),
     };
 
@@ -227,6 +233,10 @@ public static class HotkeyBindings
                 settings.PinClipboardHotkeyEnabled),
             (HotkeyAction.StickyNote,
                 TriggerFor(settings, HotkeyAction.StickyNote),
+                settings.StickyNoteHotkeyEnabled),
+            // No switch of its own: 便利貼's row switch turns both of its shortcuts on and off.
+            (HotkeyAction.StickyNoteNew,
+                TriggerFor(settings, HotkeyAction.StickyNoteNew),
                 settings.StickyNoteHotkeyEnabled),
         };
 

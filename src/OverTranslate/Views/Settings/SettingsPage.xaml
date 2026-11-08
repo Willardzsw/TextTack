@@ -1280,7 +1280,38 @@
                                     <Border x:Name="StickyNoteOpsBody" Opacity="0" Margin="0,8,0,0" Padding="12,10"
                                             BorderBrush="{DynamicResource AppButtonBorder}"
                                             BorderThickness="1" CornerRadius="6">
-                                        <local:StickyNoteSettingsPanel x:Name="StickyNoteOpsPanel"/>
+                                        <!-- The label column is shared with the panel below so the
+                                             新建便利貼 row lines up with its rows. -->
+                                        <StackPanel Grid.IsSharedSizeScope="True">
+                                            <Grid>
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="Auto" SharedSizeGroup="NoteSettingsLabel"/>
+                                                    <ColumnDefinition Width="*"/>
+                                                </Grid.ColumnDefinitions>
+                                                <TextBlock Grid.Column="0"
+                                                           Text="{DynamicResource S.Settings.StickyNoteNewHotkey}"
+                                                           Style="{StaticResource OptionTitle}"
+                                                           VerticalAlignment="Top"
+                                                           Margin="0,10,14,6"/>
+                                                <StackPanel Grid.Column="1" Margin="0,4">
+                                                    <TextBox x:Name="StickyNoteNewHotkeyBox"
+                                                             Style="{StaticResource HotkeyBox}"
+                                                             Width="180"
+                                                             HorizontalAlignment="Left"
+                                                             PreviewMouseLeftButtonDown="HotkeyBox_PreviewMouseLeftButtonDown"
+                                                             PreviewKeyDown="HotkeyBox_PreviewKeyDown"
+                                                             PreviewKeyUp="HotkeyBox_PreviewKeyUp"
+                                                             GotFocus="HotkeyBox_GotFocus"
+                                                             LostFocus="HotkeyBox_LostFocus"/>
+                                                    <TextBlock Text="{DynamicResource S.Settings.StickyNoteNewHotkeyHint}"
+                                                               Style="{StaticResource FieldHint}"
+                                                               TextWrapping="Wrap"
+                                                               Margin="0,4,0,0"/>
+                                                    <ContentControl x:Name="StickyNoteNewElevatedNote" Style="{StaticResource HotkeyElevatedNote}"/>
+                                                </StackPanel>
+                                            </Grid>
+                                            <local:StickyNoteSettingsPanel x:Name="StickyNoteOpsPanel"/>
+                                        </StackPanel>
                                     </Border>
                                 </Border>
 
@@ -1556,6 +1587,41 @@
                         <Border x:Name="OcrSettingsFold" Height="0" Visibility="Collapsed" ClipToBounds="True">
                             <Border x:Name="OcrSettingsBody" Opacity="0" Margin="0,8,0,0">
                                 <local:OcrModelCard/>
+                            </Border>
+                        </Border>
+
+                        <Border Height="1" Margin="0,14,0,12"
+                                Background="{DynamicResource AppSeparator}"/>
+
+                        <!-- 軟體更新: from the user's own GitHub releases only, folded the way 文字辨識 is. -->
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+                            <StackPanel Grid.Column="0" VerticalAlignment="Center" Margin="0,0,12,0">
+                                <TextBlock Text="{DynamicResource S.Settings.UpdateTitle}"
+                                           Style="{StaticResource OptionTitle}"/>
+                                <TextBlock Text="{DynamicResource S.Settings.UpdateHint}"
+                                           Style="{StaticResource OptionDescription}"/>
+                            </StackPanel>
+                            <ToggleButton Grid.Column="1" x:Name="UpdateToggle"
+                                          Style="{StaticResource CardFoldButton}"
+                                          Checked="CardFold_Toggled"
+                                          Unchecked="CardFold_Toggled"
+                                          AutomationProperties.Name="{DynamicResource S.Settings.UpdateFold}">
+                                <StackPanel Orientation="Horizontal">
+                                    <TextBlock Text="&#xE713;" FontFamily="Segoe Fluent Icons, Segoe MDL2 Assets"
+                                               FontSize="13" VerticalAlignment="Center" Margin="0,0,6,0"/>
+                                    <TextBlock Text="{DynamicResource S.Settings.UpdateFold}"
+                                               FontSize="12" VerticalAlignment="Center"/>
+                                </StackPanel>
+                            </ToggleButton>
+                        </Grid>
+
+                        <Border x:Name="UpdateFold" Height="0" Visibility="Collapsed" ClipToBounds="True">
+                            <Border x:Name="UpdateBody" Opacity="0" Margin="0,8,0,0">
+                                <local:UpdatePanel x:Name="UpdateOps"/>
                             </Border>
                         </Border>
                     </StackPanel>

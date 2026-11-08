@@ -33,7 +33,8 @@ public sealed class StickyNoteSettingsPanel : UserControl
     {
         _loading = true;
         var grid = new Grid();
-        grid.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
+        // Shared with the 新建便利貼 shortcut row the settings page puts above this panel.
+        grid.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto, SharedSizeGroup = "NoteSettingsLabel" });
         grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
 
         // 識別語言

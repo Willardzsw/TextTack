@@ -56,6 +56,12 @@ public class StickyNoteData
 
     /// <summary>This note's opacity, 0.4–1; set from the 便利貼設定 default when it is made.</summary>
     public double Opacity { get; set; } = 1;
+
+    /// <summary>This note's own paper colour (#RRGGBB), or null to follow the 便利貼設定 one.</summary>
+    public string? PaperColor { get; set; }
+
+    /// <summary>This note's own tape colour (#RRGGBB), or null to follow the 便利貼設定 one.</summary>
+    public string? TapeColor { get; set; }
     public DateTime Created { get; set; } = DateTime.Now;
     public DateTime Saved { get; set; } = DateTime.Now;
 }

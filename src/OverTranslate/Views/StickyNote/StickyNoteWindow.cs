@@ -8,6 +8,7 @@ using System.Windows.Media.Animation;
 using System.Windows.Media.Effects;
 using System.Windows.Shapes;
 using System.Windows.Threading;
+using OverTranslate.Controls;
 using OverTranslate.Models;
 using OverTranslate.Services;
 // UseWindowsForms puts System.Windows.Forms in the implicit usings
@@ -184,8 +185,9 @@ public sealed class StickyNoteWindow : Window
     public void ApplyAppearance()
     {
         var s = StickyNoteManager.Settings;
-        var paper = StickyNoteColors.Parse(s.PaperColor, StickyNoteColors.DefaultPaper);
-        var tape = StickyNoteColors.Parse(s.TapeColor, StickyNoteColors.DefaultTape);
+        // The note's own colours when it has them, the 便利貼設定 ones otherwise.
+        var paper = StickyNoteColors.Parse(Data.PaperColor ?? s.PaperColor, StickyNoteColors.DefaultPaper);
+        var tape = StickyNoteColors.Parse(Data.TapeColor ?? s.TapeColor, StickyNoteColors.DefaultTape);
         _paper.Paper = paper;
         _tape.Fill = new SolidColorBrush(Color.FromArgb(0xC0, tape.R, tape.G, tape.B));
         _tape.Stroke = new SolidColorBrush(Color.FromArgb(0x40, 0xFF, 0xFF, 0xFF));
@@ -413,12 +415,19 @@ public sealed class StickyNoteWindow : Window
         foreach (int percent in OpacityChoices)
         {
             int p = percent;
-            var choice = new MenuItem { Header = $"{p}%", IsCheckable = true };
-            choice.Click += (_, _) => SetOpacity(p / 100.0);
+            // Stays open, so several can be tried in a row; the tick follows the choice.
+            var choice = new MenuItem { Header = $"{p}%", IsCheckable = true, StaysOpenOnClick = true };
+            choice.Click += (_, _) =>
+            {
+                SetOpacity(p / 100.0);
+                foreach (var (item, q) in opacityChoices) item.IsChecked = q == p;
+            };
             opacity.Items.Add(choice);
             opacityChoices.Add((choice, p));
         }
         menu.Items.Add(opacity);
+        var colours = BuildColourMenu(out var syncColours);
+        menu.Items.Add(colours);
         menu.Items.Add(new Separator());
         var resize = new MenuItem { IsCheckable = true };
         resize.SetResourceReference(HeaderedItemsControl.HeaderProperty, "S.Note.Resize");
@@ -435,6 +444,7 @@ public sealed class StickyNoteWindow : Window
             resize.IsChecked = _resizing;
             foreach (var (item, p) in opacityChoices) item.IsChecked = (int)Math.Round(Data.Opacity * 100) == p;
             autoSize.IsEnabled = Data.Width is not null;
+            syncColours();
         };
         return menu;
 
@@ -445,6 +455,103 @@ public sealed class StickyNoteWindow : Window
             item.Click += (_, _) => action();
             return item;
         }
+    }
+
+    private static readonly ColorPickerPopup ColourPicker = new();
+
+    /// <summary>
+    /// 顏色: this note's paper and tape, each from the 便利貼設定 presets or 自訂…, and 跟隨預設 to
+    /// go back to the 便利貼設定 colours. Only this note changes.
+    /// </summary>
+    private MenuItem BuildColourMenu(out Action sync)
+    {
+        var root = new MenuItem();
+        root.SetResourceReference(HeaderedItemsControl.HeaderProperty, "S.Note.Colour");
+        // The choices stay open when clicked, so colours can be tried one after another; the ticks
+        // are brought up to date after each.
+        Action syncAll = () => { };
+        var paper = ColourChoices("S.Note.PaperColour", StickyNoteColors.Papers,
+            () => Data.PaperColor ?? StickyNoteManager.Settings.PaperColor, StickyNoteColors.DefaultPaper,
+            v => { SetColours(v, Data.TapeColor); syncAll(); }, out var syncPaper);
+        var tape = ColourChoices("S.Note.TapeColour", StickyNoteColors.Tapes,
+            () => Data.TapeColor ?? StickyNoteManager.Settings.TapeColor, StickyNoteColors.DefaultTape,
+            v => { SetColours(Data.PaperColor, v); syncAll(); }, out var syncTape);
+        var follow = new MenuItem { IsCheckable = true, StaysOpenOnClick = true };
+        follow.SetResourceReference(HeaderedItemsControl.HeaderProperty, "S.Note.ColourDefault");
+        follow.Click += (_, _) => { SetColours(null, null); syncAll(); };
+        root.Items.Add(paper);
+        root.Items.Add(tape);
+        root.Items.Add(new Separator());
+        root.Items.Add(follow);
+        syncAll = () =>
+        {
+            syncPaper();
+            syncTape();
+            follow.IsChecked = Data.PaperColor is null && Data.TapeColor is null;
+        };
+        sync = syncAll;
+        return root;
+    }
+
+    private MenuItem ColourChoices(string key, string[] presets, Func<string> current, string fallback,
+        Action<string> set, out Action sync)
+    {
+        var parent = new MenuItem();
+        parent.SetResourceReference(HeaderedItemsControl.HeaderProperty, key);
+        var items = new List<(MenuItem Item, string Hex)>();
+        foreach (var hex in presets)
+        {
+            var item = new MenuItem
+            {
+                IsCheckable = true,
+                StaysOpenOnClick = true,
+                Header = new Border
+                {
+                    Width = 56,
+                    Height = 16,
+                    CornerRadius = new CornerRadius(3),
+                    BorderThickness = new Thickness(1),
+                    BorderBrush = new SolidColorBrush(Color.FromArgb(0x55, 0, 0, 0)),
+                    Background = new SolidColorBrush(StickyNoteColors.Parse(hex, fallback)),
+                },
+            };
+            item.Click += (_, _) => set(hex);
+            parent.Items.Add(item);
+            items.Add((item, hex));
+        }
+        parent.Items.Add(new Separator());
+        var custom = new MenuItem();
+        custom.SetResourceReference(HeaderedItemsControl.HeaderProperty, "S.Settings.NoteCustomColor");
+        custom.Click += (_, _) =>
+        {
+            if (Content is not FrameworkElement anchor) return;
+            // After the menu has closed, so the picker is not shut by the menu going away.
+            Dispatcher.BeginInvoke(() => ColourPicker.Toggle(anchor, StickyNoteColors.Parse(current(), fallback),
+                colour => set(StickyNoteColors.ToHex(colour))), DispatcherPriority.Input);
+        };
+        parent.Items.Add(custom);
+        sync = () =>
+        {
+            var now = StickyNoteColors.ToHex(StickyNoteColors.Parse(current(), fallback));
+            bool preset = false;
+            foreach (var (item, hex) in items)
+            {
+                item.IsChecked = string.Equals(hex, now, StringComparison.OrdinalIgnoreCase);
+                preset |= item.IsChecked;
+            }
+            custom.IsCheckable = true;
+            custom.IsChecked = !preset;
+        };
+        return parent;
+    }
+
+    /// <summary>This note's own colours; null for either follows 便利貼設定.</summary>
+    public void SetColours(string? paper, string? tape)
+    {
+        Data.PaperColor = paper;
+        Data.TapeColor = tape;
+        ApplyAppearance();
+        StickyNoteManager.RaiseChanged();
     }
 
     private void CopyText()
@@ -478,8 +585,26 @@ public sealed class StickyNoteWindow : Window
         if (on && _editing) CancelEdit();
         Data.PassThrough = on;
         WindowStyles.SetClickThrough(this, on);
-        // No message on the note: how to undo it is explained by the ⓘ in 設定.
+        // No message on the note — how to undo it is explained by the ⓘ in 設定 — only a flash, so a
+        // shortcut that worked can be told from one that missed: once on, twice off.
+        Flash(on ? 1 : 2);
         StickyNoteManager.RaiseChanged();
+    }
+
+    /// <summary>Dims the note and back <paramref name="times"/> times, ending at its own opacity.</summary>
+    private void Flash(int times)
+    {
+        var flash = new DoubleAnimation(Data.Opacity, 0.2, TimeSpan.FromMilliseconds(150))
+        {
+            AutoReverse = true,
+            RepeatBehavior = new RepeatBehavior(times),
+        };
+        flash.Completed += (_, _) =>
+        {
+            BeginAnimation(OpacityProperty, null);
+            Opacity = Data.Opacity;
+        };
+        BeginAnimation(OpacityProperty, flash);
     }
 
     /// <summary>The choices the 透明度 menu offers, in percent.</summary>

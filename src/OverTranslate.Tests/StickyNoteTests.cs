@@ -87,6 +87,36 @@ public class StickyNoteTests
     }
 
     [Fact]
+    public void NewBlankNote_DefaultsToAltF2_AndFollowsTheStickyNoteSwitch()
+    {
+        var s = new AppSettings();
+
+        Assert.Equal(0x71u, s.StickyNoteNewHotkeyVirtualKey);
+        Assert.Equal(1u, s.StickyNoteNewHotkeyModifiers);
+        Assert.Equal("Alt+F2", s.StickyNoteNewHotkeyDisplay);
+        Assert.True(HotkeyBindings.Resolve(s).Single(b => b.Action == HotkeyAction.StickyNoteNew).IsActive);
+
+        FeatureToggles.Set(s, FeatureToggle.StickyNoteHotkey, false);
+        Assert.False(HotkeyBindings.Resolve(s).Single(b => b.Action == HotkeyAction.StickyNoteNew).Enabled);
+    }
+
+    [Fact]
+    public void NewBlankNote_RebindingRoundTripsThroughTheFile()
+    {
+        var s = new AppSettings
+        {
+            StickyNoteNewHotkeyModifiers = 3,
+            StickyNoteNewHotkeyVirtualKey = 0x4E,
+            StickyNoteNewHotkeyDisplay = "Ctrl+Alt+N",
+        };
+
+        var back = SettingsService.Parse(SettingsService.Serialize(s));
+
+        Assert.Equal(ShortcutTrigger.Keyboard(3, 0x4E), HotkeyBindings.TriggerFor(back, HotkeyAction.StickyNoteNew));
+        Assert.Equal("Ctrl+Alt+N", back.StickyNoteNewHotkeyDisplay);
+    }
+
+    [Fact]
     public void Settings_RoundTripThroughTheFile()
     {
         var s = new AppSettings();
@@ -103,6 +133,23 @@ public class StickyNoteTests
         Assert.Equal("TH", back.StickyNote.OcrLanguage);
         Assert.Equal(@"D:\Notes", StickyNoteArchive.FolderFor(back.StickyNote));
         Assert.False(back.StickyNoteHotkeyEnabled);
+    }
+
+    [Fact]
+    public void NoteColours_FollowTheDefaultUntilSet_AndRoundTrip()
+    {
+        var note = new StickyNoteData();
+        Assert.Null(note.PaperColor);
+        Assert.Null(note.TapeColor);
+
+        note.PaperColor = "#D9F2CF";
+        var json = System.Text.Json.JsonSerializer.Serialize(note);
+        var back = System.Text.Json.JsonSerializer.Deserialize<StickyNoteData>(json)!;
+        Assert.Equal("#D9F2CF", back.PaperColor);
+        Assert.Null(back.TapeColor);
+
+        var old = System.Text.Json.JsonSerializer.Deserialize<StickyNoteData>("""{"Text":"x"}""")!;
+        Assert.Null(old.PaperColor);
     }
 
     [Fact]

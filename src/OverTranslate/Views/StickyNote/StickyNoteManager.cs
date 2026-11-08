@@ -131,6 +131,9 @@ internal static class StickyNoteManager
         return note;
     }
 
+    /// <summary>新建便利貼 (Alt+F2, or the tray menu): a blank note under the pointer, ready to type into.</summary>
+    public static StickyNoteWindow CreateBlank() => Create("", startEditing: true);
+
     /// <summary>A new note under the pointer (or where given), saved to the archive if it has text.</summary>
     public static StickyNoteWindow Create(string text, bool startEditing, System.Drawing.Point? at = null)
     {

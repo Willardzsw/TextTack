@@ -73,6 +73,15 @@ public partial class TrayMenuWindow : Window
 
     public event EventHandler? NotePassThroughOffRequested;
 
+    /// <summary>新建便利貼: a blank note, the same as its shortcut.</summary>
+    public event EventHandler? NewNoteRequested;
+
+    private void NewNoteBtn_Click(object sender, RoutedEventArgs e)
+    {
+        Dismiss();
+        NewNoteRequested?.Invoke(this, EventArgs.Empty);
+    }
+
     public void SetNotePassThroughVisible(bool visible) =>
         NotePassThroughBtn.Visibility = visible ? Visibility.Visible : Visibility.Collapsed;
 

@@ -107,6 +107,19 @@
                     <Rectangle Height="1" Margin="8,3" Fill="{DynamicResource AppSeparator}"/>
                 </StackPanel>
 
+                <!-- 新建便利貼: a blank note under the pointer, the same as Alt+F2. -->
+                <Button x:Name="NewNoteBtn"
+                        Style="{StaticResource TrayMenuItem}"
+                        Click="NewNoteBtn_Click">
+                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                        <TextBlock FontFamily="Segoe Fluent Icons, Segoe MDL2 Assets"
+                                   FontSize="14" Text="&#xE710;"
+                                   Width="22" VerticalAlignment="Center"
+                                   Foreground="{DynamicResource AppTextSecondary}"/>
+                        <TextBlock Text="{DynamicResource S.Tray.NewNote}" VerticalAlignment="Center"/>
+                    </StackPanel>
+                </Button>
+
                 <!-- Only while a note lets clicks through: its way back, as for pins above. -->
                 <Button x:Name="NotePassThroughBtn"
                         Style="{StaticResource TrayMenuItem}"
