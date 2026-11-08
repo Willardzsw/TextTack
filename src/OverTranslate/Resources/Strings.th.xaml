@@ -724,6 +724,10 @@
     <sys:String x:Key="S.Toolbar.DoubleClickFinishTip">ดับเบิลคลิกในส่วนที่เลือกเพื่อคัดลอกภาพหน้าจอและจบการจับภาพ</sys:String>
     <sys:String x:Key="S.Toolbar.RightClickCancel">คลิกขวาเพื่อยกเลิก</sys:String>
     <sys:String x:Key="S.Toolbar.RightClickCancelTip">เมื่อมีกรอบ คลิกขวาเพื่อล้างกรอบและเลือกใหม่ เมื่อไม่มีกรอบ คลิกขวาเพื่อจบการจับภาพ</sys:String>
+    <sys:String x:Key="S.Toolbar.AutoSelectWindow">เลือกหน้าต่างอัตโนมัติ</sys:String>
+    <sys:String x:Key="S.Toolbar.AutoSelectWindowTip">ขณะจับภาพ วางเมาส์บนหน้าต่างเพื่อครอบทั้งหน้าต่าง เลื่อนล้อขึ้นต่อเพื่อครอบทั้งหน้าจอ คลิกเพื่อยืนยันกรอบ</sys:String>
+    <sys:String x:Key="S.Toolbar.AutoSelectElement">เลือกองค์ประกอบ UI อัตโนมัติ</sys:String>
+    <sys:String x:Key="S.Toolbar.AutoSelectElementTip">ครอบองค์ประกอบที่เล็กที่สุดใต้เมาส์ (ปุ่ม ช่องป้อนข้อความ แผง ฯลฯ) เลื่อนล้อขึ้นเพื่อเลือกองค์ประกอบที่อยู่รอบนอก เลื่อนลงเพื่อย้อนกลับ คลิกเพื่อยืนยันกรอบ ภาพวิดีโอและเกมเลือกได้เฉพาะทั้งหน้าต่าง</sys:String>
     <sys:String x:Key="S.Toolbar.Pin">ปักหมุด</sys:String>
     <sys:String x:Key="S.Toolbar.PinHint">ปักหมุดส่วนที่เลือกไว้บนสุดของหน้าจอและจบการจับภาพ</sys:String>
     <sys:String x:Key="S.Settings.PinHotkey">ปักหมุดคลิปบอร์ด</sys:String>

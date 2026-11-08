@@ -69,6 +69,19 @@ public class CaptureSettings
     public bool RightClickToCancel { get; set; } = true;
 
     /// <summary>
+    /// 自動選取視窗: before a box is drawn, the window under the pointer is framed (and, a wheel step
+    /// further out, the whole monitor); a click keeps it. On by default, as in Snipaste.
+    /// </summary>
+    public bool AutoSelectWindow { get; set; } = true;
+
+    /// <summary>
+    /// 自動選取介面元素: the same for the smallest UI Automation element under the pointer — a button,
+    /// a text box, a panel — the wheel stepping out to what encloses it. Applications that draw
+    /// everything themselves (video, games) offer only their window.
+    /// </summary>
+    public bool AutoSelectElement { get; set; } = true;
+
+    /// <summary>
     /// What pins the selection while a capture is up (貼圖 for the box rather than the clipboard).
     /// The middle button by default.
     /// </summary>

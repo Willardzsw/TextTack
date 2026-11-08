@@ -759,6 +759,8 @@ public partial class ToolbarWindow : Window
         CloseAfterCopyTranslationSwitch.IsChecked = SettingsService.Instance.Current.Capture.CloseAfterCopyTranslation;
         DoubleClickFinishSwitch.IsChecked = SettingsService.Instance.Current.Capture.DoubleClickToFinish;
         RightClickCancelSwitch.IsChecked = SettingsService.Instance.Current.Capture.RightClickToCancel;
+        AutoSelectWindowSwitch.IsChecked = SettingsService.Instance.Current.Capture.AutoSelectWindow;
+        AutoSelectElementSwitch.IsChecked = SettingsService.Instance.Current.Capture.AutoSelectElement;
         _syncingCapture = false;
     }
 
@@ -767,7 +769,9 @@ public partial class ToolbarWindow : Window
         if (_syncingCapture) return;
         SettingsService.Instance.UpdateCaptureOptions(
             doubleClickToFinish: DoubleClickFinishSwitch.IsChecked == true,
-            rightClickToCancel: RightClickCancelSwitch.IsChecked == true);
+            rightClickToCancel: RightClickCancelSwitch.IsChecked == true,
+            autoSelectWindow: AutoSelectWindowSwitch.IsChecked == true,
+            autoSelectElement: AutoSelectElementSwitch.IsChecked == true);
     }
 
     private void AutoTranslateSwitch_Changed(object sender, RoutedEventArgs e)

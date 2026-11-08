@@ -727,6 +727,10 @@
     <sys:String x:Key="S.Toolbar.DoubleClickFinishTip">在框选范围内双击，复制截图并结束截图翻译</sys:String>
     <sys:String x:Key="S.Toolbar.RightClickCancel">右键取消截图</sys:String>
     <sys:String x:Key="S.Toolbar.RightClickCancelTip">有选框时按右键清除选框、重新选择；没有选框时按右键结束截图</sys:String>
+    <sys:String x:Key="S.Toolbar.AutoSelectWindow">自动选择窗口</sys:String>
+    <sys:String x:Key="S.Toolbar.AutoSelectWindowTip">截图时鼠标停在窗口上就框住整个窗口，滚轮再往上可框住整个屏幕，单击即固定</sys:String>
+    <sys:String x:Key="S.Toolbar.AutoSelectElement">自动选择界面元素</sys:String>
+    <sys:String x:Key="S.Toolbar.AutoSelectElementTip">截图时框住鼠标下最小的界面元素（按钮、输入框、面板等），滚轮向上换成上一级、向下换回下一级，单击即固定；视频和游戏画面只能选择整个窗口</sys:String>
     <sys:String x:Key="S.Toolbar.Pin">贴图</sys:String>
     <sys:String x:Key="S.Toolbar.PinHint">把框选范围贴在屏幕最上层，并结束截图翻译</sys:String>
     <sys:String x:Key="S.Settings.PinHotkey">贴图（剪贴板）</sys:String>

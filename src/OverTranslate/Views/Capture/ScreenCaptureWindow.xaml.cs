@@ -104,6 +104,7 @@ public partial class ScreenCaptureWindow : Window
         Closed += (_, _) =>
         {
             CompositionTarget.Rendering -= AnnounceAdjusted;
+            UseHoverPicker(null);
             _selectionTcs.TrySetResult(false);
             CroppedBitmap?.Dispose();
             CroppedBitmap = null;
@@ -157,6 +158,9 @@ public partial class ScreenCaptureWindow : Window
         // Claimed only once the first frame is on screen. Activating before that forces a
         // foreground switch while the window is still empty, which flashes its black background.
         Activate();
+
+        // The pointer is already somewhere; what it is on is offered without waiting for it to move.
+        RefreshHover();
     }
 
     // The dim layer's outer edge is the window's, so it is laid down with the first layout rather
@@ -291,7 +295,14 @@ public partial class ScreenCaptureWindow : Window
         if (_processingStarted || _hasSelection) return;
         base.OnMouseLeftButtonDown(e);
         _startPoint  = e.GetPosition(this);
+        // Asked before the drag starts: a press on an offered box is a click on it until it moves.
+        bool onHover = BeginPressOnHover();
         _isDragging  = true;
+        if (onHover)
+        {
+            CaptureMouse();
+            return;
+        }
         HintHost.Visibility      = Visibility.Collapsed;
         SetFrameVisibility(true);
         CaptureMouse();
@@ -365,6 +376,7 @@ public partial class ScreenCaptureWindow : Window
         if (_isDragging)
         {
             _isDragging = false;
+            CancelPressOnHover();
             ReleaseMouseCapture();
             SetFrameVisibility(false);
             SetHandlesVisibility(false);
@@ -372,6 +384,7 @@ public partial class ScreenCaptureWindow : Window
             HintHost.Visibility = Visibility.Visible;
             _rightPressed = false;
             _swallowRightUp = true;
+            RefreshHover();
         }
     }
 
@@ -424,19 +437,27 @@ public partial class ScreenCaptureWindow : Window
         UpdateDimLayer();
         HintHost.Visibility = Visibility.Visible;
         _selectionTcs = new TaskCompletionSource<bool>();
+        RefreshHover();
     }
 
     protected override void OnMouseMove(MouseEventArgs e)
     {
         base.OnMouseMove(e);
-        if (!_isDragging) return;
-        DrawRect(_startPoint, e.GetPosition(this));
+        var pos = e.GetPosition(this);
+        if (!_isDragging)
+        {
+            if (_picker is not null) UpdateHover(pos);
+            return;
+        }
+        if (ContinuePressOnHover(pos)) return;
+        DrawRect(_startPoint, pos);
     }
 
     protected override void OnMouseLeftButtonUp(MouseButtonEventArgs e)
     {
         base.OnMouseLeftButtonUp(e);
         if (!_isDragging) return;
+        if (EndPressOnHover()) return;
         _isDragging = false;
         ReleaseMouseCapture();
 
@@ -449,6 +470,7 @@ public partial class ScreenCaptureWindow : Window
             SetHandlesVisibility(false);
             UpdateDimLayer();
             HintHost.Visibility = Visibility.Visible;
+            RefreshHover();
             return;
         }
 
@@ -608,7 +630,7 @@ public partial class ScreenCaptureWindow : Window
     private void UpdateDimLayer()
     {
         var r = _selectionWpfRect;
-        bool show = (_isDragging || _hasSelection) && r.Width > 0 && r.Height > 0 && _brightBrush is not null;
+        bool show = (_isDragging || _hasSelection || _hovering) && r.Width > 0 && r.Height > 0 && _brightBrush is not null;
         SelectionBright.Visibility = show ? Visibility.Visible : Visibility.Collapsed;
         if (!show) return;
 

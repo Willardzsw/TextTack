@@ -731,6 +731,10 @@
     <sys:String x:Key="S.Toolbar.DoubleClickFinishTip">選択範囲内をダブルクリックすると、スクリーンショットをコピーして終了します</sys:String>
     <sys:String x:Key="S.Toolbar.RightClickCancel">右クリックでキャンセル</sys:String>
     <sys:String x:Key="S.Toolbar.RightClickCancelTip">範囲があるときは右クリックで範囲を消して選び直し、範囲がないときは右クリックでキャプチャを終了</sys:String>
+    <sys:String x:Key="S.Toolbar.AutoSelectWindow">ウィンドウを自動選択</sys:String>
+    <sys:String x:Key="S.Toolbar.AutoSelectWindowTip">キャプチャ中、ポインターをウィンドウに合わせるとウィンドウ全体を囲みます。さらにホイールを上に回すと画面全体を囲み、クリックで確定します</sys:String>
+    <sys:String x:Key="S.Toolbar.AutoSelectElement">UI 要素を自動選択</sys:String>
+    <sys:String x:Key="S.Toolbar.AutoSelectElementTip">ポインターの下にある最小の UI 要素（ボタン、入力欄、パネルなど）を囲みます。ホイールを上に回すと外側の要素、下に回すと元に戻り、クリックで確定します。動画やゲームの画面はウィンドウ全体のみ選択できます</sys:String>
     <sys:String x:Key="S.Toolbar.Pin">ピン留め</sys:String>
     <sys:String x:Key="S.Toolbar.PinHint">選択範囲を画面の最前面にピン留めして終了します</sys:String>
     <sys:String x:Key="S.Settings.PinHotkey">ピン留め（クリップボード）</sys:String>

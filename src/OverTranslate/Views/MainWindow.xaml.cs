@@ -819,6 +819,7 @@ public partial class MainWindow : Window
 
         Bitmap screenshot;
         System.Drawing.Rectangle screenBounds;
+        CaptureElementPicker? picker = null;
         try
         {
             screenBounds = ScreenGeometry.VirtualDesktopBounds();
@@ -832,6 +833,15 @@ public partial class MainWindow : Window
                 using var g = Graphics.FromImage(screenshot);
                 g.CopyFromScreen(screenBounds.Left, screenBounds.Top, 0, 0,
                     screenBounds.Size, CopyPixelOperation.SourceCopy);
+
+                // 自動選取: the windows as they are in the picture, listed before the capture covers them.
+                // Only for a fresh capture: a pin being edited starts with its own box.
+                var capture = SettingsService.Instance.Current.Capture;
+                if (preset is null && (capture.AutoSelectWindow || capture.AutoSelectElement))
+                {
+                    try { picker = CaptureElementPicker.Snapshot(screenBounds); }
+                    catch (Exception ex) { Log.Warn(ex, "Listing windows for auto-select failed"); }
+                }
             }
         }
         catch (Exception ex)
@@ -852,6 +862,8 @@ public partial class MainWindow : Window
             Log.Info("Capture session starting, origin={Origin}, bounds={Bounds}", origin, screenBounds);
             var captureWindow = new ScreenCaptureWindow(screenshot, screenBounds);
             if (preset is { } box) captureWindow.PresetSelection(box);
+            captureWindow.UseHoverPicker(picker);
+            picker = null;
             _captureWindow = captureWindow;
 
             // The box stays adjustable until translation starts, so the toolbar anchored to it has to
@@ -932,6 +944,7 @@ public partial class MainWindow : Window
         catch (Exception ex)
         {
             Log.Error(ex, "Capture session setup failed — tearing down overlay windows");
+            picker?.Dispose();
             CloseAll("setup failed");
             screenshot.Dispose();
         }
@@ -1046,6 +1059,14 @@ public partial class MainWindow : Window
                 throw;
             }
             captureWindow.ReplaceScreenshot(shot);
+
+            // The windows as they are in the new picture; listed while this session's own are
+            // still cloaked, so none of them is among what can be framed.
+            if (captureWindow.OffersHoverBoxes)
+            {
+                try { captureWindow.UseHoverPicker(CaptureElementPicker.Snapshot(bounds)); }
+                catch (Exception ex) { Log.Warn(ex, "Listing windows for auto-select failed"); }
+            }
 
             // What was read and drawn belonged to the old picture.
             _ocrReuse.Clear();

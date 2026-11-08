@@ -84,7 +84,7 @@ public partial class ScreenCaptureWindow
             return;
         }
 
-        SizeBarTools.Visibility = _isDragging ? Visibility.Collapsed : Visibility.Visible;
+        SizeBarTools.Visibility = _isDragging || _hovering ? Visibility.Collapsed : Visibility.Visible;
 
         var r = _selectionWpfRect;
         var (_, _, pw, ph) = PhysicalOf(r);
@@ -222,6 +222,9 @@ public partial class ScreenCaptureWindow
         }
 
         bool had = _hasSelection;
+        _hovering = false;
+        _pressOnHover = false;
+        StopGlide();
         _selectionWpfRect = r;
         _hasSelection = true;
         _aspectRatio = AspectOf(r);

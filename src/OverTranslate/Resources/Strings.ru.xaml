@@ -720,6 +720,10 @@
     <sys:String x:Key="S.Toolbar.DoubleClickFinishTip">Двойной щелчок внутри выделения копирует снимок и завершает захват</sys:String>
     <sys:String x:Key="S.Toolbar.RightClickCancel">Правый щелчок — отмена</sys:String>
     <sys:String x:Key="S.Toolbar.RightClickCancelTip">Правый щелчок убирает рамку, чтобы выбрать заново; без рамки — завершает снимок</sys:String>
+    <sys:String x:Key="S.Toolbar.AutoSelectWindow">Автовыбор окон</sys:String>
+    <sys:String x:Key="S.Toolbar.AutoSelectWindowTip">При захвате наведите указатель на окно, чтобы выделить его целиком; прокрутите колесо вверх, чтобы выделить весь экран. Щелчок закрепляет рамку</sys:String>
+    <sys:String x:Key="S.Toolbar.AutoSelectElement">Автовыбор элементов интерфейса</sys:String>
+    <sys:String x:Key="S.Toolbar.AutoSelectElementTip">Выделяет наименьший элемент под указателем (кнопку, поле ввода, панель…). Колесо вверх — внешний элемент, вниз — обратно; щелчок закрепляет рамку. Видео и игры выделяются только целым окном</sys:String>
     <sys:String x:Key="S.Toolbar.Pin">Закрепить</sys:String>
     <sys:String x:Key="S.Toolbar.PinHint">Закрепить выделение поверх экрана и завершить захват</sys:String>
     <sys:String x:Key="S.Settings.PinHotkey">Закрепить буфер обмена</sys:String>

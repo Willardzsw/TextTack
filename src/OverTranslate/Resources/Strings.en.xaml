@@ -729,6 +729,10 @@ same settings, the same seed usually gives the same output.</sys:String>
     <sys:String x:Key="S.Toolbar.DoubleClickFinishTip">Double-click inside the selection to copy the screenshot and end the capture</sys:String>
     <sys:String x:Key="S.Toolbar.RightClickCancel">Right-click to cancel</sys:String>
     <sys:String x:Key="S.Toolbar.RightClickCancelTip">Right-click clears the box so you can select again; with no box, it ends the capture</sys:String>
+    <sys:String x:Key="S.Toolbar.AutoSelectWindow">Auto-select windows</sys:String>
+    <sys:String x:Key="S.Toolbar.AutoSelectWindowTip">While capturing, hovering a window frames the whole window; scroll up past it to frame the whole screen. Click to keep the box</sys:String>
+    <sys:String x:Key="S.Toolbar.AutoSelectElement">Auto-select UI elements</sys:String>
+    <sys:String x:Key="S.Toolbar.AutoSelectElementTip">Frames the smallest element under the pointer (button, text box, panel…). Scroll up for the element around it, down to go back; click to keep the box. Video and games can only be selected as a whole window</sys:String>
     <sys:String x:Key="S.Toolbar.Pin">Pin</sys:String>
     <sys:String x:Key="S.Toolbar.PinHint">Pin the selection on top of the screen and end the capture</sys:String>
     <sys:String x:Key="S.Settings.PinHotkey">Pin clipboard</sys:String>

@@ -333,7 +333,8 @@ public class SettingsService
     public void UpdateCaptureOptions(
         bool? autoTranslate = null, bool? saveScreenshot = null, bool? closeAfterCopy = null,
         bool? doubleClickToFinish = null, bool? rightClickToCancel = null,
-        bool? closeAfterCopyText = null, bool? closeAfterCopyTranslation = null)
+        bool? closeAfterCopyText = null, bool? closeAfterCopyTranslation = null,
+        bool? autoSelectWindow = null, bool? autoSelectElement = null)
     {
         var current = Current;
         var auto = autoTranslate ?? current.AutoTranslateAfterSelection;
@@ -343,11 +344,15 @@ public class SettingsService
         var rightClick = rightClickToCancel ?? current.Capture.RightClickToCancel;
         var closeText = closeAfterCopyText ?? current.Capture.CloseAfterCopyText;
         var closeTranslation = closeAfterCopyTranslation ?? current.Capture.CloseAfterCopyTranslation;
+        var pickWindow = autoSelectWindow ?? current.Capture.AutoSelectWindow;
+        var pickElement = autoSelectElement ?? current.Capture.AutoSelectElement;
         if (auto == current.AutoTranslateAfterSelection && save == current.SaveScreenshotToDisk &&
             close == current.Capture.CloseAfterCopy && doubleClick == current.Capture.DoubleClickToFinish &&
             rightClick == current.Capture.RightClickToCancel &&
             closeText == current.Capture.CloseAfterCopyText &&
-            closeTranslation == current.Capture.CloseAfterCopyTranslation) return;
+            closeTranslation == current.Capture.CloseAfterCopyTranslation &&
+            pickWindow == current.Capture.AutoSelectWindow &&
+            pickElement == current.Capture.AutoSelectElement) return;
         current.AutoTranslateAfterSelection = auto;
         current.SaveScreenshotToDisk = save;
         current.Capture.CloseAfterCopy = close;
@@ -355,6 +360,8 @@ public class SettingsService
         current.Capture.RightClickToCancel = rightClick;
         current.Capture.CloseAfterCopyText = closeText;
         current.Capture.CloseAfterCopyTranslation = closeTranslation;
+        current.Capture.AutoSelectWindow = pickWindow;
+        current.Capture.AutoSelectElement = pickElement;
         Save();
         CaptureOptionsChanged?.Invoke(this, EventArgs.Empty);
     }

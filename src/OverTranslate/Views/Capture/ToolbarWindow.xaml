@@ -625,6 +625,19 @@
                                               Content="{DynamicResource S.Toolbar.RightClickCancel}"
                                               ToolTip="{DynamicResource S.Toolbar.RightClickCancelTip}"
                                               Checked="GestureSwitch_Changed" Unchecked="GestureSwitch_Changed"/>
+                                    <!-- 自動選取 (Snipaste-style): what the pointer is on is framed before a box
+                                         is drawn. See CaptureSettings.AutoSelectWindow / AutoSelectElement;
+                                         a change here applies from the next box. -->
+                                    <CheckBox x:Name="AutoSelectWindowSwitch" Style="{StaticResource ToolbarMenuToggle}"
+                                              Tag="&#xE8A7;"
+                                              Content="{DynamicResource S.Toolbar.AutoSelectWindow}"
+                                              ToolTip="{DynamicResource S.Toolbar.AutoSelectWindowTip}"
+                                              Checked="GestureSwitch_Changed" Unchecked="GestureSwitch_Changed"/>
+                                    <CheckBox x:Name="AutoSelectElementSwitch" Style="{StaticResource ToolbarMenuToggle}"
+                                              Tag="&#xE7C9;"
+                                              Content="{DynamicResource S.Toolbar.AutoSelectElement}"
+                                              ToolTip="{DynamicResource S.Toolbar.AutoSelectElementTip}"
+                                              Checked="GestureSwitch_Changed" Unchecked="GestureSwitch_Changed"/>
                                     <!-- Where to change the folder, not the folder itself. A folder picker
                                          or an Explorer window opened from this bar would land under the
                                          capture overlay, which is full screen and topmost; and the notice
