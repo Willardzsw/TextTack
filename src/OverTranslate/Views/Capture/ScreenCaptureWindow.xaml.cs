@@ -172,9 +172,10 @@ public partial class ScreenCaptureWindow : Window
         if (!_processingStarted) UpdateDimLayer();
     }
 
-    // One card per monitor, positioned at each screen's top-left corner. This window spans the whole
-    // virtual desktop, so a single corner-anchored card would land on whichever monitor happens to
-    // hold the virtual origin — often not the one being looked at.
+    // One card per monitor, positioned at each screen's bottom-left corner (anchored by its bottom
+    // edge, so the card's own height never needs measuring). This window spans the whole virtual
+    // desktop, so a single corner-anchored card would land on whichever monitor happens to hold
+    // that corner — often not the one being looked at.
     private List<HintSpot> BuildHintSpots()
     {
         const double margin = 12;
@@ -191,15 +192,18 @@ public partial class ScreenCaptureWindow : Window
 
                 return new HintSpot(
                     (screen.Bounds.Left - _physBounds.Left) / _dpiX + margin * relScale,
-                    (screen.Bounds.Top  - _physBounds.Top)  / _dpiY + margin * relScale,
+                    // Above the taskbar: the working area's bottom is the taskbar's top when it is
+                    // docked at the bottom, and the screen's own bottom otherwise.
+                    (_physBounds.Bottom - screen.WorkingArea.Bottom) / _dpiY + margin * relScale,
                     relScale);
             })
             .ToList();
     }
 
-    // Window-local DIP position of one hint card, and the scale that makes it read the same
-    // physical size as the monitor it sits on would give it.
-    private sealed record HintSpot(double X, double Y, double Scale);
+    // Window-local DIP position of one hint card (left edge, and distance of its bottom edge from
+    // the window's bottom), and the scale that makes it read the same physical size as the monitor
+    // it sits on would give it.
+    private sealed record HintSpot(double X, double Bottom, double Scale);
 
     protected override void OnSourceInitialized(EventArgs e)
     {
