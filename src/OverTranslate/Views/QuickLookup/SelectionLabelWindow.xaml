@@ -1,0 +1,57 @@
+<Window x:Class="OverTranslate.Views.QuickLookup.SelectionLabelWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        WindowStyle="None"
+        AllowsTransparency="True"
+        Background="Transparent"
+        Topmost="True"
+        ShowInTaskbar="False"
+        ShowActivated="False"
+        ResizeMode="NoResize"
+        SizeToContent="WidthAndHeight"
+        UseLayoutRounding="True"
+        FontFamily="{DynamicResource AppFont}"
+        TextOptions.TextFormattingMode="Display">
+
+    <!-- 簡單顯示: the translation and nothing else, small, beside the selection. The margin is room
+         for the shadow; short of the blur radius it is cut off by the window's edge. -->
+    <Border Margin="8,6,8,10">
+        <Grid>
+            <Border x:Name="Card"
+                    Background="{DynamicResource HintCardBg}"
+                    BorderBrush="{DynamicResource HintCardBorder}"
+                    BorderThickness="1"
+                    CornerRadius="6">
+                <Border.Effect>
+                    <DropShadowEffect BlurRadius="8" ShadowDepth="1" Direction="270"
+                                      Opacity="0.18" Color="#000000"/>
+                </Border.Effect>
+                <ScrollViewer x:Name="Scroller"
+                              MaxHeight="240"
+                              Focusable="False"
+                              VerticalScrollBarVisibility="Auto"
+                              HorizontalScrollBarVisibility="Disabled">
+                    <TextBlock x:Name="LabelText"
+                               MaxWidth="400"
+                               Margin="8,4,8,5"
+                               FontSize="13"
+                               TextWrapping="Wrap"
+                               Foreground="{DynamicResource AppTextPrimary}"/>
+                </ScrollViewer>
+            </Border>
+
+            <!-- 已複製, over the card's top-right corner for a moment after a click. -->
+            <Border x:Name="CopiedBadge"
+                    Visibility="Collapsed"
+                    IsHitTestVisible="False"
+                    HorizontalAlignment="Right"
+                    VerticalAlignment="Top"
+                    Margin="0,-4,-4,0"
+                    Padding="6,1,6,2"
+                    CornerRadius="4"
+                    Background="{DynamicResource AppAccent}">
+                <TextBlock x:Name="CopiedText" FontSize="10.5" Foreground="White"/>
+            </Border>
+        </Grid>
+    </Border>
+</Window>

@@ -29,6 +29,48 @@ public class CaptureAutoSelectTests
         Assert.Equal(-1, CaptureHoverRules.TopmostAt([front, back], new Point(1500, 500)));
     }
 
+    // A 2560x1600 monitor with a 48px taskbar along the bottom.
+    private static readonly Rectangle MonitorBox = new(0, 0, 2560, 1600);
+    private static readonly Rectangle WorkArea = new(0, 0, 2560, 1552);
+
+    [Fact]
+    public void WorkAreaIsOfferedAroundAWindowInsideIt()
+    {
+        var window = new Rectangle(200, 100, 1200, 900);
+        Assert.True(CaptureHoverRules.OffersWorkArea(MonitorBox, WorkArea, window, new Point(500, 500)));
+        Assert.True(CaptureHoverRules.OffersWorkArea(MonitorBox, WorkArea, null, new Point(500, 500)));
+        // A maximised window fills the working area exactly.
+        Assert.True(CaptureHoverRules.OffersWorkArea(MonitorBox, WorkArea, WorkArea, new Point(500, 500)));
+    }
+
+    [Fact]
+    public void WorkAreaIsNotOfferedOnTheTaskbar()
+    {
+        Assert.False(CaptureHoverRules.OffersWorkArea(MonitorBox, WorkArea, null, new Point(500, 1580)));
+    }
+
+    [Fact]
+    public void WorkAreaIsNotOfferedUnderAFullScreenWindow()
+    {
+        // A game or video over the taskbar would be cut down to the working area otherwise.
+        Assert.False(CaptureHoverRules.OffersWorkArea(MonitorBox, WorkArea, MonitorBox, new Point(500, 500)));
+    }
+
+    [Fact]
+    public void WorkAreaIsNotOfferedWithoutATaskbar()
+    {
+        // Taskbar on another monitor or auto-hidden: the working area is the screen, one box already.
+        Assert.False(CaptureHoverRules.OffersWorkArea(MonitorBox, MonitorBox, null, new Point(500, 500)));
+    }
+
+    [Fact]
+    public void WorkAreaSitsBetweenMonitorAndWindowInTheChain()
+    {
+        var window = new Rectangle(200, 100, 1200, 900);
+        var chain = CaptureHoverRules.Chain([MonitorBox, WorkArea, window], MonitorBox);
+        Assert.Equal([MonitorBox, WorkArea, window], chain);
+    }
+
     /// <summary>An element in a made-up tree: its box and its children (null: not read yet).</summary>
     private sealed record El(string Name, Rectangle Box, El[]? Kids = null);
 

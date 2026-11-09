@@ -58,13 +58,15 @@
                        Visibility="Collapsed"
                        RenderOptions.BitmapScalingMode="NearestNeighbor"/>
 
-            <!-- The tint over the framed content, light enough to read as a wash rather than as a
-                 filter — the whole point of cutting the dim away here is that this area is legible. -->
+            <!-- Covers the box without tinting it: the framed content shows exactly as it is, the
+                 blue edge alone marks the box (as Snipaste does). It used to carry a light blue
+                 wash, which over the opening whole-screen offer read as the screen changing colour.
+                 Kept transparent rather than removed so the box still hit-tests as before. -->
             <Rectangle x:Name="SelectionFill"
                        RadiusX="3"
                        RadiusY="3"
                        Visibility="Collapsed"
-                       Fill="#1C99C8F0"/>
+                       Fill="Transparent"/>
 
             <!-- Where the 標記 marks are shown. They belong to the overlay, which owns and draws
                  them; they are hung here because this window is opaque and that one is not. A

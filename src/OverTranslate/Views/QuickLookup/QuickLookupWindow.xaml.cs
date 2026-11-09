@@ -218,8 +218,20 @@ public partial class QuickLookupWindow : Window
     /// </param>
     public static async Task SummonAsync(bool pinned = false, uint? copiedSince = null)
     {
+        // 簡單顯示 answers the shortcut with a label beside the selection. Where the selection is is
+        // asked first, while its application still has the focus, and alongside the copy.
+        var simple = !pinned && SettingsService.Instance.Current.QuickLookup.SimpleDisplay;
+        var whereSelected = simple ? SelectionLocator.FindAsync() : null;
+
         var selection = await SelectedTextReader.ReadAsync(
             SourceTextLimit.MaxLength, SettingsService.Instance.Current.QuickLookup.MultilineInput, copiedSince);
+
+        // With nothing selected there is nothing to label, and the popup is where text can be typed.
+        if (whereSelected is not null && !string.IsNullOrWhiteSpace(selection))
+        {
+            await SelectionLabelWindow.ShowAsync(selection, await whereSelected);
+            return;
+        }
 
         if (_current is { _closing: false } open)
         {

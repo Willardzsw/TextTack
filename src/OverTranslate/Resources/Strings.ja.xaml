@@ -461,6 +461,15 @@
     <sys:String x:Key="S.Settings.QuickLookupHotkey">ポップアップ翻訳</sys:String>
     <sys:String x:Key="S.Settings.QuickLookupHotkeyHint">ショートカットキーで[[ポップアップ翻訳]]を開く</sys:String>
     <sys:String x:Key="S.Settings.QuickLookupHotkeyNote">テキストを選択していると、ウィンドウを開いたときに自動で読み込んで翻訳します。</sys:String>
+    <sys:String x:Key="S.Settings.QuickLookupSimple">ポップアップ翻訳のシンプル表示</sys:String>
+    <sys:String x:Key="S.Settings.QuickLookupSettings">取得設定</sys:String>
+    <sys:String x:Key="S.Settings.QuickLookupDisplay">表示方法</sys:String>
+    <sys:String x:Key="S.Settings.QuickLookupDisplayHint">シンプル：選択したテキストの横に小さな訳文ラベルを表示。ポインターを合わせて Ctrl+C でコピー、右クリックまたはダブルクリックで閉じる、Shift+右クリックですべて閉じる、ドラッグで移動、Esc でもすべて閉じる</sys:String>
+    <sys:String x:Key="S.Settings.QuickLookupDisplayPopup">ポップアップ</sys:String>
+    <sys:String x:Key="S.Settings.QuickLookupDisplaySimple">シンプル</sys:String>
+    <sys:String x:Key="S.Settings.QuickLookupAutoHide">ラベルを自動で閉じる</sys:String>
+    <sys:String x:Key="S.Settings.QuickLookupAutoHideHint">シンプル表示のラベルを一定時間後に閉じます。ポインターが上にある間は閉じません</sys:String>
+    <sys:String x:Key="S.Settings.QuickLookupAutoHideSeconds">{0} 秒</sys:String>
     <sys:String x:Key="S.Settings.QuickTranslateHotkey">置換翻訳</sys:String>
     <sys:String x:Key="S.Settings.QuickTranslateHotkeyHint">[[選択中のテキスト]]を翻訳して貼り付け、原文を置き換える</sys:String>
     <sys:String x:Key="S.Settings.QuickTranslateHotkeyNote" xml:space="preserve">文字を入力できる欄でのみ動作し、入力欄以外には貼り付けられません。</sys:String>

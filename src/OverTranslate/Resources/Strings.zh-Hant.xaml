@@ -479,6 +479,15 @@
     <sys:String x:Key="S.Settings.QuickLookupHotkey">取詞翻譯</sys:String>
     <sys:String x:Key="S.Settings.QuickLookupHotkeyHint">按下快捷鍵開啟[[取詞翻譯]]</sys:String>
     <sys:String x:Key="S.Settings.QuickLookupHotkeyNote">若有選取文字，開啟視窗時會自動帶入並翻譯。</sys:String>
+    <sys:String x:Key="S.Settings.QuickLookupSimple">取詞翻譯簡單顯示</sys:String>
+    <sys:String x:Key="S.Settings.QuickLookupSettings">取詞設定</sys:String>
+    <sys:String x:Key="S.Settings.QuickLookupDisplay">顯示方式</sys:String>
+    <sys:String x:Key="S.Settings.QuickLookupDisplayHint">簡單：在選取文字旁顯示小譯文標籤。滑鼠指著按 Ctrl+C 複製，右鍵或雙擊關閉，Shift+右鍵關閉全部，拖曳移動，按 Esc 也可關閉全部</sys:String>
+    <sys:String x:Key="S.Settings.QuickLookupDisplayPopup">彈窗</sys:String>
+    <sys:String x:Key="S.Settings.QuickLookupDisplaySimple">簡單</sys:String>
+    <sys:String x:Key="S.Settings.QuickLookupAutoHide">標籤自動消失</sys:String>
+    <sys:String x:Key="S.Settings.QuickLookupAutoHideHint">簡單顯示的標籤過一段時間自動消失；滑鼠停在標籤上時不消失</sys:String>
+    <sys:String x:Key="S.Settings.QuickLookupAutoHideSeconds">{0} 秒</sys:String>
     <sys:String x:Key="S.Settings.QuickTranslateHotkey">替換翻譯</sys:String>
     <sys:String x:Key="S.Settings.QuickTranslateHotkeyHint">將[[選取文字]]翻譯後貼上並取代原文</sys:String>
     <sys:String x:Key="S.Settings.QuickTranslateHotkeyNote" xml:space="preserve">僅適用於可輸入文字的欄位，非輸入區域則無法貼上。</sys:String>

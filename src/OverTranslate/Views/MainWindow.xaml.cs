@@ -135,6 +135,7 @@ public partial class MainWindow : Window
             if (!RealtimeSessionController.Instance.IsActive) return;
 
             QuickLookup.QuickLookupWindow.Dismiss();
+            QuickLookup.SelectionLabelWindow.DismissAll();
             QuickTranslate.QuickTranslateHintWindow.Dismiss();
         }));
 
@@ -423,8 +424,17 @@ public partial class MainWindow : Window
     /// mid-gesture on a layer covering the whole screen, and a notification about a second feature is
     /// not what that press is asking about.
     /// </remarks>
-    private void OnHotkeyPressed(object? sender, EventArgs e) =>
-        Dispatcher.Invoke(() => RunCaptureYieldingRealtimeAsync("hotkey"));
+    private void OnHotkeyPressed(object? sender, EventArgs e)
+    {
+        // From GlobalHotkey it is raised by WM_HOTKEY on this thread, so the last message's time is
+        // the key press and the difference how long the press waited behind other work. The other
+        // shortcut kinds (mouse buttons, Ctrl+C+C) arrive another way, with no such time.
+        double? queued = sender is GlobalHotkey ? unchecked(Environment.TickCount - GetMessageTime()) : null;
+        Dispatcher.Invoke(() => RunCaptureYieldingRealtimeAsync("hotkey", queued));
+    }
+
+    [System.Runtime.InteropServices.DllImport("user32.dll")]
+    private static extern int GetMessageTime();
 
     /// <summary>
     /// Starts a capture from the 截圖翻譯 button on a running session's own control bar.
@@ -445,13 +455,15 @@ public partial class MainWindow : Window
     /// rail's button has the same pair around it but hides the shell as well, which is why it keeps
     /// its own path.
     /// </remarks>
-    private async Task RunCaptureYieldingRealtimeAsync(string origin)
+    private async Task RunCaptureYieldingRealtimeAsync(string origin, double? queuedMs = null)
     {
+        var timing = new CaptureStartupTiming(queuedMs);
         if (!RealtimeSessionController.Instance.TryYieldToCapture()) return;
+        timing.Mark("realtime");
 
         try
         {
-            await RunCaptureSessionAsync(origin);
+            await RunCaptureSessionAsync(origin, timing: timing);
         }
         finally
         {
@@ -825,9 +837,12 @@ public partial class MainWindow : Window
     /// pinned picture laid into it. Null takes the screen as it is now.
     /// </param>
     /// <param name="preset">A box to start with, in physical pixels, instead of one to drag out.</param>
+    /// <param name="timing">Started when the shortcut was handled, for the log line on how long the start took.</param>
     private async Task RunCaptureSessionAsync(
-        string origin = "hotkey", Bitmap? frozen = null, System.Drawing.Rectangle? preset = null)
+        string origin = "hotkey", Bitmap? frozen = null, System.Drawing.Rectangle? preset = null,
+        CaptureStartupTiming? timing = null)
     {
+        timing ??= new CaptureStartupTiming();
         if (HasActiveSession)
         {
             frozen?.Dispose();
@@ -851,6 +866,7 @@ public partial class MainWindow : Window
                 using var g = Graphics.FromImage(screenshot);
                 g.CopyFromScreen(screenBounds.Left, screenBounds.Top, 0, 0,
                     screenBounds.Size, CopyPixelOperation.SourceCopy);
+                timing.Mark("screenshot");
 
                 // 自動選取: the windows as they are in the picture, listed before the capture covers them.
                 // Only for a fresh capture: a pin being edited starts with its own box.
@@ -859,6 +875,7 @@ public partial class MainWindow : Window
                 {
                     try { picker = CaptureElementPicker.Snapshot(screenBounds); }
                     catch (Exception ex) { Log.Warn(ex, "Listing windows for auto-select failed"); }
+                    timing.Mark("list windows");
                 }
             }
         }
@@ -872,6 +889,7 @@ public partial class MainWindow : Window
         // writes a multi-line record, which on the way in would delay the freeze the user just
         // asked for. The values it reports are the same either side of the capture.
         DisplayDiagnostics.LogSnapshot(origin);
+        timing.Mark("display log");
 
         // Anything that escapes from here would leave the full-screen dim window on top of the
         // desktop with no owner left to close it, so the whole session setup is guarded.
@@ -879,6 +897,8 @@ public partial class MainWindow : Window
         {
             Log.Info("Capture session starting, origin={Origin}, bounds={Bounds}", origin, screenBounds);
             var captureWindow = new ScreenCaptureWindow(screenshot, screenBounds);
+            timing.Mark("build window");
+            captureWindow.StartupTiming = timing;
             if (preset is { } box) captureWindow.PresetSelection(box);
             captureWindow.UseHoverPicker(picker);
             picker = null;
@@ -931,11 +951,13 @@ public partial class MainWindow : Window
             captureWindow.RefreshRequested += (_, _) => RefreshCaptureScreenshot();
 
             captureWindow.Show();
+            timing.Mark("show");
 
             // Diagnostic: where the dim window physically landed and at what scale, versus the
             // screenBounds the screenshot was taken with. A difference between the two is the
             // misalignment users report, and Stretch="Fill" makes it invisible otherwise.
             DisplayDiagnostics.LogSnapshot("capture-window-shown", captureWindow);
+            timing.Mark("shown log");
 
             // After Show, not before: everything on the path between creating the window and
             // presenting it delays the first frame, during which the window's black background
@@ -953,6 +975,7 @@ public partial class MainWindow : Window
             // Paired with the Esc hook and for the same reason: these windows cover the screen, so
             // both ways out of a session that has gone wrong have to be set up before it can.
             _recoveryYield = SystemRecoveryYield.Install(ApplyCaptureTopmost);
+            timing.Mark("hooks");
 
             CancelSession();
             _sessionCts = new CancellationTokenSource();

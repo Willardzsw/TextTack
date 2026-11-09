@@ -735,6 +735,118 @@
                                     </StackPanel>
                                 </Grid>
 
+                                <!-- 取詞翻譯's own options: how the answer is shown. Folded like 替換翻譯's. -->
+                                <Grid Margin="0,8,0,0">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                    </Grid.ColumnDefinitions>
+                                    <ToggleButton Grid.Column="1" x:Name="QuickLookupSettingsToggle"
+                                                  Checked="QuickLookupSettings_Toggled"
+                                                  Unchecked="QuickLookupSettings_Toggled"
+                                                  HorizontalAlignment="Right"
+                                                  VerticalAlignment="Center"
+                                                  Padding="10,5"
+                                                  Foreground="{DynamicResource AppAccent}"
+                                                  FocusVisualStyle="{StaticResource CardFoldFocusVisual}"
+                                                  AutomationProperties.Name="{DynamicResource S.Settings.QuickLookupSettings}">
+                                        <ToggleButton.Template>
+                                            <ControlTemplate TargetType="ToggleButton">
+                                                <Border x:Name="Root" CornerRadius="6"
+                                                        Padding="{TemplateBinding Padding}"
+                                                        Background="{DynamicResource AppAccentSubtle}"
+                                                        BorderBrush="{DynamicResource AppAccentSubtleHover}"
+                                                        BorderThickness="1">
+                                                    <ContentPresenter VerticalAlignment="Center"
+                                                                      HorizontalAlignment="Center"/>
+                                                </Border>
+                                                <ControlTemplate.Triggers>
+                                                    <Trigger Property="IsChecked" Value="True">
+                                                        <Setter TargetName="Root" Property="BorderBrush" Value="{DynamicResource AppAccent}"/>
+                                                    </Trigger>
+                                                    <Trigger Property="IsMouseOver" Value="True">
+                                                        <Setter TargetName="Root" Property="Background" Value="{DynamicResource AppAccentSubtleHover}"/>
+                                                    </Trigger>
+                                                    <Trigger Property="IsPressed" Value="True">
+                                                        <Setter TargetName="Root" Property="Opacity" Value="0.7"/>
+                                                    </Trigger>
+                                                </ControlTemplate.Triggers>
+                                            </ControlTemplate>
+                                        </ToggleButton.Template>
+                                        <StackPanel Orientation="Horizontal">
+                                            <TextBlock Text="&#xE713;" FontFamily="Segoe Fluent Icons, Segoe MDL2 Assets"
+                                                       FontSize="13" VerticalAlignment="Center" Margin="0,0,6,0"/>
+                                            <TextBlock Text="{DynamicResource S.Settings.QuickLookupSettings}"
+                                                       FontSize="12" VerticalAlignment="Center"/>
+                                        </StackPanel>
+                                    </ToggleButton>
+                                </Grid>
+
+                                <Border x:Name="QuickLookupSettingsFold"
+                                        Height="0" Visibility="Collapsed" ClipToBounds="True">
+                                    <Border x:Name="QuickLookupSettingsBody" Opacity="0" Margin="0,8,0,0" Padding="12,10"
+                                            BorderBrush="{DynamicResource AppButtonBorder}"
+                                            BorderThickness="1" CornerRadius="6">
+                                        <StackPanel>
+                                            <!-- 顯示方式: the popup, or 簡單顯示's label beside the selection. -->
+                                            <Grid Margin="0,0,0,12">
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="*"/>
+                                                    <ColumnDefinition Width="Auto"/>
+                                                </Grid.ColumnDefinitions>
+                                                <StackPanel VerticalAlignment="Center" Margin="0,0,12,0">
+                                                    <TextBlock Text="{DynamicResource S.Settings.QuickLookupDisplay}"
+                                                               Style="{StaticResource OptionTitle}"/>
+                                                    <TextBlock Text="{DynamicResource S.Settings.QuickLookupDisplayHint}"
+                                                               Style="{StaticResource OptionDescription}"/>
+                                                </StackPanel>
+                                                <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+                                                    <RadioButton x:Name="QuickLookupPopupRadio"
+                                                                 Content="{DynamicResource S.Settings.QuickLookupDisplayPopup}"
+                                                                 GroupName="QuickLookupDisplayGroup"
+                                                                 Style="{StaticResource ThemeRadioButton}"
+                                                                 Checked="QuickLookupDisplay_Checked"/>
+                                                    <RadioButton x:Name="QuickLookupSimpleRadio"
+                                                                 Content="{DynamicResource S.Settings.QuickLookupDisplaySimple}"
+                                                                 GroupName="QuickLookupDisplayGroup"
+                                                                 Style="{StaticResource ThemeRadioButton}"
+                                                                 Checked="QuickLookupDisplay_Checked"/>
+                                                </StackPanel>
+                                            </Grid>
+
+                                            <!-- 自動消失, for the labels only: the popup goes when it loses the focus. -->
+                                            <Grid x:Name="QuickLookupAutoHideRow">
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="*"/>
+                                                    <ColumnDefinition Width="Auto"/>
+                                                    <ColumnDefinition Width="Auto"/>
+                                                </Grid.ColumnDefinitions>
+                                                <StackPanel VerticalAlignment="Center" Margin="0,0,12,0">
+                                                    <TextBlock Text="{DynamicResource S.Settings.QuickLookupAutoHide}"
+                                                               Style="{StaticResource OptionTitle}"/>
+                                                    <TextBlock Text="{DynamicResource S.Settings.QuickLookupAutoHideHint}"
+                                                               Style="{StaticResource OptionDescription}"/>
+                                                </StackPanel>
+                                                <ComboBox Grid.Column="1" x:Name="QuickLookupAutoHideSecondsBox"
+                                                          Style="{StaticResource ModernComboBox}"
+                                                          MinWidth="90"
+                                                          Margin="0,0,12,0"
+                                                          VerticalAlignment="Center"
+                                                          DisplayMemberPath="Display"
+                                                          SelectedValuePath="Seconds"
+                                                          AutomationProperties.Name="{DynamicResource S.Settings.QuickLookupAutoHide}"
+                                                          SelectionChanged="QuickLookupAutoHideSeconds_Changed"/>
+                                                <CheckBox Grid.Column="2" x:Name="QuickLookupAutoHideToggle"
+                                                          Style="{StaticResource ToggleSwitch}"
+                                                          VerticalAlignment="Center"
+                                                          AutomationProperties.Name="{DynamicResource S.Settings.QuickLookupAutoHide}"
+                                                          Checked="QuickLookupAutoHide_Toggled"
+                                                          Unchecked="QuickLookupAutoHide_Toggled"/>
+                                            </Grid>
+                                        </StackPanel>
+                                    </Border>
+                                </Border>
+
                                 <ContentControl x:Name="QuickLookupElevatedNote" Style="{StaticResource HotkeyElevatedNote}"/>
                             </StackPanel>
                         </Border>

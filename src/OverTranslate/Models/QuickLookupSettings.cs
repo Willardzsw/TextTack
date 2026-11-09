@@ -12,6 +12,24 @@ public class QuickLookupSettings
     public bool AutoCopyTranslation { get; set; } = false;
 
     /// <summary>
+    /// 簡單顯示: the shortcut puts a small label with the translation beside the selection instead
+    /// of opening the popup. Off by default — the popup is what the feature has always been. The
+    /// entry on the main window still opens the popup: someone who went looking for it wants it.
+    /// </summary>
+    public bool SimpleDisplay { get; set; } = false;
+
+    /// <summary>Whether a 簡單顯示 label takes itself away after <see cref="SimpleAutoHideSeconds"/>.</summary>
+    public bool SimpleAutoHide { get; set; } = false;
+
+    /// <summary>How long a label stays when <see cref="SimpleAutoHide"/> is on, in seconds.</summary>
+    public int SimpleAutoHideSeconds { get; set; } = DefaultAutoHideSeconds;
+
+    /// <summary>The choices offered for <see cref="SimpleAutoHideSeconds"/>.</summary>
+    public static readonly int[] AutoHideChoices = [5, 10, 15, 30, 60];
+
+    public const int DefaultAutoHideSeconds = 10;
+
+    /// <summary>
     /// Whether a selection keeps its line breaks and the box takes more than one line. Off by
     /// default: a selection dragged across a web page or a PDF is hard-wrapped at the page's width,
     /// and for most readers those breaks are noise that splits a sentence in two.

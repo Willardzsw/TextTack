@@ -331,6 +331,7 @@ public partial class SettingsPage : UserControl
             if (UiLanguageBox.SelectedValue == null) UiLanguageBox.SelectedIndex = 0;
 
             ShowQuickTranslateProvider(s);
+            ShowQuickLookupDisplay(s);
 
             QuickTranslateSourceBox.ItemsSource = LanguageData.SourceLanguages;
             QuickTranslateTargetBox.ItemsSource = LanguageData.TargetLanguages;
@@ -444,6 +445,66 @@ public partial class SettingsPage : UserControl
         };
         fold.BeginAnimation(HeightProperty, height);
         body.BeginAnimation(OpacityProperty, new DoubleAnimation(expanded ? 1 : 0, duration));
+    }
+
+    private void QuickLookupSettings_Toggled(object sender, RoutedEventArgs e)
+    {
+        if (QuickLookupSettingsFold is null) return;
+        AnimateFold(QuickLookupSettingsToggle.IsChecked == true, QuickLookupSettingsFold, QuickLookupSettingsBody);
+    }
+
+    /// <summary>One entry of 自動消失's picker: a number of seconds and how it reads.</summary>
+    private sealed record AutoHideChoice(int Seconds, string Display);
+
+    /// <summary>Puts 取詞翻譯's 顯示方式 and 自動消失 on screen as stored.</summary>
+    private void ShowQuickLookupDisplay(AppSettings s)
+    {
+        var quickLookup = s.QuickLookup;
+        QuickLookupPopupRadio.IsChecked = !quickLookup.SimpleDisplay;
+        QuickLookupSimpleRadio.IsChecked = quickLookup.SimpleDisplay;
+
+        var choices = QuickLookupSettings.AutoHideChoices
+            .Select(n => new AutoHideChoice(n, LocalizationService.Format("S.Settings.QuickLookupAutoHideSeconds", n)))
+            .ToList();
+        int stored = quickLookup.SimpleAutoHideSeconds;
+        if (!choices.Any(c => c.Seconds == stored))
+            stored = QuickLookupSettings.DefaultAutoHideSeconds;
+        QuickLookupAutoHideSecondsBox.ItemsSource = choices;
+        QuickLookupAutoHideSecondsBox.SelectedValue = stored;
+        QuickLookupAutoHideToggle.IsChecked = quickLookup.SimpleAutoHide;
+        RenderQuickLookupAutoHide();
+    }
+
+    /// <summary>自動消失 is about the labels, so it is greyed out while the popup is chosen.</summary>
+    private void RenderQuickLookupAutoHide()
+    {
+        bool simple = QuickLookupSimpleRadio.IsChecked == true;
+        QuickLookupAutoHideRow.IsEnabled = simple;
+        QuickLookupAutoHideRow.Opacity = simple ? 1 : 0.5;
+        QuickLookupAutoHideSecondsBox.IsEnabled = QuickLookupAutoHideToggle.IsChecked == true;
+    }
+
+    private void QuickLookupDisplay_Checked(object sender, RoutedEventArgs e)
+    {
+        if (QuickLookupAutoHideRow is null) return;
+        RenderQuickLookupAutoHide();
+        if (_loading) return;
+        // Through the feature switch, so the tray menu's 簡單顯示 and this agree.
+        SettingsService.Instance.SetFeatureToggle(FeatureToggle.QuickLookupSimple, QuickLookupSimpleRadio.IsChecked == true);
+        FlashSaved();
+    }
+
+    private void QuickLookupAutoHide_Toggled(object sender, RoutedEventArgs e)
+    {
+        if (QuickLookupAutoHideSecondsBox is null) return;
+        RenderQuickLookupAutoHide();
+        Persist(s => s.QuickLookup.SimpleAutoHide = QuickLookupAutoHideToggle.IsChecked == true);
+    }
+
+    private void QuickLookupAutoHideSeconds_Changed(object sender, SelectionChangedEventArgs e)
+    {
+        if (QuickLookupAutoHideSecondsBox?.SelectedValue is not int seconds) return;
+        Persist(s => s.QuickLookup.SimpleAutoHideSeconds = seconds);
     }
 
     private void QuickTranslateSettings_Toggled(object sender, RoutedEventArgs e)

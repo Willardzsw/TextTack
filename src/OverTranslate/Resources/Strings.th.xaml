@@ -452,6 +452,15 @@
     <sys:String x:Key="S.Settings.QuickLookupHotkey">แปลด่วน</sys:String>
     <sys:String x:Key="S.Settings.QuickLookupHotkeyHint">กดปุ่มลัดเพื่อเปิด[[แปลด่วน]]</sys:String>
     <sys:String x:Key="S.Settings.QuickLookupHotkeyNote">หากมีข้อความที่เลือกไว้ จะถูกนำเข้ามาแปลทันทีเมื่อหน้าต่างเปิด</sys:String>
+    <sys:String x:Key="S.Settings.QuickLookupSimple">แปลด่วนแบบแสดงอย่างง่าย</sys:String>
+    <sys:String x:Key="S.Settings.QuickLookupSettings">การตั้งค่าแปลด่วน</sys:String>
+    <sys:String x:Key="S.Settings.QuickLookupDisplay">รูปแบบการแสดง</sys:String>
+    <sys:String x:Key="S.Settings.QuickLookupDisplayHint">อย่างง่าย: แสดงป้ายคำแปลเล็ก ๆ ข้างข้อความที่เลือก ชี้ที่ป้ายแล้วกด Ctrl+C เพื่อคัดลอก คลิกขวาหรือดับเบิลคลิกเพื่อปิด Shift+คลิกขวาเพื่อปิดทั้งหมด ลากเพื่อย้าย กด Esc ก็ปิดทั้งหมดได้</sys:String>
+    <sys:String x:Key="S.Settings.QuickLookupDisplayPopup">หน้าต่าง</sys:String>
+    <sys:String x:Key="S.Settings.QuickLookupDisplaySimple">อย่างง่าย</sys:String>
+    <sys:String x:Key="S.Settings.QuickLookupAutoHide">ปิดป้ายอัตโนมัติ</sys:String>
+    <sys:String x:Key="S.Settings.QuickLookupAutoHideHint">ป้ายแบบแสดงอย่างง่ายจะปิดเองหลังเวลาที่กำหนด ยกเว้นขณะที่ตัวชี้อยู่บนป้าย</sys:String>
+    <sys:String x:Key="S.Settings.QuickLookupAutoHideSeconds">{0} วินาที</sys:String>
     <sys:String x:Key="S.Settings.QuickTranslateHotkey">แปลแทนที่</sys:String>
     <sys:String x:Key="S.Settings.QuickTranslateHotkeyHint">แปล[[ข้อความที่เลือก]]แล้ววางทับต้นฉบับ</sys:String>
     <sys:String x:Key="S.Settings.QuickTranslateHotkeyNote" xml:space="preserve">ใช้ได้เฉพาะในช่องที่พิมพ์ข้อความได้ วางนอกพื้นที่ป้อนข้อมูลไม่ได้</sys:String>

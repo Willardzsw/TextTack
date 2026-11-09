@@ -35,6 +35,18 @@ public partial class ScreenCaptureWindow
 
     private Rect _pressedHoverRect;
 
+    /// <summary>
+    /// Set from the start of the capture until the pointer moves: the box offered is the screen
+    /// without the taskbar, whatever the pointer is on. See <see cref="PreselectWorkArea"/>.
+    /// </summary>
+    private bool _holdWorkArea;
+
+    /// <summary>Where the pointer was, in physical pixels, when the capture started.</summary>
+    private System.Drawing.Point _holdPoint;
+
+    /// <summary>How far, in physical pixels, the pointer may drift and still not count as moved.</summary>
+    private const int HoldSlopPx = 2;
+
     /// <summary>Whether this capture offers boxes at all — a fresh one does, a pin being edited does not.</summary>
     public bool OffersHoverBoxes => _picker is not null;
 
@@ -84,7 +96,12 @@ public partial class ScreenCaptureWindow
         UpdateHover(Mouse.GetPosition(this));
     }
 
-    private void UpdateHover(WPoint pos)
+    private void UpdateHover(WPoint pos) =>
+        UpdateHover(new System.Drawing.Point(
+            (int)Math.Round(_physBounds.Left + pos.X * _dpiX),
+            (int)Math.Round(_physBounds.Top + pos.Y * _dpiY)));
+
+    private void UpdateHover(System.Drawing.Point phys)
     {
         if (!HoverAllowed || _picker is null)
         {
@@ -92,9 +109,14 @@ public partial class ScreenCaptureWindow
             return;
         }
 
-        var phys = new System.Drawing.Point(
-            (int)Math.Round(_physBounds.Left + pos.X * _dpiX),
-            (int)Math.Round(_physBounds.Top + pos.Y * _dpiY));
+        if (_holdWorkArea &&
+            (Math.Abs(phys.X - _holdPoint.X) > HoldSlopPx || Math.Abs(phys.Y - _holdPoint.Y) > HoldSlopPx))
+        {
+            // The pointer has moved: from here on the box follows it, gliding in from the screen.
+            _holdWorkArea = false;
+            _hoverInnermost = default;
+        }
+
         var chain = _picker.Resolve(phys, PickWindows, PickElements);
         if (chain.Count == 0)
         {
@@ -108,6 +130,14 @@ public partial class ScreenCaptureWindow
             _hoverUp = 0;
         }
 
+        if (_holdWorkArea)
+        {
+            // Elements read in the meantime deepen the chain; the offer stays on the screen box.
+            int at = _picker.WorkAreaAt(_holdPoint) is { } area ? chain.IndexOf(area) : -1;
+            if (at >= 0) _hoverUp = chain.Count - 1 - at;
+            else _holdWorkArea = false;
+        }
+
         _hoverChain = chain.Select(r => new Rect(
             (r.Left - _physBounds.Left) / _dpiX, (r.Top - _physBounds.Top) / _dpiY,
             r.Width / _dpiX, r.Height / _dpiY)).ToList();
@@ -116,6 +146,23 @@ public partial class ScreenCaptureWindow
     }
 
     /// <summary>How long the frame takes to grow or shrink onto the next box.</summary>
+    /// <summary>
+    /// 自動選取's first offer: the screen the pointer is on, without its taskbar, put up before the
+    /// first frame so the capture appears with that already bright and only the taskbar dimmed —
+    /// rather than the whole desktop going dark and the window under the pointer being uncovered a
+    /// moment later. It stays until the pointer moves; a click takes it, the wheel steps from it.
+    /// Call once the window's scale is known and before it is shown.
+    /// </summary>
+    private void PreselectWorkArea()
+    {
+        if (_picker is null || !PickWindows || _hasSelection || _processingStarted) return;
+        var p = System.Windows.Forms.Cursor.Position;
+        if (_picker.WorkAreaAt(p) is null) return;
+        _holdPoint = p;
+        _holdWorkArea = true;
+        UpdateHover(p);
+    }
+
     private static readonly TimeSpan HoverGlide = TimeSpan.FromMilliseconds(140);
 
     /// <summary>The box being offered — where the frame is going, whatever it shows mid-glide.</summary>
@@ -194,6 +241,7 @@ public partial class ScreenCaptureWindow
     private void HideHover()
     {
         StopGlide();
+        _holdWorkArea = false;
         if (!_hovering) return;
         _hovering = false;
         _hoverChain = [];
@@ -208,6 +256,8 @@ public partial class ScreenCaptureWindow
         base.OnMouseWheel(e);
         if (!_hovering || _hoverChain.Count == 0 || !HoverAllowed) return;
         e.Handled = true;
+        // Stepping from the screen box: it is the user's choice now, not the opening offer.
+        _holdWorkArea = false;
         int up = Math.Clamp(_hoverUp + (e.Delta > 0 ? 1 : -1), 0, _hoverChain.Count - 1);
         if (up == _hoverUp) return;
         _hoverUp = up;
@@ -218,6 +268,7 @@ public partial class ScreenCaptureWindow
     private bool BeginPressOnHover()
     {
         if (!_hovering || !HoverAllowed) return false;
+        _holdWorkArea = false;
         _pressOnHover = true;
         // Where the frame is going, not where the glide has got to.
         _pressedHoverRect = _hoverTarget;

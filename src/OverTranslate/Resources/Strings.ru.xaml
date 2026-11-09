@@ -452,6 +452,15 @@
     <sys:String x:Key="S.Settings.QuickLookupHotkey">Всплывающий перевод</sys:String>
     <sys:String x:Key="S.Settings.QuickLookupHotkeyHint">Нажмите сочетание, чтобы открыть [[всплывающий перевод]]</sys:String>
     <sys:String x:Key="S.Settings.QuickLookupHotkeyNote">Если выделен текст, он сразу подставляется и переводится при открытии окна.</sys:String>
+    <sys:String x:Key="S.Settings.QuickLookupSimple">Всплывающий перевод: простой вид</sys:String>
+    <sys:String x:Key="S.Settings.QuickLookupSettings">Настройки перевода выделения</sys:String>
+    <sys:String x:Key="S.Settings.QuickLookupDisplay">Вид</sys:String>
+    <sys:String x:Key="S.Settings.QuickLookupDisplayHint">Простой: небольшая подпись с переводом рядом с выделением. Наведите указатель и нажмите Ctrl+C, чтобы скопировать; правый или двойной щелчок — закрыть, Shift+правый щелчок — закрыть все; перетаскивание — переместить; Esc тоже закрывает все</sys:String>
+    <sys:String x:Key="S.Settings.QuickLookupDisplayPopup">Окно</sys:String>
+    <sys:String x:Key="S.Settings.QuickLookupDisplaySimple">Простой</sys:String>
+    <sys:String x:Key="S.Settings.QuickLookupAutoHide">Автоматически закрывать подписи</sys:String>
+    <sys:String x:Key="S.Settings.QuickLookupAutoHideHint">Подписи простого вида закрываются через заданное время, но не пока на них указатель</sys:String>
+    <sys:String x:Key="S.Settings.QuickLookupAutoHideSeconds">{0} с</sys:String>
     <sys:String x:Key="S.Settings.QuickTranslateHotkey">Перевод с заменой</sys:String>
     <sys:String x:Key="S.Settings.QuickTranslateHotkeyHint">Переводит [[выделенный текст]] и вставляет перевод вместо оригинала</sys:String>
     <sys:String x:Key="S.Settings.QuickTranslateHotkeyNote" xml:space="preserve">Работает только в полях для ввода текста; вне поля ввода вставить ничего нельзя.</sys:String>

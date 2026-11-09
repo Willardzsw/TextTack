@@ -92,6 +92,13 @@ internal static class WindowScreenPresence
         return hr >= 0;
     }
 
+    /// <summary>Blocks until DWM has composed its next frame (at most one display frame).</summary>
+    public static void WaitForComposition()
+    {
+        int hr = DwmFlush();
+        if (hr < 0) Log.Debug("DwmFlush failed (0x{0:X8})", hr);
+    }
+
     private static void SetTransitionsEnabled(nint hwnd, bool enabled)
     {
         if (hwnd == nint.Zero) return;

@@ -461,6 +461,15 @@
     <sys:String x:Key="S.Settings.QuickLookupHotkey">팝업 번역</sys:String>
     <sys:String x:Key="S.Settings.QuickLookupHotkeyHint">단축키로 [[팝업 번역]] 열기</sys:String>
     <sys:String x:Key="S.Settings.QuickLookupHotkeyNote">텍스트를 선택해 두면 창이 열릴 때 자동으로 불러와 번역합니다.</sys:String>
+    <sys:String x:Key="S.Settings.QuickLookupSimple">팝업 번역 간단 표시</sys:String>
+    <sys:String x:Key="S.Settings.QuickLookupSettings">가져오기 설정</sys:String>
+    <sys:String x:Key="S.Settings.QuickLookupDisplay">표시 방식</sys:String>
+    <sys:String x:Key="S.Settings.QuickLookupDisplayHint">간단: 선택한 텍스트 옆에 작은 번역 라벨을 표시. 포인터를 올리고 Ctrl+C로 복사, 오른쪽 클릭 또는 더블클릭으로 닫기, Shift+오른쪽 클릭으로 모두 닫기, 드래그로 이동, Esc로도 모두 닫기</sys:String>
+    <sys:String x:Key="S.Settings.QuickLookupDisplayPopup">팝업</sys:String>
+    <sys:String x:Key="S.Settings.QuickLookupDisplaySimple">간단</sys:String>
+    <sys:String x:Key="S.Settings.QuickLookupAutoHide">라벨 자동 닫기</sys:String>
+    <sys:String x:Key="S.Settings.QuickLookupAutoHideHint">간단 표시 라벨이 일정 시간 후 닫힙니다. 포인터가 라벨 위에 있으면 닫히지 않습니다</sys:String>
+    <sys:String x:Key="S.Settings.QuickLookupAutoHideSeconds">{0}초</sys:String>
     <sys:String x:Key="S.Settings.QuickTranslateHotkey">대치 번역</sys:String>
     <sys:String x:Key="S.Settings.QuickTranslateHotkeyHint">[[선택한 텍스트]]를 번역해 그대로 붙여넣어 원문을 바꿉니다</sys:String>
     <sys:String x:Key="S.Settings.QuickTranslateHotkeyNote" xml:space="preserve">글자를 입력할 수 있는 칸에서만 동작하며, 입력란이 아니면 붙여넣을 수 없습니다.</sys:String>

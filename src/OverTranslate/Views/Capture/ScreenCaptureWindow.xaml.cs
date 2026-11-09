@@ -46,6 +46,14 @@ public partial class ScreenCaptureWindow : Window
     private bool _inBackgroundMode;
     private bool _cloaked;
 
+    private static readonly NLog.Logger Log = NLog.LogManager.GetCurrentClassLogger();
+
+    /// <summary>
+    /// Set by the capture session before Show: the steps up to the frozen desktop appearing, logged
+    /// once it has. Null when the window is not shown by a fresh session.
+    /// </summary>
+    internal CaptureStartupTiming? StartupTiming { get; set; }
+
     private Bitmap _screenshot;
     private readonly System.Drawing.Rectangle _physBounds;
     private TaskCompletionSource<bool> _selectionTcs = new();
@@ -104,6 +112,7 @@ public partial class ScreenCaptureWindow : Window
         Closed += (_, _) =>
         {
             CompositionTarget.Rendering -= AnnounceAdjusted;
+            CompositionTarget.Rendering -= RevealWhenPresented;
             UseHoverPicker(null);
             _selectionTcs.TrySetResult(false);
             CroppedBitmap?.Dispose();
@@ -146,21 +155,59 @@ public partial class ScreenCaptureWindow : Window
     protected override void OnContentRendered(EventArgs e)
     {
         base.OnContentRendered(e);
+        StartupTiming?.Mark("first frame");
 
-        // The first frame has been drawn behind the cloak, so this puts up the frozen desktop in
-        // one step. See OnSourceInitialized.
-        if (_cloaked)
+        if (!_cloaked)
         {
-            WindowScreenPresence.SetCloaked(new WindowInteropHelper(this).Handle, cloaked: false);
-            _cloaked = false;
+            FinishReveal();
+            return;
         }
 
+        // ContentRendered means the interface thread has handed its first frame over, not that the
+        // render thread has put it up: uploading the full-desktop picture to the GPU can take it
+        // another 30-150 ms, and uncloaking in between showed the window's black background for a
+        // frame — the flash before the frozen desktop. WPF does not start a frame until the one
+        // before it has been presented, so a couple of frame ticks later the picture is there.
+        _revealTicks = 0;
+        CompositionTarget.Rendering += RevealWhenPresented;
+    }
+
+    /// <summary>Frame ticks waited after ContentRendered before uncloaking.</summary>
+    private const int RevealAfterTicks = 2;
+
+    private int _revealTicks;
+
+    private void RevealWhenPresented(object? sender, EventArgs e)
+    {
+        if (++_revealTicks < RevealAfterTicks && IsVisible) return;
+        CompositionTarget.Rendering -= RevealWhenPresented;
+        if (!IsVisible) return;
+
+        var hwnd = new WindowInteropHelper(this).Handle;
+        // And one composition, so DWM holds the presented surface before the window joins the screen.
+        WindowScreenPresence.WaitForComposition();
+        StartupTiming?.Mark("presented");
+        WindowScreenPresence.SetCloaked(hwnd, cloaked: false);
+        _cloaked = false;
+        FinishReveal();
+    }
+
+    private void FinishReveal()
+    {
         // Claimed only once the first frame is on screen. Activating before that forces a
         // foreground switch while the window is still empty, which flashes its black background.
         Activate();
+        StartupTiming?.Mark("reveal");
 
         // The pointer is already somewhere; what it is on is offered without waiting for it to move.
         RefreshHover();
+
+        if (StartupTiming is { } timing)
+        {
+            timing.Mark("first hover");
+            StartupTiming = null;
+            Log.Info("Capture start timing, {Timing}", timing.Describe());
+        }
     }
 
     // The dim layer's outer edge is the window's, so it is laid down with the first layout rather
@@ -248,6 +295,8 @@ public partial class ScreenCaptureWindow : Window
         HintHost.ItemsSource = BuildHintSpots();
 
         if (_preset is { } preset) ApplyPreset(preset);
+        else PreselectWorkArea();
+        StartupTiming?.Mark("window init");
     }
 
     private IntPtr WndProc(IntPtr hwnd, int msg, IntPtr wParam, IntPtr lParam, ref bool handled)

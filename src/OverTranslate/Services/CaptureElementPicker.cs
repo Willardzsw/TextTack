@@ -1,4 +1,5 @@
 using System.Collections.Concurrent;
+using System.Diagnostics;
 using System.Drawing;
 using System.Runtime.InteropServices;
 using System.Text;
@@ -96,6 +97,23 @@ internal static class CaptureHoverRules
         return chain;
     }
 
+    /// <summary>
+    /// Whether the monitor's working area (the screen without the taskbar) is a box of its own
+    /// between the monitor and the window at <paramref name="p"/>: only where the taskbar takes
+    /// something away, the point is not on the taskbar, and the window (null: none) fits inside it.
+    /// A window over the taskbar — a full-screen game or video — would otherwise be cut down to the
+    /// working area as the chain clips each box to the one outside it.
+    /// </summary>
+    public static bool OffersWorkArea(Rectangle monitor, Rectangle workArea, Rectangle? window, Point p, int tolerance = 2)
+    {
+        if (workArea.Width < 2 || workArea.Height < 2 || Near(monitor, workArea, tolerance)) return false;
+        if (!workArea.Contains(p)) return false;
+        if (window is not { } w) return true;
+        var inflated = workArea;
+        inflated.Inflate(tolerance, tolerance);
+        return inflated.Contains(Rectangle.Intersect(w, monitor));
+    }
+
     private static bool Near(Rectangle a, Rectangle b, int tolerance) =>
         Math.Abs(a.Left - b.Left) <= tolerance && Math.Abs(a.Top - b.Top) <= tolerance &&
         Math.Abs(a.Right - b.Right) <= tolerance && Math.Abs(a.Bottom - b.Bottom) <= tolerance;
@@ -125,6 +143,9 @@ internal sealed class CaptureElementPicker : IDisposable
     private readonly IReadOnlyList<(IntPtr Hwnd, Rectangle Bounds)> _windows;
     private readonly Rectangle[] _windowBounds;
     private readonly Rectangle[] _monitors;
+
+    /// <summary>Each monitor's working area (without the taskbar), in the order of <see cref="_monitors"/>.</summary>
+    private readonly Rectangle[] _workAreas;
     private readonly Rectangle _desktop;
     private readonly Dispatcher _dispatcher;
     private readonly ConcurrentDictionary<IntPtr, Node> _roots = new();
@@ -139,11 +160,13 @@ internal sealed class CaptureElementPicker : IDisposable
     public event EventHandler? Updated;
 
     private CaptureElementPicker(
-        IReadOnlyList<(IntPtr, Rectangle)> windows, Rectangle[] monitors, Rectangle desktop, Dispatcher dispatcher)
+        IReadOnlyList<(IntPtr, Rectangle)> windows, Rectangle[] monitors, Rectangle[] workAreas,
+        Rectangle desktop, Dispatcher dispatcher)
     {
         _windows = windows;
         _windowBounds = windows.Select(w => w.Item2).ToArray();
         _monitors = monitors;
+        _workAreas = workAreas;
         _desktop = desktop;
         _dispatcher = dispatcher;
     }
@@ -154,8 +177,25 @@ internal sealed class CaptureElementPicker : IDisposable
     /// </summary>
     public static CaptureElementPicker Snapshot(Rectangle desktop)
     {
-        var monitors = System.Windows.Forms.Screen.AllScreens.Select(s => s.Bounds).ToArray();
-        return new CaptureElementPicker(ListWindows(desktop), monitors, desktop, Dispatcher.CurrentDispatcher);
+        var screens = System.Windows.Forms.Screen.AllScreens;
+        return new CaptureElementPicker(
+            ListWindows(desktop), screens.Select(s => s.Bounds).ToArray(), screens.Select(s => s.WorkingArea).ToArray(),
+            desktop, Dispatcher.CurrentDispatcher);
+    }
+
+    /// <summary>
+    /// The working area (the screen without the taskbar) of the monitor at <paramref name="p"/>,
+    /// where <see cref="Resolve"/> offers it as a box of its own; null otherwise.
+    /// </summary>
+    public Rectangle? WorkAreaAt(Point p)
+    {
+        int m = Array.FindIndex(_monitors, r => r.Contains(p));
+        if (m < 0) return null;
+        int w = CaptureHoverRules.TopmostAt(_windowBounds, p);
+        Rectangle? window = w >= 0 ? _windowBounds[w] : null;
+        return CaptureHoverRules.OffersWorkArea(_monitors[m], _workAreas[m], window, p)
+            ? Rectangle.Intersect(_workAreas[m], _desktop)
+            : null;
     }
 
     /// <summary>
@@ -170,6 +210,7 @@ internal sealed class CaptureElementPicker : IDisposable
         {
             foreach (var m in _monitors)
                 if (m.Contains(p)) { path.Add(m); break; }
+            if (WorkAreaAt(p) is { } workArea) path.Add(workArea);
         }
 
         int w = CaptureHoverRules.TopmostAt(_windowBounds, p);
@@ -225,9 +266,20 @@ internal sealed class CaptureElementPicker : IDisposable
             bool mayGrow = false;
             try
             {
+                long started = Stopwatch.GetTimestamp();
                 bool changed = Load(j.Hwnd, j.Point, out mayGrow);
+                LogLoadTime(j.Hwnd, Stopwatch.GetElapsedTime(started).TotalMilliseconds);
                 if (changed && !_disposed)
-                    _dispatcher.BeginInvoke(() => { if (!_disposed) Updated?.Invoke(this, EventArgs.Empty); });
+                {
+                    long posted = Stopwatch.GetTimestamp();
+                    _dispatcher.BeginInvoke(() =>
+                    {
+                        double waited = Stopwatch.GetElapsedTime(posted).TotalMilliseconds;
+                        if (waited >= SlowDispatchMs)
+                            Log.Info("Auto-select: the interface thread took {Ms:F0} ms to take the elements read", waited);
+                        if (!_disposed) Updated?.Invoke(this, EventArgs.Empty);
+                    });
+                }
             }
             catch (Exception ex)
             {
@@ -285,6 +337,49 @@ internal sealed class CaptureElementPicker : IDisposable
         mayGrow = grow && !_disposed;
         return changed;
     }
+
+    /// <summary>Since the windows were listed; the first element read is logged against it.</summary>
+    private readonly Stopwatch _sinceSnapshot = Stopwatch.StartNew();
+
+    private bool _firstLoadLogged;
+
+    /// <summary>A read of one pass this long or longer is logged.</summary>
+    private const double SlowLoadMs = 150;
+
+    /// <summary>A wait this long or longer for the UI thread to take the result is logged.</summary>
+    private const double SlowDispatchMs = 100;
+
+    /// <summary>
+    /// Logs the first read of this capture, and any later one that was slow, with the program it
+    /// asked — the elements come from that program, and a slow one is what a slow read points at.
+    /// </summary>
+    private void LogLoadTime(IntPtr hwnd, double ms)
+    {
+        bool first = !_firstLoadLogged;
+        _firstLoadLogged = true;
+        if (!first && ms < SlowLoadMs) return;
+
+        string program = "?";
+        try
+        {
+            GetWindowThreadProcessId(hwnd, out uint pid);
+            using var process = System.Diagnostics.Process.GetProcessById((int)pid);
+            program = process.ProcessName;
+        }
+        catch (Exception)
+        {
+            // Gone already; the time still counts.
+        }
+
+        if (first)
+            Log.Info("Auto-select: first elements read from {Program} in {Ms:F0} ms, {Since:F0} ms after the windows were listed",
+                program, ms, _sinceSnapshot.Elapsed.TotalMilliseconds);
+        else
+            Log.Info("Auto-select: reading elements from {Program} took {Ms:F0} ms", program, ms);
+    }
+
+    [DllImport("user32.dll")]
+    private static extern uint GetWindowThreadProcessId(IntPtr hwnd, out uint processId);
 
     private static readonly CacheRequest ChildCache = MakeCache();
 
