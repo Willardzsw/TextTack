@@ -28,6 +28,7 @@ public partial class MainWindow : Window
     private GlobalHotkey? _realtimePauseHotkey;
     private GlobalHotkey? _quickLookupHotkey;
     private GlobalHotkey? _quickTranslateHotkey;
+    private GlobalHotkey? _quickAppendHotkey;
     private GlobalHotkey? _pinHotkey;
     private GlobalHotkey? _stickyNoteHotkey;
     private GlobalHotkey? _stickyNoteNewHotkey;
@@ -201,6 +202,9 @@ public partial class MainWindow : Window
         _quickTranslateHotkey = new GlobalHotkey(GlobalHotkey.QuickTranslateId);
         _quickTranslateHotkey.HotkeyPressed += OnQuickTranslateHotkeyPressed;
 
+        _quickAppendHotkey = new GlobalHotkey(GlobalHotkey.QuickAppendId);
+        _quickAppendHotkey.HotkeyPressed += OnQuickAppendHotkeyPressed;
+
         _pinHotkey = new GlobalHotkey(GlobalHotkey.PinId);
         _pinHotkey.HotkeyPressed += OnPinHotkeyPressed;
 
@@ -217,6 +221,7 @@ public partial class MainWindow : Window
             [HotkeyAction.RealtimePause] = _realtimePauseHotkey,
             [HotkeyAction.QuickLookup] = _quickLookupHotkey,
             [HotkeyAction.QuickTranslate] = _quickTranslateHotkey,
+            [HotkeyAction.QuickAppend] = _quickAppendHotkey,
             [HotkeyAction.Pin] = _pinHotkey,
             [HotkeyAction.StickyNote] = _stickyNoteHotkey,
             [HotkeyAction.StickyNoteNew] = _stickyNoteNewHotkey,
@@ -238,6 +243,12 @@ public partial class MainWindow : Window
             if (!binding.Enabled)
             {
                 Log.Info("Hotkey {Action} is switched off in settings", binding.Action);
+                continue;
+            }
+
+            if (HotkeyBindings.IsUnset(binding.Trigger))
+            {
+                Log.Info("Hotkey {Action} is switched on but has no shortcut set", binding.Action);
                 continue;
             }
 
@@ -286,6 +297,9 @@ public partial class MainWindow : Window
                 break;
             case HotkeyAction.QuickTranslate:
                 RunQuickTranslate(copiedSince);
+                break;
+            case HotkeyAction.QuickAppend:
+                RunQuickTranslate(copiedSince, append: true);
                 break;
             case HotkeyAction.Pin:
                 OnPinHotkeyPressed(this, EventArgs.Empty);
@@ -382,6 +396,7 @@ public partial class MainWindow : Window
         _realtimePauseHotkey?.Unregister();
         _quickLookupHotkey?.Unregister();
         _quickTranslateHotkey?.Unregister();
+        _quickAppendHotkey?.Unregister();
         _pinHotkey?.Unregister();
         _stickyNoteHotkey?.Unregister();
         _stickyNoteNewHotkey?.Unregister();
@@ -525,13 +540,16 @@ public partial class MainWindow : Window
     /// </remarks>
     private void OnQuickTranslateHotkeyPressed(object? sender, EventArgs e) => RunQuickTranslate(null);
 
-    private void RunQuickTranslate(uint? copiedSince) =>
+    /// <summary>追加翻譯: the same flow and guards, pasting after the selection instead of over it.</summary>
+    private void OnQuickAppendHotkeyPressed(object? sender, EventArgs e) => RunQuickTranslate(null, append: true);
+
+    private void RunQuickTranslate(uint? copiedSince, bool append = false) =>
         Dispatcher.Invoke(async () =>
         {
             if (HasActiveSession) return;
             if (RealtimeSessionController.Instance is { IsActive: true, IsTranslating: false }) return;
 
-            await Views.QuickTranslate.QuickTranslateFlow.RunAsync(copiedSince);
+            await Views.QuickTranslate.QuickTranslateFlow.RunAsync(copiedSince, append);
         });
 
     /// <summary>
@@ -2337,6 +2355,7 @@ public partial class MainWindow : Window
         _realtimePauseHotkey?.Dispose();
         _quickLookupHotkey?.Dispose();
         _quickTranslateHotkey?.Dispose();
+        _quickAppendHotkey?.Dispose();
         _pinHotkey?.Dispose();
         _stickyNoteHotkey?.Dispose();
         _stickyNoteNewHotkey?.Dispose();

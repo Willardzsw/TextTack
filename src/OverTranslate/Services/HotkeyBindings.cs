@@ -13,6 +13,7 @@ public enum HotkeyAction
     Pin,
     StickyNote,
     StickyNoteNew,
+    QuickAppend,
 }
 
 /// <summary>
@@ -135,6 +136,10 @@ public static class HotkeyBindings
             settings.StickyNoteNewHotkeyInputKind,
             settings.StickyNoteNewHotkeyModifiers,
             settings.StickyNoteNewHotkeyVirtualKey),
+        HotkeyAction.QuickAppend => BuildTrigger(
+            settings.QuickAppendHotkeyInputKind,
+            settings.QuickAppendHotkeyModifiers,
+            settings.QuickAppendHotkeyVirtualKey),
         _ => throw new ArgumentOutOfRangeException(nameof(action), action, null),
     };
 
@@ -156,6 +161,13 @@ public static class HotkeyBindings
         0x13, // Pause
         0x91, // Scroll Lock
     ];
+
+    /// <summary>
+    /// Whether no trigger has been chosen at all: a keyboard trigger with neither modifiers nor a
+    /// key. 追加翻譯 starts that way. An unset shortcut is never registered and claims nothing.
+    /// </summary>
+    public static bool IsUnset(ShortcutTrigger trigger) =>
+        trigger.Kind == ShortcutInputKind.Keyboard && trigger.Modifiers == 0 && trigger.Code == 0;
 
     /// <summary>
     /// Whether a trigger may be bound at all, as opposed to whether anything else has taken it.
@@ -216,6 +228,9 @@ public static class HotkeyBindings
             (HotkeyAction.StickyNoteNew,
                 TriggerFor(settings, HotkeyAction.StickyNoteNew),
                 settings.StickyNoteHotkeyEnabled),
+            (HotkeyAction.QuickAppend,
+                TriggerFor(settings, HotkeyAction.QuickAppend),
+                settings.QuickAppendHotkeyEnabled),
         };
 
         var claimed = new Dictionary<ShortcutTrigger, HotkeyAction>();
@@ -227,7 +242,7 @@ public static class HotkeyBindings
 
             // A disabled shortcut does not claim its trigger, so turning one off hands the trigger to
             // whatever was shadowed by it rather than leaving it reserved.
-            if (enabled)
+            if (enabled && !IsUnset(trigger))
             {
                 if (claimed.TryGetValue(trigger, out var holder)) shadowedBy = holder;
                 else claimed[trigger] = action;

@@ -168,7 +168,8 @@ public class HotkeyBindingsTests
 
         var resolved = HotkeyBindings.Resolve(settings);
         Assert.All(
-            resolved.Where(b => b.Action != HotkeyAction.Capture),
+            // 追加翻譯 is off by default, so it is not one of the shortcuts being checked here.
+            resolved.Where(b => b.Action is not (HotkeyAction.Capture or HotkeyAction.QuickAppend)),
             binding => Assert.True(binding.IsActive));
     }
 

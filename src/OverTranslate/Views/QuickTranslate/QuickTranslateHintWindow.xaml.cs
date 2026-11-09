@@ -193,12 +193,13 @@ public partial class QuickTranslateHintWindow : Window
     /// the whole point of this feature — offering to put them on the clipboard as well would be a
     /// control for something that has already happened.
     /// </remarks>
-    public void ReportSuccess()
+    /// <param name="appended">追加翻譯: the translation went after the selection, not over it.</param>
+    public void ReportSuccess(bool appended = false)
     {
         if (_closed) return;
 
         ShowGlyph(DoneGlyph, "AppSuccess");
-        MessageText.Text = LocalizationService.Get("S.QuickTranslate.Replaced");
+        MessageText.Text = LocalizationService.Get(appended ? "S.QuickTranslate.Appended" : "S.QuickTranslate.Replaced");
 
         _copyText = "";
         CopyBtn.Visibility = Visibility.Collapsed;

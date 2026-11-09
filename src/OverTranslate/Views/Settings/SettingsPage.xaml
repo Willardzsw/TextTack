@@ -877,6 +877,17 @@
                                             BorderBrush="{DynamicResource AppButtonBorder}"
                                             BorderThickness="1" CornerRadius="6">
                                         <StackPanel>
+                                            <!-- The service first: 跟隨全域 keeps the one 文字翻譯, 取詞翻譯 and 截圖翻譯
+                                                 share; anything else is 替換翻譯's and 追加翻譯's own. -->
+                                            <StackPanel Margin="0,0,0,12">
+                                                <TextBlock Text="{DynamicResource S.Realtime.Provider}" Style="{StaticResource FieldLabel}" Margin="0,0,0,6"/>
+                                                <ComboBox x:Name="QuickTranslateProviderBox"
+                                                          Style="{StaticResource ModernComboBox}"
+                                                          DisplayMemberPath="Display"
+                                                          AutomationProperties.Name="{DynamicResource S.Realtime.Provider}"
+                                                          SelectionChanged="QuickTranslateProvider_Changed"/>
+                                            </StackPanel>
+
                                             <!-- 雙語互譯 first, because it decides what the pickers under it mean: off, they are
                                                  the fixed 來源／目標 pair; on, they are the two languages the direction is chosen
                                                  between. Same name, wording and rules as 取詞翻譯's (#322) — one feature, two
@@ -972,6 +983,59 @@
                                 </Border>
 
                                 <ContentControl x:Name="QuickTranslateElevatedNote" Style="{StaticResource HotkeyElevatedNote}"/>
+                            </StackPanel>
+                        </Border>
+
+                        <!-- 追加翻譯. Right under 替換翻譯: the same gesture and the same settings (its
+                             fold above), pasting after the selection rather than over it. No fold of its
+                             own, as it has no options of its own. Off and unbound by default. -->
+                        <Border Style="{StaticResource HotkeyRow}">
+                            <StackPanel>
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="Auto"/>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="0.72*" MinWidth="140"/>
+                                        <ColumnDefinition Width="Auto" SharedSizeGroup="HotkeyToggle"/>
+                                    </Grid.ColumnDefinitions>
+
+                                    <Border Grid.Column="0" Style="{StaticResource HotkeyRowIcon}">
+                                        <TextBlock Text="&#xE710;" Style="{StaticResource HotkeyRowGlyph}"/>
+                                    </Border>
+
+                                    <StackPanel Grid.Column="1" VerticalAlignment="Center" Margin="0,0,14,0">
+                                        <StackPanel Orientation="Horizontal">
+                                            <TextBlock Text="{DynamicResource S.Settings.QuickAppendHotkey}"
+                                                       Style="{StaticResource OptionTitle}"
+                                                       VerticalAlignment="Center"/>
+                                            <controls:InfoTip TextKey="S.Settings.QuickAppendHotkeyNote"/>
+                                        </StackPanel>
+                                        <TextBlock controls:HighlightedText.Source="{DynamicResource S.Settings.QuickAppendHotkeyHint}"
+                                                   Style="{StaticResource OptionDescription}"
+                                                   TextTrimming="CharacterEllipsis"
+                                                   MaxHeight="34"/>
+                                    </StackPanel>
+
+                                    <TextBox Grid.Column="2" x:Name="QuickAppendHotkeyBox"
+                                             Style="{StaticResource HotkeyBox}"
+                                             PreviewMouseLeftButtonDown="HotkeyBox_PreviewMouseLeftButtonDown"
+                                             PreviewKeyDown="HotkeyBox_PreviewKeyDown"
+                                             PreviewKeyUp="HotkeyBox_PreviewKeyUp"
+                                             GotFocus="HotkeyBox_GotFocus"
+                                             LostFocus="HotkeyBox_LostFocus"/>
+
+                                    <StackPanel Grid.Column="3"
+                                                Orientation="Horizontal"
+                                                VerticalAlignment="Center"
+                                                Margin="12,0,0,0">
+                                        <CheckBox x:Name="QuickAppendHotkeyEnabledCheckBox"
+                                                  Style="{StaticResource ToggleSwitch}"
+                                                  Checked="HotkeyEnabled_Toggled"
+                                                  Unchecked="HotkeyEnabled_Toggled"/>
+                                    </StackPanel>
+                                </Grid>
+
+                                <ContentControl x:Name="QuickAppendElevatedNote" Style="{StaticResource HotkeyElevatedNote}"/>
                             </StackPanel>
                         </Border>
 

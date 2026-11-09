@@ -20,6 +20,7 @@ public enum FeatureToggle
     MouseHorizontalScroll,
     MouseResize,
     StickyNoteHotkey,
+    QuickAppendHotkey,
 }
 
 /// <summary>What the tray icon's right-click menu shows.</summary>
@@ -41,6 +42,7 @@ public static class FeatureToggles
         FeatureToggle.CaptureHotkey,
         FeatureToggle.QuickLookupHotkey,
         FeatureToggle.QuickTranslateHotkey,
+        FeatureToggle.QuickAppendHotkey,
         FeatureToggle.TranslationWindowHotkey,
         FeatureToggle.RealtimePauseHotkey,
         FeatureToggle.PinHotkey,
@@ -59,6 +61,7 @@ public static class FeatureToggles
         FeatureToggle.RealtimePauseHotkey => "S.Settings.RealtimePauseHotkey",
         FeatureToggle.QuickLookupHotkey => "S.Settings.QuickLookupHotkey",
         FeatureToggle.QuickTranslateHotkey => "S.Settings.QuickTranslateHotkey",
+        FeatureToggle.QuickAppendHotkey => "S.Settings.QuickAppendHotkey",
         FeatureToggle.PinHotkey => "S.Settings.PinHotkey",
         FeatureToggle.StickyNoteHotkey => "S.Settings.StickyNoteHotkey",
         FeatureToggle.MouseEnhance => "S.Settings.MouseEnhance",
@@ -75,6 +78,7 @@ public static class FeatureToggles
         FeatureToggle.RealtimePauseHotkey => s.RealtimePauseHotkeyEnabled,
         FeatureToggle.QuickLookupHotkey => s.QuickLookupHotkeyEnabled,
         FeatureToggle.QuickTranslateHotkey => s.QuickTranslateHotkeyEnabled,
+        FeatureToggle.QuickAppendHotkey => s.QuickAppendHotkeyEnabled,
         FeatureToggle.PinHotkey => s.PinClipboardHotkeyEnabled,
         FeatureToggle.StickyNoteHotkey => s.StickyNoteHotkeyEnabled,
         FeatureToggle.MouseEnhance => Mouse(s).Enabled,
@@ -93,6 +97,7 @@ public static class FeatureToggles
             case FeatureToggle.RealtimePauseHotkey: s.RealtimePauseHotkeyEnabled = on; break;
             case FeatureToggle.QuickLookupHotkey: s.QuickLookupHotkeyEnabled = on; break;
             case FeatureToggle.QuickTranslateHotkey: s.QuickTranslateHotkeyEnabled = on; break;
+            case FeatureToggle.QuickAppendHotkey: s.QuickAppendHotkeyEnabled = on; break;
             case FeatureToggle.PinHotkey: s.PinClipboardHotkeyEnabled = on; break;
             case FeatureToggle.StickyNoteHotkey: s.StickyNoteHotkeyEnabled = on; break;
             case FeatureToggle.MouseEnhance: Mouse(s).Enabled = on; break;

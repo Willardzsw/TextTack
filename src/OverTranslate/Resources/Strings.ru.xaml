@@ -90,6 +90,7 @@
 
     <!-- ── In-place translation ── -->
     <sys:String x:Key="S.QuickTranslate.Replaced">Переведено и вставлено.</sys:String>
+    <sys:String x:Key="S.QuickTranslate.Appended">Переведено и вставлено после оригинала.</sys:String>
     <sys:String x:Key="S.QuickTranslate.EmptyResult">Перевод пришел пустым; ваш текст оставлен без изменений.</sys:String>
     <sys:String x:Key="S.QuickTranslate.FocusMoved">Вы переключились на другое окно, поэтому перевод не удалось вставить.</sys:String>
     <sys:String x:Key="S.QuickTranslate.ClipboardBusy">Буфер обмена недоступен, поэтому ничего не вставлено.</sys:String>
@@ -455,8 +456,13 @@
     <sys:String x:Key="S.Settings.QuickTranslateHotkeyHint">Переводит [[выделенный текст]] и вставляет перевод вместо оригинала</sys:String>
     <sys:String x:Key="S.Settings.QuickTranslateHotkeyNote" xml:space="preserve">Работает только в полях для ввода текста; вне поля ввода вставить ничего нельзя.</sys:String>
     <sys:String x:Key="S.Settings.QuickTranslateSettings">Настройки перевода</sys:String>
-    <sys:String x:Key="S.Settings.QuickTranslateLanguageNote">Эти языки используются только для перевода с заменой и не влияют на перевод снимка экрана, текста и перевод в реальном времени.</sys:String>
+    <sys:String x:Key="S.Settings.QuickTranslateLanguageNote">Эти настройки используются только для перевода с заменой и с добавлением и не влияют на перевод снимка экрана, текста и перевод в реальном времени.</sys:String>
     <sys:String x:Key="S.Settings.QuickTranslateBilingualHint">Определяет язык выделенного текста и переводит между двумя выбранными языками</sys:String>
+    <sys:String x:Key="S.Settings.QuickAppendHotkey">Перевод с добавлением</sys:String>
+    <sys:String x:Key="S.Settings.QuickAppendHotkeyHint">Переводит [[выделенный текст]] и вставляет перевод после оригинала, сохраняя его</sys:String>
+    <sys:String x:Key="S.Settings.QuickAppendHotkeyNote" xml:space="preserve">Языки и служба общие с переводом с заменой; меняются в его настройках перевода. Работает только в полях для ввода текста.</sys:String>
+    <sys:String x:Key="S.Settings.HotkeyUnset">Не задано</sys:String>
+    <sys:String x:Key="S.Settings.ProviderFollowGlobal">Как в общих настройках ({0})</sys:String>
     <sys:String x:Key="S.Settings.HotkeyNeedsModifier">✗ Одной клавишей можно назначить только F1–F24, Pause или Scroll Lock — для остальных нужны Ctrl/Alt/Shift</sys:String>
 
     <sys:String x:Key="S.Settings.General">Общие</sys:String>

@@ -90,6 +90,7 @@ Translation failed: {1}</sys:String>
     <!-- ── In-place translation ── Only ever seen on the hint card, so each line stays to one: it sits
          over the window the reader is working in. -->
     <sys:String x:Key="S.QuickTranslate.Replaced">Translated and pasted.</sys:String>
+    <sys:String x:Key="S.QuickTranslate.Appended">Translated and pasted after the original.</sys:String>
     <sys:String x:Key="S.QuickTranslate.EmptyResult">The translation came back empty; your text was left as it was.</sys:String>
     <sys:String x:Key="S.QuickTranslate.FocusMoved">You switched windows, so the translation could not be pasted.</sys:String>
     <sys:String x:Key="S.QuickTranslate.ClipboardBusy">The clipboard is unavailable, so nothing was pasted.</sys:String>
@@ -460,8 +461,13 @@ Details: {0}</sys:String>
     <sys:String x:Key="S.Settings.QuickTranslateHotkeyHint">Translates the [[selected text]] and pastes it over the original</sys:String>
     <sys:String x:Key="S.Settings.QuickTranslateHotkeyNote" xml:space="preserve">Only in fields that accept typed text; nothing can be pasted outside an input area.</sys:String>
     <sys:String x:Key="S.Settings.QuickTranslateSettings">Translation settings</sys:String>
-    <sys:String x:Key="S.Settings.QuickTranslateLanguageNote">These languages apply only to in-place translation, without affecting screenshot, text or real-time translation.</sys:String>
+    <sys:String x:Key="S.Settings.QuickTranslateLanguageNote">These settings apply to in-place and append translation only, without affecting screenshot, text or real-time translation.</sys:String>
     <sys:String x:Key="S.Settings.QuickTranslateBilingualHint">Detects the language of the selected text and translates between the two languages you choose</sys:String>
+    <sys:String x:Key="S.Settings.QuickAppendHotkey">Append translation</sys:String>
+    <sys:String x:Key="S.Settings.QuickAppendHotkeyHint">Translates the [[selected text]] and pastes it after the original, keeping both</sys:String>
+    <sys:String x:Key="S.Settings.QuickAppendHotkeyNote" xml:space="preserve">Shares its languages and service with in-place translation; change them under its Translation settings. Only in fields that accept typed text.</sys:String>
+    <sys:String x:Key="S.Settings.HotkeyUnset">Not set</sys:String>
+    <sys:String x:Key="S.Settings.ProviderFollowGlobal">Follow global ({0})</sys:String>
     <sys:String x:Key="S.Settings.HotkeyNeedsModifier">✗ A single key can only be F1–F24, Pause or Scroll Lock — other keys need Ctrl/Alt/Shift</sys:String>
 
     <sys:String x:Key="S.Settings.General">General</sys:String>

@@ -141,6 +141,20 @@ public partial class SettingsPage : UserControl
                 QuickTranslateHotkeyEnabledCheckBox,
                 (s, on) => s.QuickTranslateHotkeyEnabled = on),
             new HotkeyField(
+                HotkeyAction.QuickAppend,
+                "S.Settings.QuickAppendHotkey",
+                QuickAppendHotkeyBox,
+                QuickAppendElevatedNote,
+                // Unbound until the user picks one: the box says so rather than standing empty.
+                s => string.IsNullOrEmpty(s.QuickAppendHotkeyDisplay)
+                    ? LocalizationService.Get("S.Settings.HotkeyUnset")
+                    : s.QuickAppendHotkeyDisplay,
+                s => HotkeyBindings.TriggerFor(s, HotkeyAction.QuickAppend),
+                ApplyQuickAppendTrigger,
+                AdvertisedInShell: false,
+                QuickAppendHotkeyEnabledCheckBox,
+                (s, on) => s.QuickAppendHotkeyEnabled = on),
+            new HotkeyField(
                 HotkeyAction.TranslationWindow,
                 "S.Settings.WindowHotkey",
                 WindowHotkeyBox,
@@ -316,6 +330,8 @@ public partial class SettingsPage : UserControl
             UiLanguageBox.SelectedValue = LocalizationService.Current;
             if (UiLanguageBox.SelectedValue == null) UiLanguageBox.SelectedIndex = 0;
 
+            ShowQuickTranslateProvider(s);
+
             QuickTranslateSourceBox.ItemsSource = LanguageData.SourceLanguages;
             QuickTranslateTargetBox.ItemsSource = LanguageData.TargetLanguages;
             QuickTranslateSourceBox.SelectedValue = LanguageData.GetValidSourceCode(s.QuickTranslate.SourceLanguage);
@@ -434,6 +450,36 @@ public partial class SettingsPage : UserControl
     {
         if (QuickTranslateSettingsFold is null) return;
         AnimateFold(QuickTranslateSettingsToggle.IsChecked == true, QuickTranslateSettingsFold, QuickTranslateSettingsBody);
+    }
+
+    /// <summary>One entry of 替換翻譯's service picker: a service, or null for 跟隨全域.</summary>
+    private sealed record QuickTranslateProviderChoice(TranslationProvider? Provider, string Display);
+
+    /// <summary>
+    /// Fills 替換翻譯's service picker: 跟隨全域 first, then the services the other menus offer
+    /// (a hidden one only while it is the saved choice).
+    /// </summary>
+    private void ShowQuickTranslateProvider(AppSettings s)
+    {
+        var saved = s.QuickTranslate.Provider;
+        var choices = new List<QuickTranslateProviderChoice>
+        {
+            new(null, LocalizationService.Format("S.Settings.ProviderFollowGlobal",
+                LanguageData.GetProviderDisplay(s.Provider))),
+        };
+        choices.AddRange(ProviderVisibility.MenuItems(s, saved ?? s.Provider)
+            .Where(item => !item.IsHiddenSelection || item.Provider == saved)
+            .Select(item => new QuickTranslateProviderChoice(item.Provider, item.Display)));
+
+        QuickTranslateProviderBox.ItemsSource = choices;
+        QuickTranslateProviderBox.SelectedItem =
+            choices.FirstOrDefault(choice => choice.Provider == saved) ?? choices[0];
+    }
+
+    private void QuickTranslateProvider_Changed(object sender, SelectionChangedEventArgs e)
+    {
+        if (_loading || QuickTranslateProviderBox.SelectedItem is not QuickTranslateProviderChoice choice) return;
+        Persist(s => s.QuickTranslate.Provider = choice.Provider);
     }
 
     private void QuickTranslateLanguage_Changed(object sender, SelectionChangedEventArgs e)
@@ -1576,6 +1622,17 @@ public partial class SettingsPage : UserControl
         {
             s.PinClipboardHotkeyModifiers = trigger.Modifiers;
             s.PinClipboardHotkeyVirtualKey = trigger.VirtualKey;
+        }
+    }
+
+    private static void ApplyQuickAppendTrigger(AppSettings s, ShortcutTrigger trigger, string display)
+    {
+        s.QuickAppendHotkeyInputKind = trigger.Kind;
+        s.QuickAppendHotkeyDisplay = display;
+        if (trigger.Kind == ShortcutInputKind.Keyboard)
+        {
+            s.QuickAppendHotkeyModifiers = trigger.Modifiers;
+            s.QuickAppendHotkeyVirtualKey = trigger.VirtualKey;
         }
     }
 

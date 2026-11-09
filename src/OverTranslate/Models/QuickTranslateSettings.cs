@@ -14,6 +14,12 @@ public class QuickTranslateSettings
     public string TargetLanguage { get; set; } = "EN-US";
 
     /// <summary>
+    /// The translation service 替換翻譯 and 追加翻譯 use, or null to follow the shared one that
+    /// 文字翻譯, 取詞翻譯 and 截圖翻譯 switch between.
+    /// </summary>
+    public TranslationProvider? Provider { get; set; } = null;
+
+    /// <summary>
     /// Whether the replacement picks the direction itself out of <see cref="BilingualFirstLanguage"/>
     /// and <see cref="BilingualSecondLanguage"/> instead of translating along the fixed pair above
     /// (#322). The same 雙語互譯 as 取詞翻譯's, with a pair of its own: each feature already keeps

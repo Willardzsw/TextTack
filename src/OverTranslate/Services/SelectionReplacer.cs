@@ -62,6 +62,25 @@ internal static class SelectionReplacer
             TryPut, StillOwnsClipboard, () => KeyboardInput.SendControlChordAsync(KeyboardInput.VK_V),
             () => Task.Delay(PasteSettle), ClipboardBackup.Restore);
 
+    /// <summary>
+    /// Pastes <paramref name="text"/> after the foreground application's selection, keeping it:
+    /// 追加翻譯.
+    /// </summary>
+    /// <remarks>
+    /// Right arrow first, which in an ordinary text field collapses a selection to its end whichever
+    /// way it was made; the paste then lands there. Sent with the user's modifiers released, as the
+    /// paste is, so a Ctrl or Shift still held from the shortcut cannot turn it into a word jump or a
+    /// wider selection. The same foreground checks as a replacement guard both keystrokes.
+    /// </remarks>
+    public static Task<PasteOutcome> AppendAfterSelectionAsync(string text, IntPtr expectedForeground) =>
+        ReplaceSelectionAsync(text, expectedForeground, GetForegroundWindow, ClipboardBackup.Capture,
+            TryPut, StillOwnsClipboard, async () =>
+            {
+                await KeyboardInput.SendKeyAsync(KeyboardInput.VK_RIGHT);
+                await KeyboardInput.SendControlChordAsync(KeyboardInput.VK_V);
+            },
+            () => Task.Delay(PasteSettle), ClipboardBackup.Restore);
+
     internal static async Task<PasteOutcome> ReplaceSelectionAsync(string text, IntPtr expectedForeground,
         Func<IntPtr> foreground, Func<object?> capture, Func<string, object?> put, Func<object, bool> isCurrent,
         Func<Task> paste, Func<Task> settle, Action<object?> restore)

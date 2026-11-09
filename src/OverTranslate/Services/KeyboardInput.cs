@@ -34,6 +34,7 @@ internal static class KeyboardInput
     public const ushort VK_RWIN = 0x5C;
     public const ushort VK_C = 0x43;
     public const ushort VK_V = 0x56;
+    public const ushort VK_RIGHT = 0x27;
 
     /// <summary>Sends Ctrl+<paramref name="virtualKey"/> to whatever has the foreground.</summary>
     /// <remarks>
@@ -54,6 +55,27 @@ internal static class KeyboardInput
             () => Inject(press.ToArray()),
             () => Task.Delay(ChordHold),
             () => Inject([Key(virtualKey, up: true), Key(VK_CONTROL, up: true)]));
+    }
+
+    /// <summary>Sends one plain key, with every modifier the user may still hold released first.</summary>
+    /// <remarks>
+    /// The arrow keys are extended keys; without the flag some applications read the numeric-pad
+    /// arrow, which with Num Lock on types a digit instead of moving the caret.
+    /// </remarks>
+    public static Task SendKeyAsync(ushort virtualKey)
+    {
+        var press = new List<INPUT>();
+
+        foreach (var modifier in new ushort[] { VK_MENU, VK_SHIFT, VK_LWIN, VK_RWIN, VK_CONTROL })
+            press.Add(Key(modifier, up: true));
+
+        var extended = virtualKey is >= 0x21 and <= 0x28;
+        press.Add(Key(virtualKey, up: false, extended));
+
+        return HoldChordAsync(
+            () => Inject(press.ToArray()),
+            () => Task.Delay(ChordHold),
+            () => Inject([Key(virtualKey, up: true, extended)]));
     }
 
     /// <summary>Keeps an injected chord down long enough to cross a frame boundary.</summary>
@@ -88,7 +110,7 @@ internal static class KeyboardInput
     /// </summary>
     public static readonly IntPtr InjectedMarker = new(0x4F544B49); // "OTKI"
 
-    public static INPUT Key(ushort virtualKey, bool up) => new()
+    public static INPUT Key(ushort virtualKey, bool up, bool extended = false) => new()
     {
         type = INPUT_KEYBOARD,
         u = new INPUTUNION
@@ -96,7 +118,7 @@ internal static class KeyboardInput
             ki = new KEYBDINPUT
             {
                 wVk = virtualKey,
-                dwFlags = up ? KEYEVENTF_KEYUP : 0,
+                dwFlags = (up ? KEYEVENTF_KEYUP : 0) | (extended ? KEYEVENTF_EXTENDEDKEY : 0),
                 dwExtraInfo = InjectedMarker,
             },
         },
@@ -104,6 +126,7 @@ internal static class KeyboardInput
 
     private const uint INPUT_KEYBOARD = 1;
     private const uint KEYEVENTF_KEYUP = 0x0002;
+    private const uint KEYEVENTF_EXTENDEDKEY = 0x0001;
 
     [StructLayout(LayoutKind.Sequential)]
     internal struct INPUT

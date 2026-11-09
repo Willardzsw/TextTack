@@ -85,6 +85,7 @@
     <!-- ── In-place translation ── Only ever seen on the hint card, so each line stays to one: it sits
          over the window the reader is working in. -->
     <sys:String x:Key="S.QuickTranslate.Replaced">แปลและวางแล้ว</sys:String>
+    <sys:String x:Key="S.QuickTranslate.Appended">แปลและวางต่อท้ายต้นฉบับแล้ว</sys:String>
     <sys:String x:Key="S.QuickTranslate.EmptyResult">คำแปลว่างเปล่า ข้อความของคุณจึงยังเหมือนเดิม</sys:String>
     <sys:String x:Key="S.QuickTranslate.FocusMoved">คุณสลับหน้าต่าง จึงวางคำแปลไม่ได้</sys:String>
     <sys:String x:Key="S.QuickTranslate.ClipboardBusy">คลิปบอร์ดใช้งานไม่ได้ จึงไม่ได้วางอะไร</sys:String>
@@ -455,8 +456,13 @@
     <sys:String x:Key="S.Settings.QuickTranslateHotkeyHint">แปล[[ข้อความที่เลือก]]แล้ววางทับต้นฉบับ</sys:String>
     <sys:String x:Key="S.Settings.QuickTranslateHotkeyNote" xml:space="preserve">ใช้ได้เฉพาะในช่องที่พิมพ์ข้อความได้ วางนอกพื้นที่ป้อนข้อมูลไม่ได้</sys:String>
     <sys:String x:Key="S.Settings.QuickTranslateSettings">การตั้งค่าการแปล</sys:String>
-    <sys:String x:Key="S.Settings.QuickTranslateLanguageNote">ภาษาเหล่านี้ใช้กับการแปลแทนที่เท่านั้น ไม่กระทบการแปลภาพหน้าจอ ข้อความ หรือแบบเรียลไทม์</sys:String>
+    <sys:String x:Key="S.Settings.QuickTranslateLanguageNote">การตั้งค่าเหล่านี้ใช้กับการแปลแทนที่และแปลต่อท้ายเท่านั้น ไม่กระทบการแปลภาพหน้าจอ ข้อความ หรือแบบเรียลไทม์</sys:String>
     <sys:String x:Key="S.Settings.QuickTranslateBilingualHint">ตรวจหาภาษาของข้อความที่เลือกและแปลระหว่างสองภาษาที่คุณเลือก</sys:String>
+    <sys:String x:Key="S.Settings.QuickAppendHotkey">แปลต่อท้าย</sys:String>
+    <sys:String x:Key="S.Settings.QuickAppendHotkeyHint">แปล[[ข้อความที่เลือก]]แล้ววางต่อท้ายโดยเก็บต้นฉบับไว้</sys:String>
+    <sys:String x:Key="S.Settings.QuickAppendHotkeyNote" xml:space="preserve">ใช้ภาษาและผู้ให้บริการร่วมกับการแปลแทนที่ ปรับได้ในการตั้งค่าการแปลของการแปลแทนที่ ใช้ได้เฉพาะในช่องที่พิมพ์ข้อความได้</sys:String>
+    <sys:String x:Key="S.Settings.HotkeyUnset">ยังไม่ได้ตั้ง</sys:String>
+    <sys:String x:Key="S.Settings.ProviderFollowGlobal">ตามการตั้งค่าหลัก ({0})</sys:String>
     <sys:String x:Key="S.Settings.HotkeyNeedsModifier">✗ ปุ่มเดียวใช้ได้เฉพาะ F1–F24, Pause หรือ Scroll Lock — ปุ่มอื่นต้องใช้ร่วมกับ Ctrl/Alt/Shift</sys:String>
 
     <sys:String x:Key="S.Settings.General">ทั่วไป</sys:String>

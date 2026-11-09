@@ -91,6 +91,7 @@
     <!-- ── In-place translation ── Only ever seen on the hint card, so each line stays to one: it sits
          over the window the reader is working in. -->
     <sys:String x:Key="S.QuickTranslate.Replaced">翻訳して貼り付けました。</sys:String>
+    <sys:String x:Key="S.QuickTranslate.Appended">翻訳して原文の後ろに貼り付けました。</sys:String>
     <sys:String x:Key="S.QuickTranslate.EmptyResult">訳文が空でした。元のテキストはそのままです。</sys:String>
     <sys:String x:Key="S.QuickTranslate.FocusMoved">ウィンドウが切り替わったため、訳文を貼り付けられませんでした。</sys:String>
     <sys:String x:Key="S.QuickTranslate.ClipboardBusy">クリップボードが使えないため、貼り付けを行いませんでした。</sys:String>
@@ -464,8 +465,13 @@
     <sys:String x:Key="S.Settings.QuickTranslateHotkeyHint">[[選択中のテキスト]]を翻訳して貼り付け、原文を置き換える</sys:String>
     <sys:String x:Key="S.Settings.QuickTranslateHotkeyNote" xml:space="preserve">文字を入力できる欄でのみ動作し、入力欄以外には貼り付けられません。</sys:String>
     <sys:String x:Key="S.Settings.QuickTranslateSettings">翻訳設定</sys:String>
-    <sys:String x:Key="S.Settings.QuickTranslateLanguageNote">この言語設定は置換翻訳専用です。スクリーンショット翻訳、テキスト翻訳、リアルタイム翻訳には影響しません。</sys:String>
+    <sys:String x:Key="S.Settings.QuickTranslateLanguageNote">この設定は置換翻訳と追記翻訳専用です。スクリーンショット翻訳、テキスト翻訳、リアルタイム翻訳には影響しません。</sys:String>
     <sys:String x:Key="S.Settings.QuickTranslateBilingualHint">選択したテキストの言語を判別し、指定した 2 つの言語の間で翻訳します</sys:String>
+    <sys:String x:Key="S.Settings.QuickAppendHotkey">追記翻訳</sys:String>
+    <sys:String x:Key="S.Settings.QuickAppendHotkeyHint">[[選択中のテキスト]]を翻訳し、原文を残したまま後ろに貼り付ける</sys:String>
+    <sys:String x:Key="S.Settings.QuickAppendHotkeyNote" xml:space="preserve">言語と翻訳サービスは置換翻訳と共通です。置換翻訳の「翻訳設定」で変更します。文字を入力できる欄でのみ動作します。</sys:String>
+    <sys:String x:Key="S.Settings.HotkeyUnset">未設定</sys:String>
+    <sys:String x:Key="S.Settings.ProviderFollowGlobal">全体設定に従う（{0}）</sys:String>
     <sys:String x:Key="S.Settings.HotkeyNeedsModifier">✗ 単独で使えるのは F1–F24、Pause、Scroll Lock のみです。ほかのキーは Ctrl／Alt／Shift と組み合わせてください</sys:String>
 
     <sys:String x:Key="S.Settings.General">一般</sys:String>

@@ -45,6 +45,9 @@ public class GlobalHotkey : IDisposable
     /// <summary>The shortcut that makes a blank 便利貼 (Alt+F2 by default).</summary>
     public const int StickyNoteNewId = 9009;
 
+    /// <summary>The 追加翻譯 shortcut (unbound by default): pastes the translation after the selection.</summary>
+    public const int QuickAppendId = 9010;
+
     public GlobalHotkey(int id) : this(id, RegisterHotKey, UnregisterHotKey) { }
 
     internal GlobalHotkey(int id, Func<IntPtr, int, uint, uint, bool> register,

@@ -168,6 +168,8 @@ public class SettingsService
         // Retired options, read as the ones that replaced them — the pickers no longer list them.
         settings.Provider = LanguageData.CurrentProvider(settings.Provider);
         settings.Realtime.Provider = LanguageData.CurrentProvider(settings.Realtime.Provider);
+        if (settings.QuickTranslate.Provider is { } quickProvider)
+            settings.QuickTranslate.Provider = LanguageData.CurrentProvider(quickProvider);
         // Retired/unrecognized OCR service choices safely return to installed language routing.
         settings.OcrModels.Selection = Ocr.OcrModelCatalog.Normalize(settings.OcrModels.Selection);
         settings.OcrModels.DetectorSize = Ocr.OcrModelCatalog.DetectorSize(settings.OcrModels);

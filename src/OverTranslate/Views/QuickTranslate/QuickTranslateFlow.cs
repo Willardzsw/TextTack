@@ -49,7 +49,11 @@ internal static class QuickTranslateFlow
     /// Set when the shortcut was Ctrl+C+C, whose first Ctrl+C already copied the selection — see
     /// <see cref="SelectedTextReader.ReadAsync"/>.
     /// </param>
-    public static async Task RunAsync(uint? copiedSince = null)
+    /// <param name="append">
+    /// 追加翻譯: keep the selection and paste a space and the translation after it, instead of
+    /// replacing it. Same languages, service and guards as 替換翻譯.
+    /// </param>
+    public static async Task RunAsync(uint? copiedSince = null, bool append = false)
     {
         var (seq, token) = Request.Start();
 
@@ -74,7 +78,9 @@ internal static class QuickTranslateFlow
         var hint = QuickTranslateHintWindow.Summon();
         var settings = SettingsService.Instance.Current;
 
-        if (AppServices.Translation.RequiresApiKey && string.IsNullOrWhiteSpace(settings.ApiKey))
+        var engine = settings.QuickTranslate.Provider ?? settings.Provider;
+
+        if (AppServices.Translation.ProviderRequiresApiKey(engine) && string.IsNullOrWhiteSpace(settings.ApiKey))
         {
             hint.ReportFailure(LocalizationService.Get("S.Translation.MissingApiKey"));
             return;
@@ -82,7 +88,7 @@ internal static class QuickTranslateFlow
 
         try
         {
-            var (results, _) = await TranslateAsync(source, settings, token);
+            var (results, _) = await TranslateAsync(source, settings, engine, token);
 
             if (!Request.IsCurrent(seq)) return;
 
@@ -96,15 +102,17 @@ internal static class QuickTranslateFlow
                 return;
             }
 
-            Log.Debug("替換翻譯 is pasting: {Text}", translation);
+            Log.Debug("替換翻譯 is pasting{Mode}: {Text}", append ? " after the selection" : "", translation);
 
-            var outcome = await SelectionReplacer.ReplaceSelectionAsync(translation, foreground);
+            var outcome = append
+                ? await SelectionReplacer.AppendAfterSelectionAsync(" " + translation, foreground)
+                : await SelectionReplacer.ReplaceSelectionAsync(translation, foreground);
             if (!Request.IsCurrent(seq)) return;
 
             switch (outcome)
             {
                 case PasteOutcome.Pasted:
-                    hint.ReportSuccess();
+                    hint.ReportSuccess(append);
                     break;
                 case PasteOutcome.FocusMoved:
                     hint.ReportFailure(LocalizationService.Get("S.QuickTranslate.FocusMoved"));
@@ -121,7 +129,7 @@ internal static class QuickTranslateFlow
             Log.Warn(ex, "替換翻譯 could not translate");
             hint.ReportFailure(LocalizationService.Format(
                 "S.Translation.ProviderUnavailable",
-                LanguageData.GetProviderDisplay(settings.Provider),
+                LanguageData.GetProviderDisplay(engine),
                 ex.Message));
         }
     }
@@ -136,7 +144,7 @@ internal static class QuickTranslateFlow
     /// same language.
     /// </remarks>
     private static async Task<(List<TranslatedBlock> Blocks, string DetectedLang)> TranslateAsync(
-        string source, AppSettings settings, CancellationToken token)
+        string source, AppSettings settings, TranslationProvider engine, CancellationToken token)
     {
         var quickTranslate = settings.QuickTranslate;
         var block = new OcrTextBlock(source, new Rect());
@@ -148,7 +156,8 @@ internal static class QuickTranslateFlow
                 LanguageData.GetValidSourceCode(quickTranslate.SourceLanguage),
                 LanguageData.GetValidTargetCode(quickTranslate.TargetLanguage),
                 settings.ApiKey,
-                cancellationToken: token);
+                cancellationToken: token,
+                engine: engine);
         }
 
         var pair = BilingualPair.Load(quickTranslate.BilingualFirstLanguage,
@@ -156,7 +165,7 @@ internal static class QuickTranslateFlow
         var answer = await BilingualTranslation.TranslateAsync(source, pair,
             (from, target) => AppServices.Translation.TranslateAsync(
                 [block], BilingualTranslation.SourceCode(from), target, settings.ApiKey,
-                cancellationToken: token));
+                cancellationToken: token, engine: engine));
 
         return (answer.Blocks, answer.DetectedLang);
     }

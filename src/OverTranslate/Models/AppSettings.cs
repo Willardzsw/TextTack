@@ -150,6 +150,27 @@ public class AppSettings
     public bool QuickTranslateHotkeyEnabled { get; set; } = true;
 
     /// <summary>
+    /// 追加翻譯's shortcut: pastes the selection's translation after it, a space between, keeping
+    /// the original. Shares 替換翻譯's languages and service (<see cref="QuickTranslate"/>).
+    /// </summary>
+    /// <remarks>
+    /// Off and unbound by default, at the user's request: no combination is taken from anyone until
+    /// they pick one. Unbound is a keyboard trigger with no modifiers and no key — see
+    /// <see cref="Services.HotkeyBindings.IsUnset"/>.
+    /// </remarks>
+    public uint QuickAppendHotkeyModifiers { get; set; } = 0;
+
+    /// <inheritdoc cref="QuickAppendHotkeyModifiers"/>
+    public uint QuickAppendHotkeyVirtualKey { get; set; } = 0;
+
+    /// <inheritdoc cref="QuickAppendHotkeyModifiers"/>
+    public string QuickAppendHotkeyDisplay { get; set; } = "";
+    public ShortcutInputKind QuickAppendHotkeyInputKind { get; set; } = ShortcutInputKind.Keyboard;
+
+    /// <inheritdoc cref="QuickAppendHotkeyModifiers"/>
+    public bool QuickAppendHotkeyEnabled { get; set; } = false;
+
+    /// <summary>
     /// 貼圖's global shortcut: pins what is on the clipboard (a picture, or text drawn as a card)
     /// under the pointer. F3 by default, the key Snipaste uses for the same thing.
     /// </summary>

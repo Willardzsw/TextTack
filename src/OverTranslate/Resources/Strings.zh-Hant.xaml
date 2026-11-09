@@ -96,6 +96,7 @@
 
     <!-- ── 替換翻譯 ── 只在提示卡片上出現的字，一行以內，因為它蓋在使用者自己的視窗上。 -->
     <sys:String x:Key="S.QuickTranslate.Replaced">已完成翻譯並貼上譯文。</sys:String>
+    <sys:String x:Key="S.QuickTranslate.Appended">已完成翻譯並在原文後貼上譯文。</sys:String>
     <sys:String x:Key="S.QuickTranslate.EmptyResult">翻譯結果是空的，已保留原本的文字。</sys:String>
     <sys:String x:Key="S.QuickTranslate.FocusMoved">已切換視窗，無法貼上翻譯結果。</sys:String>
     <sys:String x:Key="S.QuickTranslate.ClipboardBusy">剪貼簿目前無法使用，沒有貼上翻譯。</sys:String>
@@ -482,8 +483,13 @@
     <sys:String x:Key="S.Settings.QuickTranslateHotkeyHint">將[[選取文字]]翻譯後貼上並取代原文</sys:String>
     <sys:String x:Key="S.Settings.QuickTranslateHotkeyNote" xml:space="preserve">僅適用於可輸入文字的欄位，非輸入區域則無法貼上。</sys:String>
     <sys:String x:Key="S.Settings.QuickTranslateSettings">翻譯設定</sys:String>
-    <sys:String x:Key="S.Settings.QuickTranslateLanguageNote">此設定僅適用於替換翻譯，不會影響截圖翻譯、文字翻譯或即時翻譯。</sys:String>
+    <sys:String x:Key="S.Settings.QuickTranslateLanguageNote">這些設定適用於替換翻譯和追加翻譯，不會影響截圖翻譯、文字翻譯或即時翻譯。</sys:String>
     <sys:String x:Key="S.Settings.QuickTranslateBilingualHint">自動判斷選取文字的語言，在指定的兩種語言之間互譯</sys:String>
+    <sys:String x:Key="S.Settings.QuickAppendHotkey">追加翻譯</sys:String>
+    <sys:String x:Key="S.Settings.QuickAppendHotkeyHint">將[[選取文字]]翻譯後貼在原文後面，保留原文</sys:String>
+    <sys:String x:Key="S.Settings.QuickAppendHotkeyNote" xml:space="preserve">語言和翻譯服務與替換翻譯共用，在替換翻譯的「翻譯設定」中調整。僅適用於可輸入文字的欄位。</sys:String>
+    <sys:String x:Key="S.Settings.HotkeyUnset">未設定</sys:String>
+    <sys:String x:Key="S.Settings.ProviderFollowGlobal">跟隨全域（{0}）</sys:String>
     <sys:String x:Key="S.Settings.HotkeyNeedsModifier">✗ 單一按鍵只能是 F1–F24、Pause 或 Scroll Lock，其他按鍵請搭配 Ctrl／Alt／Shift</sys:String>
 
     <sys:String x:Key="S.Settings.General">一般設定</sys:String>

@@ -12,7 +12,9 @@ public class FeatureTogglesTests
     {
         foreach (var toggle in FeatureToggles.All)
         {
+            // Every switch on first: 追加翻譯 is the one that starts off.
             var s = new AppSettings();
+            foreach (var each in FeatureToggles.All) FeatureToggles.Set(s, each, true);
             Assert.True(FeatureToggles.Get(s, toggle));
 
             FeatureToggles.Set(s, toggle, false);
@@ -26,6 +28,7 @@ public class FeatureTogglesTests
     {
         Assert.Equal(FeatureToggles.All.Distinct(), FeatureToggles.All);
         Assert.Contains(FeatureToggle.MouseEnhance, FeatureToggles.All);
+        Assert.False(FeatureToggles.Get(new AppSettings(), FeatureToggle.QuickAppendHotkey));
         Assert.DoesNotContain(FeatureToggle.MouseResize, FeatureToggles.All);
         Assert.All(FeatureToggles.All, t => Assert.StartsWith("S.Settings.", FeatureToggles.NameKey(t)));
     }
