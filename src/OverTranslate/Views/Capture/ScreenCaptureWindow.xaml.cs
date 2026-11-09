@@ -464,6 +464,13 @@ public partial class ScreenCaptureWindow : Window
         if (EndPressOnHover()) return;
         _isDragging = false;
         ReleaseMouseCapture();
+        // Releasing the capture makes WPF send a mouse move straight away, while no box is kept yet,
+        // so the auto-select offer has just framed whatever is under the pointer again. That offer
+        // is dropped here, as SetSelectionFromCode does: left standing it kept the size bar's tools
+        // hidden until the box was next moved.
+        _hovering = false;
+        _hoverChain = [];
+        StopGlide();
 
         var rect = Normalize(_startPoint, e.GetPosition(this));
         _selectionWpfRect = rect;
