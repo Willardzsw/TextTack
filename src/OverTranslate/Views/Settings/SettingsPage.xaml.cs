@@ -1764,7 +1764,29 @@ public partial class SettingsPage : UserControl
             () => 0,
             key => Keyboard.IsKeyDown(KeyInterop.KeyFromVirtualKey((int)key)));
         GlobalAuxiliaryHotkeys.Paused = true;
+
+        // The registered combinations too: one of them pressed into the box would otherwise run its
+        // shortcut and never arrive here. See MainWindow.ReleaseKeyboardHotkeys.
+        if (System.Windows.Application.Current?.MainWindow is MainWindow main)
+        {
+            main.ReleaseKeyboardHotkeys();
+            _hotkeysReleased = true;
+        }
+
+        // Switching to another program leaves the box focused as far as this window knows, so
+        // LostFocus says nothing — and a recording left open would keep every shortcut stood down
+        // while the user works elsewhere.
+        _recordingWindow = Window.GetWindow(this);
+        if (_recordingWindow is not null) _recordingWindow.Deactivated += OnRecordingWindowDeactivated;
     }
+
+    /// <summary>The window watched for losing the foreground while a recording is open.</summary>
+    private Window? _recordingWindow;
+
+    private void OnRecordingWindowDeactivated(object? sender, EventArgs e) => StopRecording();
+
+    /// <summary>Whether a recording has the registered shortcuts stood down, to be put back when it ends.</summary>
+    private bool _hotkeysReleased;
 
     /// <summary>Ends recording and puts the stored trigger back in the box.</summary>
     /// <remarks>
@@ -1778,6 +1800,18 @@ public partial class SettingsPage : UserControl
         _pendingCtrlC = null;
         _recordSequences = null;
         GlobalAuxiliaryHotkeys.Paused = false;
+        if (_recordingWindow is not null)
+        {
+            _recordingWindow.Deactivated -= OnRecordingWindowDeactivated;
+            _recordingWindow = null;
+        }
+        if (_hotkeysReleased)
+        {
+            // From the settings as they are now: after a successful recording that is the new shortcut.
+            _hotkeysReleased = false;
+            if (System.Windows.Application.Current?.MainWindow is MainWindow main)
+                main.ReRegisterHotkey();
+        }
         if (_recording is not { } field) return;
 
         ShowStoredShortcut(field, SettingsService.Instance.Current);
@@ -2067,12 +2101,9 @@ public partial class SettingsPage : UserControl
 
         Persist(s => recording.Apply(s, trigger, display));
 
-        // After the write, so the box picks the new trigger up out of the settings.
+        // After the write, so the box picks the new trigger up out of the settings — and so the
+        // shortcuts, stood down while recording, are registered again with the new trigger.
         StopRecording();
-
-        // The global hook holds the old trigger until it is rebound.
-        if (System.Windows.Application.Current.MainWindow is MainWindow main)
-            main.ReRegisterHotkey();
 
         // The nav rail advertises these beside 截圖翻譯 and 取詞翻譯 and is on screen right now, so it
         // has to be told; nothing else re-reads them until the shell is next shown or activated. The

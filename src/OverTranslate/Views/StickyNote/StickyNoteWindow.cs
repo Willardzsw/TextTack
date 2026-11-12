@@ -576,13 +576,15 @@ public sealed class StickyNoteWindow : Window
     }
 
     /// <summary>
-    /// Lets every click through to what is under the note. It cannot be clicked to undo that, so
-    /// the 便利貼 shortcut over it, the tray menu, and the 便利貼 page do.
+    /// Lets every click through to what is under the note. The 便利貼 shortcut over the note turns
+    /// it on or off; it cannot be clicked to undo it, so the tray menu and the 便利貼 page also can.
     /// </summary>
     public void SetPassThrough(bool on)
     {
-        if (Data.PassThrough == on) return;
-        if (on && _editing) CancelEdit();
+        if (Data.PassThrough == on || _closed) return;
+        // Typed text is kept, as ✓ would; a note emptied that way goes, as it does then.
+        if (on && _editing) CommitEdit();
+        if (_closed) return;
         Data.PassThrough = on;
         WindowStyles.SetClickThrough(this, on);
         // No message on the note — how to undo it is explained by the ⓘ in 設定 — only a flash, so a
@@ -622,6 +624,14 @@ public sealed class StickyNoteWindow : Window
     public void Delete()
     {
         Close();
+    }
+
+    private bool _closed;
+
+    protected override void OnClosed(EventArgs e)
+    {
+        _closed = true;
+        base.OnClosed(e);
     }
 
     /// <summary>Brings the note to the middle of the screen the main window is on and flashes it.</summary>

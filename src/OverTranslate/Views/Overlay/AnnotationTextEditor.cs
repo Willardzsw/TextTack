@@ -269,6 +269,7 @@ internal sealed class AnnotationTextEditor : Window
             double ppd = VisualTreeHelper.GetDpi(this).PixelsPerDip;
             var laid = style.Layout(text, Color, ppd);
             var origin = TextOriginIn(box);
+            style.DrawOutline(dc, laid, origin);
             ColorGlyphText.Draw(dc, laid, origin);
 
             DrawCompositionUnderline(dc, laid, origin, style.Size);
@@ -349,9 +350,13 @@ internal sealed class AnnotationTextEditor : Window
 
     /// <summary>Sets the words' look. Applied at once to what is already typed.</summary>
     /// <param name="sizePx">The em size in physical pixels, which is what the panel shows.</param>
-    public void ApplyStyle(FontFamily family, int sizePx, Color color, bool bold, bool italic, bool underline, bool strikethrough)
+    /// <param name="outlineColor">The 描邊 colour, or null for none.</param>
+    /// <param name="outlineWidthPx">How far the 描邊 reaches, in physical pixels like the size.</param>
+    public void ApplyStyle(FontFamily family, int sizePx, Color color, bool bold, bool italic, bool underline, bool strikethrough,
+        Color? outlineColor = null, int outlineWidthPx = 0)
     {
         _sizePx = sizePx;
+        _outline = (outlineColor, outlineWidthPx);
 
         var brush = new SolidColorBrush(color);
         _box.FontFamily = family;
@@ -374,11 +379,15 @@ internal sealed class AnnotationTextEditor : Window
     private (FontFamily Family, bool Bold, bool Italic, bool Underline, bool Strikethrough) _style =
         (new FontFamily("Segoe UI"), false, false, false, false);
 
+    private (Color? Color, int WidthPx) _outline;
+
     /// <summary>Hands the drawn words the box's current look, in the box's own DIP.</summary>
     private void SyncColorView()
     {
+        double scale = VisualTreeHelper.GetDpi(this).DpiScaleX;
         _colorView.TextStyle = new AnnotationTextStyle(
-            _style.Family, _box.FontSize, _style.Bold, _style.Italic, _style.Underline, _style.Strikethrough);
+            _style.Family, _box.FontSize, _style.Bold, _style.Italic, _style.Underline, _style.Strikethrough,
+            _outline.Color, _outline.WidthPx / scale);
         _colorView.InvalidateVisual();
     }
 

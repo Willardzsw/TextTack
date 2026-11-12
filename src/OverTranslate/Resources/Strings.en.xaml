@@ -171,6 +171,9 @@ Translation failed: {1}</sys:String>
     <sys:String x:Key="S.Annotate.Italic">Italic</sys:String>
     <sys:String x:Key="S.Annotate.Underline">Underline</sys:String>
     <sys:String x:Key="S.Annotate.Strikethrough">Strikethrough</sys:String>
+    <sys:String x:Key="S.Annotate.Outline">Outline</sys:String>
+    <sys:String x:Key="S.Annotate.OutlineColor">Outline color</sys:String>
+    <sys:String x:Key="S.Annotate.OutlineWidth">Outline width</sys:String>
     <sys:String x:Key="S.Annotate.Eraser">Eraser</sys:String>
     <sys:String x:Key="S.Annotate.Undo">Undo</sys:String>
     <sys:String x:Key="S.Annotate.Redo">Redo</sys:String>
@@ -847,7 +850,7 @@ same settings, the same seed usually gives the same output.</sys:String>
     <sys:String x:Key="S.Settings.UpdateNotWritable">The program folder cannot be written to; download the update from GitHub yourself</sys:String>
     <sys:String x:Key="S.Update.NotifyTitle">Update available</sys:String>
     <sys:String x:Key="S.Update.NotifyBody">TextTack v{0} is out. Click here, or go to Settings › General › Software update, to update</sys:String>
-    <sys:String x:Key="S.Settings.StickyNoteNote">Double-click a note to edit, ✓ to save; right-click to keep on top, change opacity, click through or resize. With click-through on, clicks pass through the note: point at it and press the sticky-note shortcut, or use the tray menu or the Sticky notes page, to turn it off.</sys:String>
+    <sys:String x:Key="S.Settings.StickyNoteNote">Double-click a note to edit, ✓ to save; right-click to keep on top, change opacity, click through or resize. Point at a note and press the sticky-note shortcut to turn click-through on or off; while on, clicks pass through the note, and the tray menu or the Sticky notes page can also turn it off.</sys:String>
     <sys:String x:Key="S.Settings.StickyNoteOps">Note settings</sys:String>
     <sys:String x:Key="S.Settings.NoteOcrLanguage">Picture language</sys:String>
     <sys:String x:Key="S.Settings.NoteWidth">Default width</sys:String>

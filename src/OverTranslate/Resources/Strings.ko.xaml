@@ -172,6 +172,9 @@
     <sys:String x:Key="S.Annotate.Italic">기울임꼴</sys:String>
     <sys:String x:Key="S.Annotate.Underline">밑줄</sys:String>
     <sys:String x:Key="S.Annotate.Strikethrough">취소선</sys:String>
+    <sys:String x:Key="S.Annotate.Outline">외곽선</sys:String>
+    <sys:String x:Key="S.Annotate.OutlineColor">외곽선 색</sys:String>
+    <sys:String x:Key="S.Annotate.OutlineWidth">외곽선 두께</sys:String>
     <sys:String x:Key="S.Annotate.Eraser">지우개</sys:String>
     <sys:String x:Key="S.Annotate.Undo">실행 취소</sys:String>
     <sys:String x:Key="S.Annotate.Redo">다시 실행</sys:String>
@@ -849,7 +852,7 @@
     <sys:String x:Key="S.Settings.UpdateNotWritable">프로그램 폴더에 쓸 수 없습니다. GitHub에서 직접 다운로드하세요</sys:String>
     <sys:String x:Key="S.Update.NotifyTitle">새 버전</sys:String>
     <sys:String x:Key="S.Update.NotifyBody">TextTack v{0}이(가) 나왔습니다. 여기를 누르거나 설정 › 일반 › 소프트웨어 업데이트에서 업데이트하세요</sys:String>
-    <sys:String x:Key="S.Settings.StickyNoteNote">메모지를 두 번 클릭해 편집하고 ✓로 저장합니다. 오른쪽 클릭으로 항상 위·투명도·마우스 통과·크기 조정. 마우스 통과 중에는 클릭이 메모지를 지나갑니다. 메모지 위에서 메모지 단축키를 누르거나 트레이 메뉴·메모지 페이지에서 끌 수 있습니다.</sys:String>
+    <sys:String x:Key="S.Settings.StickyNoteNote">메모지를 두 번 클릭해 편집하고 ✓로 저장합니다. 오른쪽 클릭으로 항상 위·투명도·마우스 통과·크기 조정. 메모지 위에서 메모지 단축키를 누르면 마우스 통과를 켜거나 끕니다. 통과 중에는 클릭이 메모지를 지나가며, 트레이 메뉴·메모지 페이지에서도 끌 수 있습니다.</sys:String>
     <sys:String x:Key="S.Settings.StickyNoteOps">메모지 설정</sys:String>
     <sys:String x:Key="S.Settings.NoteOcrLanguage">그림 인식 언어</sys:String>
     <sys:String x:Key="S.Settings.NoteWidth">기본 너비</sys:String>

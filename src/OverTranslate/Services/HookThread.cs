@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using System.Windows.Threading;
 using NLog;
 
@@ -48,8 +49,19 @@ internal sealed class HookThread : IDisposable
     /// <summary>Starts the thread if it is not already pumping. Safe to call repeatedly.</summary>
     public void Start()
     {
-        // A timed-out shutdown still owns its thread. Do not start a second set of hooks beside it.
-        if (_thread?.IsAlive == true) return;
+        if (_thread is { IsAlive: true } running)
+        {
+            if (!_stopping) return;
+
+            // Stop does not wait for the thread to end, so a restart has to: normally a matter of
+            // milliseconds. One that outlasts the wait still owns its thread — do not start a second
+            // set of hooks beside it.
+            if (!running.Join(_shutdownTimeout))
+            {
+                Log.Warn("Hook thread '{Name}' is still shutting down after {Timeout}; not restarted", _name, _shutdownTimeout);
+                return;
+            }
+        }
         _stopping = false;
 
         // Waited on rather than assumed: the dispatcher belongs to the new thread and does not
@@ -84,9 +96,16 @@ internal sealed class HookThread : IDisposable
     /// Ends the thread, running <paramref name="teardown"/> on it first — hooks have to be removed
     /// from the thread that installed them.
     /// </summary>
+    /// <remarks>
+    /// Waits (bounded) for the teardown, since the caller counts on the hooks being off, but not for
+    /// the thread to end. Joining it here held the interface thread — the usual caller — for up to
+    /// the whole timeout per hook whenever the thread was slow to exit, with the capture's windows
+    /// still on screen: seen as two and four seconds while another program was slow to answer an
+    /// element query. Nothing needs the thread gone; <see cref="Start"/> waits where it matters.
+    /// </remarks>
     public void Stop(Action? teardown = null)
     {
-        if (_dispatcher is not { } dispatcher) return;
+        if (_stopping || _dispatcher is not { } dispatcher) return;
         _stopping = true;
 
         if (!dispatcher.HasShutdownStarted)
@@ -107,22 +126,32 @@ internal sealed class HookThread : IDisposable
             finally
             {
                 // InvokeShutdown marshals synchronously and can hang forever on the very callback
-                // that just timed out. Queue shutdown behind teardown and bound only the join.
-                dispatcher.BeginInvokeShutdown(DispatcherPriority.Background);
+                // that just timed out. Queue shutdown behind teardown — the same priority, so it
+                // keeps its place in line; a background one also waits for the thread's input
+                // queue to be empty, which is one more thing that can hold it up.
+                dispatcher.BeginInvokeShutdown(DispatcherPriority.Normal);
             }
         }
 
-        // Keep the fields on timeout so Start cannot create a second thread beside a live one.
-        if (_thread == Thread.CurrentThread) return;
-        if (_thread?.Join(_shutdownTimeout) == false)
+        // The fields stay, so Start cannot create a second thread beside a live one. The exit is
+        // only watched, off this thread, so a slow one is in the log.
+        if (_thread is not { } thread || thread == Thread.CurrentThread) return;
+        long started = Stopwatch.GetTimestamp();
+        ThreadPool.QueueUserWorkItem(_ =>
         {
-            Log.Warn("Hook thread '{Name}' still running after {Timeout}", _name, _shutdownTimeout);
-            return;
-        }
+            if (!thread.Join(_shutdownTimeout))
+            {
+                Log.Warn("Hook thread '{Name}' still running after {Timeout}", _name, _shutdownTimeout);
+                if (!thread.Join(TimeSpan.FromSeconds(30))) return;
+            }
 
-        _thread = null;
-        _dispatcher = null;
+            double ms = Stopwatch.GetElapsedTime(started).TotalMilliseconds;
+            if (ms >= SlowExitMs) Log.Info("Hook thread '{Name}' took {Ms:F0} ms to end", _name, ms);
+        });
     }
+
+    /// <summary>An exit this long or longer is logged.</summary>
+    private const double SlowExitMs = 100;
 
     public void Dispose() => Stop();
 }

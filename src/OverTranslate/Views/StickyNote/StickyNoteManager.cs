@@ -387,19 +387,29 @@ internal static class StickyNoteManager
         foreach (var note in Open.Where(n => n.Data.PassThrough).ToList()) note.SetPassThrough(false);
     }
 
-    /// <summary>Gives the note under the pointer its clicks back, if it lets them through.</summary>
-    public static bool TryDisablePassThroughUnderPointer()
+    /// <summary>
+    /// The 便利貼 shortcut over a note: one that lets clicks through gets them back, any other
+    /// starts letting them through. A note that lets clicks through wins over one that does not,
+    /// since it cannot be reached any other way under the pointer. False when no note is there.
+    /// </summary>
+    public static bool TryTogglePassThroughUnderPointer()
     {
         var cursor = System.Windows.Forms.Cursor.Position;
+        StickyNoteWindow? solid = null;
         for (int i = Open.Count - 1; i >= 0; i--)
         {
             var note = Open[i];
-            if (!note.Data.PassThrough) continue;
             var r = ScreenGeometry.PhysicalBounds(note);
             if (r.IsEmpty || !r.Contains(cursor)) continue;
-            note.SetPassThrough(false);
-            return true;
+            if (note.Data.PassThrough)
+            {
+                note.SetPassThrough(false);
+                return true;
+            }
+            solid ??= note;
         }
-        return false;
+        if (solid is null) return false;
+        solid.SetPassThrough(true);
+        return true;
     }
 }

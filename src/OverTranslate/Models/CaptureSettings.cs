@@ -113,9 +113,9 @@ public class CaptureSettings
     /// <summary>How the 標記 tools were last set up.</summary>
     /// <remarks>
     /// The user's preferences for the tools, not the state of a drawing: the colour, each tool's
-    /// width, how faint a highlight is and which shape 形狀 gives. Which tool is in hand is not kept —
-    /// every capture starts on the pen, because one that started on the eraser would be a drag that
-    /// draws nothing and looks broken. The marks themselves belong to the capture they were drawn on.
+    /// width, how faint a highlight is, which shape 形狀 gives and the tool last picked up — every
+    /// tool but the eraser, because a capture that started on the eraser would be a drag that draws
+    /// nothing and looks broken. The marks themselves belong to the capture they were drawn on.
     /// </remarks>
     public CaptureAnnotationSettings Annotation { get; set; } = new();
 }
@@ -153,6 +153,26 @@ public class CaptureAnnotationSettings
 
     /// <summary>What 形狀 gives when pressed. Anything but one of the three shapes reads as Rectangle.</summary>
     public AnnotationTool Shape { get; set; } = AnnotationTool.Rectangle;
+
+    /// <summary>The tool 標記 opens with: the one last picked up, never the eraser. 方框 until one is.</summary>
+    public AnnotationTool LastTool { get; set; } = AnnotationTool.Rectangle;
+
+    /// <summary>The tool a capture starts with — <see cref="LastTool"/>, with the eraser read as 方框.</summary>
+    public AnnotationTool StartingTool() =>
+        LastTool == AnnotationTool.Eraser || !Enum.IsDefined(LastTool) ? AnnotationTool.Rectangle : LastTool;
+
+    /// <summary>Whether 文字 marks are drawn with an outline round each glyph.</summary>
+    public bool TextOutline { get; set; } = false;
+
+    /// <summary>The 文字 outline colour as #RRGGBB, one of the palette's colours.</summary>
+    public string TextOutlineColor { get; set; } = "#FFFFFF";
+
+    /// <summary>How far the 文字 outline reaches out from the glyphs, in physical pixels of the capture.</summary>
+    public int TextOutlineWidth { get; set; } = DefaultTextOutlineWidth;
+
+    public const int DefaultTextOutlineWidth = 2;
+    public const int MinTextOutlineWidth = 1;
+    public const int MaxTextOutlineWidth = 20;
 
     /// <summary>The 文字 size in physical pixels of the capture, which is what the panel shows (#362).</summary>
     /// <remarks>

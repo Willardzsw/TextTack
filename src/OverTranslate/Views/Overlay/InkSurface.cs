@@ -328,7 +328,11 @@ public sealed class InkSurface
                 if (stroke.Tool == AnnotationTool.Text)
                 {
                     if (stroke.Text is { } text && stroke.TextStyle is { } style && stroke.Points.Count > 0)
-                        ColorGlyphText.Draw(dc, style.Layout(text, stroke.Color, _scale), stroke.Points[0]);
+                    {
+                        var laid = style.Layout(text, stroke.Color, _scale);
+                        style.DrawOutline(dc, laid, stroke.Points[0]);
+                        ColorGlyphText.Draw(dc, laid, stroke.Points[0]);
+                    }
 
                     dc.Pop();
                     continue;

@@ -58,14 +58,44 @@ public enum AnnotationTool
 
 /// <summary>How a 文字 mark is set: one style for the whole of it, never per character.</summary>
 /// <param name="Size">The em size in the overlay's own DIP.</param>
+/// <param name="OutlineColor">The 描邊 round each glyph, or null for none.</param>
+/// <param name="OutlineWidth">How far the 描邊 reaches out from the glyphs, in the same DIP as <paramref name="Size"/>.</param>
 public sealed record AnnotationTextStyle(
     System.Windows.Media.FontFamily Family,
     double Size,
     bool Bold,
     bool Italic,
     bool Underline,
-    bool Strikethrough)
+    bool Strikethrough,
+    Color? OutlineColor = null,
+    double OutlineWidth = 0)
 {
+    /// <summary>Whether the words are drawn with a 描邊.</summary>
+    public bool HasOutline => OutlineColor is not null && OutlineWidth > 0;
+
+    /// <summary>
+    /// Draws the 描邊 under laid-out words whose first line starts at <paramref name="origin"/>. The
+    /// words themselves are drawn over it afterwards, so the outline only shows outside the glyphs.
+    /// </summary>
+    /// <remarks>
+    /// A pen twice the width, centred on the glyph edges: half of it is covered by the fill drawn
+    /// on top, and what shows outside is the width the user chose. Round joins so sharp corners
+    /// of the glyphs do not grow spikes at large widths.
+    /// </remarks>
+    public void DrawOutline(DrawingContext dc, FormattedText laid, Point origin)
+    {
+        if (!HasOutline) return;
+
+        var pen = new Pen(new SolidColorBrush(OutlineColor!.Value), OutlineWidth * 2)
+        {
+            LineJoin     = PenLineJoin.Round,
+            StartLineCap = PenLineCap.Round,
+            EndLineCap   = PenLineCap.Round,
+        };
+        pen.Freeze();
+        dc.DrawGeometry(null, pen, laid.BuildGeometry(origin));
+    }
+
     /// <summary>The words laid out as they are drawn, with the top-left of the first line at the origin.</summary>
     /// <param name="pixelsPerDip">Of whatever the text is being drawn into; it only moves glyphs onto whole pixels.</param>
     public FormattedText Layout(string text, Color color, double pixelsPerDip)
@@ -389,7 +419,7 @@ public sealed class AnnotationStroke
         if (Tool != AnnotationTool.Text || Text is null || TextStyle is null || Points.Count == 0) return null;
 
         var formatted = TextStyle.Layout(Text, Color, 1);
-        double pad = TextStyle.Size * 0.3 + 1;
+        double pad = TextStyle.Size * 0.3 + 1 + (TextStyle.HasOutline ? TextStyle.OutlineWidth : 0);
         return new Rect(
             Points[0].X - pad, Points[0].Y - pad,
             formatted.WidthIncludingTrailingWhitespace + pad * 2, formatted.Height + pad * 2);

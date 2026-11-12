@@ -69,6 +69,48 @@ public class HookThreadTests
     }
 
     [Fact]
+    public void StartAfterStopRunsAgain_OnANewThreadOnceTheOldOneHasEnded()
+    {
+        using var hookThread = new HookThread("test hook thread");
+        hookThread.Start();
+        int first = 0;
+        hookThread.Invoke(() => first = Environment.CurrentManagedThreadId);
+
+        // Stop no longer waits for the thread to end; a restart straight after it must still work.
+        hookThread.Stop();
+        hookThread.Start();
+
+        int second = 0;
+        hookThread.Invoke(() => second = Environment.CurrentManagedThreadId);
+        Assert.NotEqual(0, second);
+        Assert.NotEqual(first, second);
+    }
+
+    [Fact]
+    public void StopDoesNotWaitForTheThreadToEnd()
+    {
+        using var hookThread = new HookThread("test hook thread", TimeSpan.FromSeconds(10));
+        // Not disposed: the hook thread may only get to waiting on it after this method has returned.
+        var release = new ManualResetEventSlim();
+        hookThread.Start();
+
+        // Work the teardown leaves in front of the shutdown keeps the thread from ending — the
+        // capture's hook threads were seen to take seconds over it. Stop returns all the same.
+        var started = System.Diagnostics.Stopwatch.StartNew();
+        try
+        {
+            hookThread.Stop(() =>
+                System.Windows.Threading.Dispatcher.CurrentDispatcher.BeginInvoke(() => release.Wait()));
+            Assert.True(started.Elapsed < TimeSpan.FromSeconds(5));
+            Assert.Null(hookThread.Dispatcher);
+        }
+        finally
+        {
+            release.Set();
+        }
+    }
+
+    [Fact]
     public void StopWithoutStartDoesNothing()
     {
         var hookThread = new HookThread("test hook thread");

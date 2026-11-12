@@ -6,6 +6,7 @@ namespace OverTranslate.Services;
 /// <summary>
 /// How long each step between the capture shortcut and the frozen desktop appearing took, written
 /// to the log as one line per capture so a slow start can be traced to the step that was slow.
+/// The way out of a capture (copy, close) is timed with it as well.
 /// </summary>
 /// <remarks>Used on the UI thread only.</remarks>
 internal sealed class CaptureStartupTiming

@@ -166,6 +166,9 @@
     <sys:String x:Key="S.Annotate.Italic">ตัวเอียง</sys:String>
     <sys:String x:Key="S.Annotate.Underline">ขีดเส้นใต้</sys:String>
     <sys:String x:Key="S.Annotate.Strikethrough">ขีดฆ่า</sys:String>
+    <sys:String x:Key="S.Annotate.Outline">เส้นขอบตัวอักษร</sys:String>
+    <sys:String x:Key="S.Annotate.OutlineColor">สีเส้นขอบ</sys:String>
+    <sys:String x:Key="S.Annotate.OutlineWidth">ความหนาเส้นขอบ</sys:String>
     <sys:String x:Key="S.Annotate.Eraser">ยางลบ</sys:String>
     <sys:String x:Key="S.Annotate.Undo">เลิกทำ</sys:String>
     <sys:String x:Key="S.Annotate.Redo">ทำซ้ำ</sys:String>
@@ -842,7 +845,7 @@
     <sys:String x:Key="S.Settings.UpdateNotWritable">เขียนลงโฟลเดอร์โปรแกรมไม่ได้ โปรดดาวน์โหลดจาก GitHub เอง</sys:String>
     <sys:String x:Key="S.Update.NotifyTitle">มีเวอร์ชันใหม่</sys:String>
     <sys:String x:Key="S.Update.NotifyBody">TextTack v{0} ออกแล้ว คลิกที่นี่ หรือไปที่ การตั้งค่า › ทั่วไป › อัปเดตซอฟต์แวร์</sys:String>
-    <sys:String x:Key="S.Settings.StickyNoteNote">ดับเบิลคลิกโน้ตเพื่อแก้ไข ✓ เพื่อบันทึก คลิกขวาเพื่อไว้บนสุด ปรับความทึบ คลิกทะลุ หรือปรับขนาด เมื่อเปิดคลิกทะลุ การคลิกจะทะลุผ่านโน้ต ชี้ที่โน้ตแล้วกดปุ่มลัดโน้ตแปะ หรือปิดได้จากเมนูถาดระบบหรือหน้าโน้ตแปะ</sys:String>
+    <sys:String x:Key="S.Settings.StickyNoteNote">ดับเบิลคลิกโน้ตเพื่อแก้ไข ✓ เพื่อบันทึก คลิกขวาเพื่อไว้บนสุด ปรับความทึบ คลิกทะลุ หรือปรับขนาด ชี้ที่โน้ตแล้วกดปุ่มลัดโน้ตแปะเพื่อเปิดหรือปิดคลิกทะลุ ขณะเปิด การคลิกจะทะลุผ่านโน้ต และปิดได้จากเมนูถาดระบบหรือหน้าโน้ตแปะด้วย</sys:String>
     <sys:String x:Key="S.Settings.StickyNoteOps">การตั้งค่าโน้ต</sys:String>
     <sys:String x:Key="S.Settings.NoteOcrLanguage">ภาษาในรูปภาพ</sys:String>
     <sys:String x:Key="S.Settings.NoteWidth">ความกว้างเริ่มต้น</sys:String>

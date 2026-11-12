@@ -123,6 +123,49 @@ public partial class ScreenCaptureWindow : Window
 
     public Task<bool> WaitForSelectionAsync() => _selectionTcs.Task;
 
+    /// <summary>Set on the window <see cref="WarmUp"/> makes: never revealed, never activated, closed once painted.</summary>
+    private bool _warmUpOnly;
+
+    /// <summary>
+    /// Builds, lays out and paints one small capture window that is never seen, so the first real
+    /// capture does not pay for loading this window's interface and compiling its code.
+    /// </summary>
+    /// <remarks>
+    /// The first capture of a process took 1.2 s to appear against 0.2 s for the ones after it, and
+    /// about 0.85 s of the difference was creating and showing this window for the first time. The
+    /// window stays cloaked (see OnSourceInitialized) and is shown without activation, so nothing
+    /// on screen changes and the keyboard stays where it was. Call on the UI thread.
+    /// </remarks>
+    internal static void WarmUp()
+    {
+        long started = System.Diagnostics.Stopwatch.GetTimestamp();
+        var origin = System.Windows.Forms.Screen.PrimaryScreen?.Bounds.Location ?? System.Drawing.Point.Empty;
+        var bounds = new System.Drawing.Rectangle(origin.X, origin.Y, 64, 64);
+        var bitmap = new Bitmap(bounds.Width, bounds.Height);
+        ScreenCaptureWindow window;
+        try
+        {
+            window = new ScreenCaptureWindow(bitmap, bounds) { ShowActivated = false, _warmUpOnly = true };
+        }
+        catch
+        {
+            bitmap.Dispose();
+            throw;
+        }
+
+        window.Closed += (_, _) => Log.Info("Capture window warmed up in {Ms:F0} ms",
+            System.Diagnostics.Stopwatch.GetElapsedTime(started).TotalMilliseconds);
+        try
+        {
+            window.Show();
+        }
+        catch
+        {
+            window.Close();
+            throw;
+        }
+    }
+
     private System.Drawing.Rectangle? _preset;
 
     /// <summary>
@@ -155,6 +198,12 @@ public partial class ScreenCaptureWindow : Window
     protected override void OnContentRendered(EventArgs e)
     {
         base.OnContentRendered(e);
+        if (_warmUpOnly)
+        {
+            // Painted, which is all it was for. Not from inside the callback of its own Show.
+            Dispatcher.BeginInvoke(Close);
+            return;
+        }
         StartupTiming?.Mark("first frame");
 
         if (!_cloaked)
@@ -263,6 +312,12 @@ public partial class ScreenCaptureWindow : Window
         // not help: this window is not layered, so a transparent one is still a black one. Cloaked,
         // it goes through all of that off screen and appears already painted.
         _cloaked = WindowScreenPresence.SetCloaked(_hwndSource.Handle, cloaked: true);
+        if (_warmUpOnly && !_cloaked)
+        {
+            // It would be seen. Building it this far has done most of the warming up already.
+            Dispatcher.BeginInvoke(Close);
+            return;
+        }
 
         // Before the DPI is read: pinning the window settles which monitor it belongs to, and that
         // is what the DPI below describes.

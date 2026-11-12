@@ -178,6 +178,9 @@
     <sys:String x:Key="S.Annotate.Italic">斜體</sys:String>
     <sys:String x:Key="S.Annotate.Underline">底線</sys:String>
     <sys:String x:Key="S.Annotate.Strikethrough">刪除線</sys:String>
+    <sys:String x:Key="S.Annotate.Outline">描邊</sys:String>
+    <sys:String x:Key="S.Annotate.OutlineColor">描邊顏色</sys:String>
+    <sys:String x:Key="S.Annotate.OutlineWidth">描邊粗細</sys:String>
     <sys:String x:Key="S.Annotate.Eraser">橡皮擦</sys:String>
     <sys:String x:Key="S.Annotate.Undo">復原</sys:String>
     <sys:String x:Key="S.Annotate.Redo">重做</sys:String>
@@ -868,7 +871,7 @@
     <sys:String x:Key="S.Settings.UpdateNotWritable">程式所在資料夾無法寫入，請到 GitHub 手動下載</sys:String>
     <sys:String x:Key="S.Update.NotifyTitle">有新版本</sys:String>
     <sys:String x:Key="S.Update.NotifyBody">TextTack v{0} 已發布，點這裡到 設定 › 一般 › 軟體更新 一鍵更新</sys:String>
-    <sys:String x:Key="S.Settings.StickyNoteNote">雙擊便利貼編輯，點 √ 儲存；按右鍵可置頂、調整透明度、滑鼠穿透、調整大小。開啟滑鼠穿透後點擊會穿過便利貼，指標放在便利貼上按便利貼快捷鍵，或從系統匣選單、便利貼頁即可取消。</sys:String>
+    <sys:String x:Key="S.Settings.StickyNoteNote">雙擊便利貼編輯，點 √ 儲存；按右鍵可置頂、調整透明度、滑鼠穿透、調整大小。指標放在便利貼上按便利貼快捷鍵可開啟或取消滑鼠穿透；開啟後點擊會穿過便利貼，也可從系統匣選單、便利貼頁取消。</sys:String>
     <sys:String x:Key="S.Settings.StickyNoteOps">便利貼設定</sys:String>
     <sys:String x:Key="S.Settings.NoteOcrLanguage">圖片辨識語言</sys:String>
     <sys:String x:Key="S.Settings.NoteWidth">預設寬度</sys:String>

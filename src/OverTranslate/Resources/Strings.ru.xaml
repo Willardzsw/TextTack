@@ -168,6 +168,9 @@
     <sys:String x:Key="S.Annotate.Italic">Курсив</sys:String>
     <sys:String x:Key="S.Annotate.Underline">Подчёркнутый</sys:String>
     <sys:String x:Key="S.Annotate.Strikethrough">Зачёркнутый</sys:String>
+    <sys:String x:Key="S.Annotate.Outline">Обводка</sys:String>
+    <sys:String x:Key="S.Annotate.OutlineColor">Цвет обводки</sys:String>
+    <sys:String x:Key="S.Annotate.OutlineWidth">Толщина обводки</sys:String>
     <sys:String x:Key="S.Annotate.Eraser">Ластик</sys:String>
     <sys:String x:Key="S.Annotate.Undo">Отменить</sys:String>
     <sys:String x:Key="S.Annotate.Redo">Повторить</sys:String>
@@ -838,7 +841,7 @@
     <sys:String x:Key="S.Settings.UpdateNotWritable">Папка программы недоступна для записи; скачайте обновление с GitHub вручную</sys:String>
     <sys:String x:Key="S.Update.NotifyTitle">Доступно обновление</sys:String>
     <sys:String x:Key="S.Update.NotifyBody">Вышла TextTack v{0}. Нажмите здесь или откройте Настройки › Общие › Обновление</sys:String>
-    <sys:String x:Key="S.Settings.StickyNoteNote">Двойной щелчок — изменить, ✓ — сохранить; правой кнопкой — поверх окон, прозрачность, сквозные щелчки, размер. Со сквозными щелчками нажатия проходят сквозь заметку: наведите на неё и нажмите клавишу заметок или выключите в меню трея или на странице заметок.</sys:String>
+    <sys:String x:Key="S.Settings.StickyNoteNote">Двойной щелчок — изменить, ✓ — сохранить; правой кнопкой — поверх окон, прозрачность, сквозные щелчки, размер. Наведите на заметку и нажмите клавишу заметок, чтобы включить или выключить сквозные щелчки; пока они включены, нажатия проходят сквозь заметку, выключить их можно и в меню трея или на странице заметок.</sys:String>
     <sys:String x:Key="S.Settings.StickyNoteOps">Настройки заметок</sys:String>
     <sys:String x:Key="S.Settings.NoteOcrLanguage">Язык картинки</sys:String>
     <sys:String x:Key="S.Settings.NoteWidth">Ширина по умолчанию</sys:String>

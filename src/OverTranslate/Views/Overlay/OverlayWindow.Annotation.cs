@@ -273,8 +273,13 @@ public partial class OverlayWindow
 
     /// <summary>How the next 文字 mark is set, and the one being typed if there is one.</summary>
     /// <param name="sizePx">The em size in physical pixels of the capture.</param>
-    public void SetAnnotationTextStyle(int sizePx, bool bold, bool italic, bool underline, bool strikethrough)
+    /// <param name="outlineColor">The 描邊 colour, or null for none.</param>
+    /// <param name="outlineWidthPx">How far the 描邊 reaches, in physical pixels of the capture.</param>
+    public void SetAnnotationTextStyle(int sizePx, bool bold, bool italic, bool underline, bool strikethrough,
+        Color? outlineColor = null, int outlineWidthPx = 0)
     {
+        _textOutlineColor   = outlineColor;
+        _textOutlineWidthPx = outlineWidthPx;
         _textSizePx        = sizePx;
         _textBold          = bold;
         _textItalic        = italic;
@@ -670,7 +675,11 @@ public partial class OverlayWindow
 
     private void ApplyTextEditorStyle() =>
         _textEditor?.ApplyStyle(TextFamily, _textSizePx, _annotationColor,
-            _textBold, _textItalic, _textUnderline, _textStrikethrough);
+            _textBold, _textItalic, _textUnderline, _textStrikethrough, _textOutlineColor, _textOutlineWidthPx);
+
+    // The 描邊 the next 文字 mark gets: null for none, and its reach in physical pixels.
+    private Color? _textOutlineColor;
+    private int _textOutlineWidthPx;
 
     /// <summary>The words are set in the interface's own font, which is chosen for its language.</summary>
     private static System.Windows.Media.FontFamily TextFamily =>
@@ -706,7 +715,8 @@ public partial class OverlayWindow
             Text      = text,
             TextStyle = new AnnotationTextStyle(
                 TextFamily, _textSizePx / _dpiX,
-                _textBold, _textItalic, _textUnderline, _textStrikethrough),
+                _textBold, _textItalic, _textUnderline, _textStrikethrough,
+                _textOutlineColor, _textOutlineWidthPx / _dpiX),
         };
 
         EnsureInkSurface();

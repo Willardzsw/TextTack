@@ -47,11 +47,11 @@ public partial class AnnotationPanelWindow : Window
         Color.FromRgb(0x7C, 0x3A, 0xED), // 紫
     ];
 
-    /// <summary>What every capture starts with in hand.</summary>
+    /// <summary>What a capture starts with in hand before any tool has been remembered.</summary>
     /// <remarks>
-    /// Not remembered, unlike the rest of the panel — see CaptureSettings.Annotation for why.
+    /// After that, the tool last picked up — except the eraser; see CaptureSettings.Annotation.
     /// </remarks>
-    public static AnnotationTool DefaultTool => AnnotationTool.Pen;
+    public static AnnotationTool DefaultTool => AnnotationTool.Rectangle;
 
     /// <summary>
     /// What the 透明度 slider means, as (faintest, strongest).
@@ -115,6 +115,25 @@ public partial class AnnotationPanelWindow : Window
     public bool TextItalic        => _prefs.TextItalic;
     public bool TextUnderline     => _prefs.TextUnderline;
     public bool TextStrikethrough => _prefs.TextStrikethrough;
+
+    /// <summary>The 描邊 colour for 文字, or null while 描邊 is off.</summary>
+    public Color? TextOutlineColor => _prefs.TextOutline ? OutlineColor : null;
+
+    /// <summary>The 描邊's reach in physical pixels, always inside the range the field allows.</summary>
+    public int TextOutlineWidth => Math.Clamp(_prefs.TextOutlineWidth,
+        CaptureAnnotationSettings.MinTextOutlineWidth, CaptureAnnotationSettings.MaxTextOutlineWidth);
+
+    /// <summary>The 描邊 colour chosen, whether or not 描邊 is on. One the palette does not offer reads as white.</summary>
+    private Color OutlineColor
+    {
+        get
+        {
+            var parsed = TryParseColor(_prefs.TextOutlineColor);
+            return parsed is { } c && PaletteColors.Contains(c) ? c : PaletteColors[1];
+        }
+    }
+
+    private readonly List<ToggleButton> _outlineSwatches = [];
 
     /// <summary>The sizes the tray under the 文字 size field offers.</summary>
     /// <remarks>
@@ -269,6 +288,7 @@ public partial class AnnotationPanelWindow : Window
 
         BuildPalette();
         BuildTextSizeTray();
+        BuildOutlinePalette();
         RenderTextOptions();
         RenderToolSelection();
         OpacitySlider.Value = Math.Clamp(prefs.HighlighterOpacity, 0, 1);
@@ -292,7 +312,7 @@ public partial class AnnotationPanelWindow : Window
         if (!_typing) return;
         for (var node = e.OriginalSource as DependencyObject; node is not null;
              node = node is Visual ? VisualTreeHelper.GetParent(node) : LogicalTreeHelper.GetParent(node))
-            if (ReferenceEquals(node, TextSizeBox)) return;
+            if (ReferenceEquals(node, _typingBox)) return;
 
         EndTyping();
     }
@@ -316,7 +336,7 @@ public partial class AnnotationPanelWindow : Window
     /// </remarks>
     private void RefuseKeyboardFocus(object sender, System.Windows.Input.KeyboardFocusChangedEventArgs e)
     {
-        if (_typing && ReferenceEquals(e.NewFocus, TextSizeBox)) return;
+        if (_typing && ReferenceEquals(e.NewFocus, _typingBox)) return;
         e.Handled = true;
     }
 
@@ -625,6 +645,7 @@ public partial class AnnotationPanelWindow : Window
         _openTraySurface = null;
         _openTrayAnchor = null;
         TextSizeDrop.IsChecked = false;
+        OutlineColorButton.IsChecked = false;
 
         _trayCloser?.Dispose();
         _trayCloser = null;
@@ -673,6 +694,7 @@ public partial class AnnotationPanelWindow : Window
     {
         bool shape = AnnotationStroke.IsShapeTool(Tool);
         if (shape) _lastShape = _prefs.Shape = Tool;
+        if (Tool != AnnotationTool.Eraser) _prefs.LastTool = Tool;
 
         PenTool.IsChecked         = Tool == AnnotationTool.Pen;
         HighlighterTool.IsChecked = Tool == AnnotationTool.Highlighter;
@@ -809,6 +831,128 @@ public partial class AnnotationPanelWindow : Window
         ItalicToggle.IsChecked        = _prefs.TextItalic;
         UnderlineToggle.IsChecked     = _prefs.TextUnderline;
         StrikethroughToggle.IsChecked = _prefs.TextStrikethrough;
+        RenderOutlineOptions();
+    }
+
+    // ── 描邊 ────────────────────────────────────────────────────────────────────────────────────
+
+    /// <summary>The same eight colours the ink is picked from, in the tray behind the colour chip.</summary>
+    private void BuildOutlinePalette()
+    {
+        foreach (var color in PaletteColors)
+        {
+            var swatch = new ToggleButton
+            {
+                Style      = (Style)FindResource("AnnotationSwatchButton"),
+                Background = new SolidColorBrush(color),
+                Tag        = color,
+            };
+            System.Windows.Automation.AutomationProperties.SetName(swatch, color.ToString());
+            swatch.Click += OutlineSwatch_Click;
+            _outlineSwatches.Add(swatch);
+            OutlineSwatches.Children.Add(swatch);
+        }
+    }
+
+    /// <summary>Shows whether 描邊 is on, its colour and its reach.</summary>
+    private void RenderOutlineOptions()
+    {
+        var color = OutlineColor;
+        _prefs.TextOutlineColor = ToHex(color);
+
+        OutlineToggle.IsChecked   = _prefs.TextOutline;
+        OutlineOptions.Visibility = _prefs.TextOutline ? Visibility.Visible : Visibility.Collapsed;
+        OutlineColorChip.Background = new SolidColorBrush(color);
+        foreach (var swatch in _outlineSwatches) swatch.IsChecked = swatch.Tag is Color c && c == color;
+        OutlineWidthBox.Text = TextOutlineWidth.ToString(System.Globalization.CultureInfo.InvariantCulture);
+    }
+
+    private void OutlineToggle_Click(object sender, RoutedEventArgs e)
+    {
+        EndTyping();
+        HideShapeTray();
+        _prefs.TextOutline = OutlineToggle.IsChecked == true;
+        RenderOutlineOptions();
+        SettingsChanged?.Invoke(this, EventArgs.Empty);
+    }
+
+    private void OutlineColorButton_Click(object sender, RoutedEventArgs e)
+    {
+        if (ReferenceEquals(_openTray, OutlineColorTray))
+        {
+            HideShapeTray();
+            return;
+        }
+
+        EndTyping();
+        ShowTray(OutlineColorTray, OutlineColorTraySurface, OutlineColorButton);
+        OutlineColorButton.IsChecked = true;
+    }
+
+    private void OutlineSwatch_Click(object sender, RoutedEventArgs e)
+    {
+        if (sender is not ToggleButton { Tag: Color color }) return;
+        HideShapeTray();
+        _prefs.TextOutlineColor = ToHex(color);
+        RenderOutlineOptions();
+        SettingsChanged?.Invoke(this, EventArgs.Empty);
+    }
+
+    /// <summary>Takes a reach, clamped to the field's range, shows it and passes it on.</summary>
+    private void SetOutlineWidth(int width)
+    {
+        width = Math.Clamp(width, CaptureAnnotationSettings.MinTextOutlineWidth, CaptureAnnotationSettings.MaxTextOutlineWidth);
+        OutlineWidthBox.Text = width.ToString(System.Globalization.CultureInfo.InvariantCulture);
+        if (width == _prefs.TextOutlineWidth) return;
+
+        _prefs.TextOutlineWidth = width;
+        SettingsChanged?.Invoke(this, EventArgs.Empty);
+    }
+
+    private void CommitTypedOutlineWidth()
+    {
+        if (int.TryParse(OutlineWidthBox.Text, System.Globalization.NumberStyles.None,
+                System.Globalization.CultureInfo.InvariantCulture, out int typed))
+            SetOutlineWidth(typed);
+        else
+            OutlineWidthBox.Text = TextOutlineWidth.ToString(System.Globalization.CultureInfo.InvariantCulture);
+    }
+
+    private void OutlineWidthBox_LostKeyboardFocus(object sender, System.Windows.Input.KeyboardFocusChangedEventArgs e) =>
+        CommitTypedOutlineWidth();
+
+    private void OutlineWidthBox_PreviewKeyDown(object sender, System.Windows.Input.KeyEventArgs e)
+    {
+        switch (e.Key)
+        {
+            case System.Windows.Input.Key.Enter:
+                CommitTypedOutlineWidth();
+                EndTyping();
+                e.Handled = true;
+                break;
+
+            case System.Windows.Input.Key.Escape:
+                OutlineWidthBox.Text = TextOutlineWidth.ToString(System.Globalization.CultureInfo.InvariantCulture);
+                EndTyping();
+                e.Handled = true;
+                break;
+
+            case System.Windows.Input.Key.Up:
+            case System.Windows.Input.Key.Down:
+                CommitTypedOutlineWidth();
+                SetOutlineWidth(TextOutlineWidth + (e.Key == System.Windows.Input.Key.Up ? 1 : -1));
+                OutlineWidthBox.SelectAll();
+                e.Handled = true;
+                break;
+        }
+    }
+
+    /// <summary>One pixel a notch, without having to click into the field first.</summary>
+    private void OutlineWidthBox_MouseWheel(object sender, System.Windows.Input.MouseWheelEventArgs e)
+    {
+        CommitTypedOutlineWidth();
+        SetOutlineWidth(TextOutlineWidth + Math.Sign(e.Delta));
+        e.Handled = true;
     }
 
     private void TextStyleToggle_Click(object sender, RoutedEventArgs e)
@@ -874,27 +1018,49 @@ public partial class AnnotationPanelWindow : Window
     private IntPtr _typingPrevious;
     private bool _typing;
 
+    /// <summary>The field the keyboard was taken for: the 文字 size or the 描邊 width.</summary>
+    private System.Windows.Controls.TextBox? _typingBox;
+
     /// <summary>
     /// The panel takes the keyboard for the size field, and only for it. A click is what asks: this
     /// window is no-activate, so without this the field would show a caret while the keys went to
     /// the application underneath.
     /// </summary>
-    private void TextSizeBox_PreviewMouseLeftButtonDown(object sender, MouseButtonEventArgs e)
+    private void TypingBox_PreviewMouseLeftButtonDown(object sender, MouseButtonEventArgs e)
     {
+        if (sender is not System.Windows.Controls.TextBox box) return;
         HideShapeTray();
-        if (_typing) return;
+        if (_typing && ReferenceEquals(_typingBox, box)) return;
 
-        _typing = true;
-        _typingPrevious = KeyboardForeground.Take(this);
+        // From one field straight to the other: the first one's number is applied, and the keyboard
+        // the panel already holds is handed across rather than given back and taken again.
+        if (_typing)
+        {
+            CommitTyping();
+            _typingBox = box;
+        }
+        else
+        {
+            _typing = true;
+            _typingBox = box;
+            _typingPrevious = KeyboardForeground.Take(this);
+        }
 
         // Focused here rather than left to the click, so the whole number is selected and the first
         // digit typed replaces it — the same as the realtime panel's size field.
-        TextSizeBox.Focus();
+        box.Focus();
         e.Handled = true;
     }
 
     private void TextSizeBox_GotKeyboardFocus(object sender, System.Windows.Input.KeyboardFocusChangedEventArgs e) =>
-        TextSizeBox.SelectAll();
+        (sender as System.Windows.Controls.TextBox)?.SelectAll();
+
+    /// <summary>Applies whatever is in the field being typed into.</summary>
+    private void CommitTyping()
+    {
+        if (ReferenceEquals(_typingBox, OutlineWidthBox)) CommitTypedOutlineWidth();
+        else CommitTypedTextSize();
+    }
 
     private void TextSizeBox_LostKeyboardFocus(object sender, System.Windows.Input.KeyboardFocusChangedEventArgs e) =>
         CommitTypedTextSize();
@@ -959,7 +1125,8 @@ public partial class AnnotationPanelWindow : Window
         if (!_typing) return;
         _typing = false;
 
-        CommitTypedTextSize();
+        CommitTyping();
+        _typingBox = null;
         if (IsKeyboardFocusWithin) System.Windows.Input.Keyboard.ClearFocus();
         System.Windows.Input.FocusManager.SetFocusedElement(this, null);
 

@@ -172,6 +172,9 @@
     <sys:String x:Key="S.Annotate.Italic">斜体</sys:String>
     <sys:String x:Key="S.Annotate.Underline">下線</sys:String>
     <sys:String x:Key="S.Annotate.Strikethrough">取り消し線</sys:String>
+    <sys:String x:Key="S.Annotate.Outline">縁取り</sys:String>
+    <sys:String x:Key="S.Annotate.OutlineColor">縁取りの色</sys:String>
+    <sys:String x:Key="S.Annotate.OutlineWidth">縁取りの太さ</sys:String>
     <sys:String x:Key="S.Annotate.Eraser">消しゴム</sys:String>
     <sys:String x:Key="S.Annotate.Undo">元に戻す</sys:String>
     <sys:String x:Key="S.Annotate.Redo">やり直す</sys:String>
@@ -849,7 +852,7 @@
     <sys:String x:Key="S.Settings.UpdateNotWritable">プログラムのフォルダーに書き込めません。GitHub から手動でダウンロードしてください</sys:String>
     <sys:String x:Key="S.Update.NotifyTitle">新しいバージョン</sys:String>
     <sys:String x:Key="S.Update.NotifyBody">TextTack v{0} が公開されました。ここをクリックするか、設定 › 一般 › ソフトウェア更新 から更新できます</sys:String>
-    <sys:String x:Key="S.Settings.StickyNoteNote">付箋をダブルクリックで編集、✓ で保存。右クリックで最前面・透明度・マウス透過・サイズ変更。マウス透過中はクリックが付箋を通り抜けます。付箋の上で付箋ショートカットを押すか、トレイメニューや付箋ページで解除できます。</sys:String>
+    <sys:String x:Key="S.Settings.StickyNoteNote">付箋をダブルクリックで編集、✓ で保存。右クリックで最前面・透明度・マウス透過・サイズ変更。付箋の上で付箋ショートカットを押すとマウス透過のオン／オフを切り替えます。透過中はクリックが付箋を通り抜け、トレイメニューや付箋ページでも解除できます。</sys:String>
     <sys:String x:Key="S.Settings.StickyNoteOps">付箋の設定</sys:String>
     <sys:String x:Key="S.Settings.NoteOcrLanguage">画像認識の言語</sys:String>
     <sys:String x:Key="S.Settings.NoteWidth">既定の幅</sys:String>

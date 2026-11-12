@@ -457,7 +457,7 @@
                                              MaxLength="3"
                                              InputMethod.IsInputMethodEnabled="False"
                                              AutomationProperties.Name="{DynamicResource S.Annotate.Size}"
-                                             PreviewMouseLeftButtonDown="TextSizeBox_PreviewMouseLeftButtonDown"
+                                             PreviewMouseLeftButtonDown="TypingBox_PreviewMouseLeftButtonDown"
                                              PreviewTextInput="TextSizeBox_PreviewTextInput"
                                              PreviewKeyDown="TextSizeBox_PreviewKeyDown"
                                              GotKeyboardFocus="TextSizeBox_GotKeyboardFocus"
@@ -513,6 +513,88 @@
                                           Click="TextStyleToggle_Click">
                                 <TextBlock Style="{StaticResource TextOptionGlyph}" Text="S" TextDecorations="Strikethrough"/>
                             </ToggleButton>
+
+                            <!-- 描邊: an outline round each glyph, so the words read on any ground.
+                                 Its colour and reach show only while it is on. -->
+                            <ToggleButton x:Name="OutlineToggle"
+                                          Margin="2,0,0,0"
+                                          Style="{StaticResource TextOptionToggle}"
+                                          ToolTip="{DynamicResource S.Annotate.Outline}"
+                                          AutomationProperties.Name="{DynamicResource S.Annotate.Outline}"
+                                          Click="OutlineToggle_Click">
+                                <Path Style="{StaticResource ToolbarToolStroke}"
+                                      StrokeThickness="1.2"
+                                      Stroke="{Binding Foreground, RelativeSource={RelativeSource AncestorType=ToggleButton}}"
+                                      Data="M8,1.5 L14.5,15 H11.4 L10.2,12.2 H5.8 L4.6,15 H1.5 Z M6.9,9.6 H9.1 L8,6.8 Z"/>
+                            </ToggleButton>
+
+                            <StackPanel x:Name="OutlineOptions"
+                                        Orientation="Horizontal"
+                                        Margin="4,0,0,0"
+                                        Visibility="Collapsed">
+                                <ToggleButton x:Name="OutlineColorButton"
+                                              Style="{StaticResource TextOptionToggle}"
+                                              ToolTip="{DynamicResource S.Annotate.OutlineColor}"
+                                              AutomationProperties.Name="{DynamicResource S.Annotate.OutlineColor}"
+                                              Click="OutlineColorButton_Click">
+                                    <Border x:Name="OutlineColorChip"
+                                            Width="16"
+                                            Height="16"
+                                            CornerRadius="8"
+                                            BorderThickness="1"
+                                            BorderBrush="{DynamicResource AppButtonBorder}"/>
+                                </ToggleButton>
+
+                                <Border Height="30"
+                                        Margin="4,0,0,0"
+                                        CornerRadius="7"
+                                        BorderThickness="1"
+                                        Background="{DynamicResource AppButtonBg}"
+                                        ToolTip="{DynamicResource S.Annotate.OutlineWidth}">
+                                    <Border.Style>
+                                        <Style TargetType="Border">
+                                            <Setter Property="BorderBrush" Value="{DynamicResource AppButtonBorder}"/>
+                                            <Style.Triggers>
+                                                <Trigger Property="IsKeyboardFocusWithin" Value="True">
+                                                    <Setter Property="BorderBrush" Value="{DynamicResource AppInputFocusBorder}"/>
+                                                </Trigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </Border.Style>
+                                    <DockPanel>
+                                        <TextBlock Text="px"
+                                                   DockPanel.Dock="Right"
+                                                   Margin="2,0,6,1"
+                                                   VerticalAlignment="Center"
+                                                   FontFamily="{DynamicResource AppFont}"
+                                                   FontSize="11.5"
+                                                   Foreground="{DynamicResource AppTextSecondary}"/>
+                                        <TextBox x:Name="OutlineWidthBox"
+                                                 Width="20"
+                                                 Margin="6,0,0,0"
+                                                 VerticalAlignment="Center"
+                                                 BorderThickness="0"
+                                                 Background="Transparent"
+                                                 Padding="0"
+                                                 HorizontalContentAlignment="Right"
+                                                 FontFamily="{DynamicResource AppFont}"
+                                                 FontSize="13"
+                                                 Foreground="{DynamicResource AppTextPrimary}"
+                                                 CaretBrush="{DynamicResource AppTextPrimary}"
+                                                 SelectionBrush="{DynamicResource AppAccent}"
+                                                 MaxLength="2"
+                                                 InputMethod.IsInputMethodEnabled="False"
+                                                 AutomationProperties.Name="{DynamicResource S.Annotate.OutlineWidth}"
+                                                 PreviewMouseLeftButtonDown="TypingBox_PreviewMouseLeftButtonDown"
+                                                 PreviewTextInput="TextSizeBox_PreviewTextInput"
+                                                 PreviewKeyDown="OutlineWidthBox_PreviewKeyDown"
+                                                 GotKeyboardFocus="TextSizeBox_GotKeyboardFocus"
+                                                 LostKeyboardFocus="OutlineWidthBox_LostKeyboardFocus"
+                                                 MouseWheel="OutlineWidthBox_MouseWheel"
+                                                 DataObject.Pasting="TextSizeBox_Pasting"/>
+                                    </DockPanel>
+                                </Border>
+                            </StackPanel>
                         </StackPanel>
 
                         <!-- How much of the page still shows through, for the one tool the question
@@ -653,6 +735,31 @@
                         Padding="6"
                         RenderOptions.ClearTypeHint="Enabled">
                     <StackPanel x:Name="TextSizeChoices" Orientation="Horizontal"/>
+                </Border>
+            </Grid>
+
+            <!-- The 描邊 colours, behind the colour chip: the same eight the ink is picked from.
+                 Filled from code — see BuildOutlinePalette. -->
+            <Grid x:Name="OutlineColorTray"
+                  HorizontalAlignment="Left"
+                  Visibility="Collapsed">
+                <Border Background="{DynamicResource ToolbarBg}"
+                        Margin="2"
+                        CornerRadius="12">
+                    <Border.Effect>
+                        <DropShadowEffect BlurRadius="14" ShadowDepth="2" Direction="270"
+                                          Opacity="0.20" Color="#000000"/>
+                    </Border.Effect>
+                </Border>
+
+                <Border x:Name="OutlineColorTraySurface"
+                        Background="{DynamicResource ToolbarBg}"
+                        BorderBrush="{DynamicResource ToolbarBorder}"
+                        BorderThickness="1"
+                        CornerRadius="14"
+                        Padding="6"
+                        RenderOptions.ClearTypeHint="Enabled">
+                    <StackPanel x:Name="OutlineSwatches" Orientation="Horizontal"/>
                 </Border>
             </Grid>
         </StackPanel>

@@ -94,6 +94,31 @@ public partial class MainWindow : Window
         InitializeComponent();
     }
 
+    /// <summary>
+    /// A few seconds after start, once the startup work is out of the way: see
+    /// <see cref="ScreenCaptureWindow.WarmUp"/>. Skipped when a capture got there first — that one
+    /// has done the same work for real.
+    /// </summary>
+    private void WarmUpCaptureSoon()
+    {
+        var timer = new System.Windows.Threading.DispatcherTimer(
+            System.Windows.Threading.DispatcherPriority.ApplicationIdle, Dispatcher)
+        {
+            Interval = TimeSpan.FromSeconds(3),
+        };
+        timer.Tick += (_, _) =>
+        {
+            timer.Stop();
+            if (_capturedOnce || HasActiveSession) return;
+            try { ScreenCaptureWindow.WarmUp(); }
+            catch (Exception ex) { Log.Warn(ex, "Warming up the capture window failed"); }
+        };
+        timer.Start();
+    }
+
+    /// <summary>Whether a capture has been started in this process.</summary>
+    private bool _capturedOnce;
+
     public void InitializeApp()
     {
         var helper = new WindowInteropHelper(this);
@@ -112,6 +137,8 @@ public partial class MainWindow : Window
         Views.StickyNote.StickyNoteManager.RestoreAll();
         Views.StickyNote.StickyNoteManager.WarmUp();
         TopmostKeeper.Start(() => _captureWindow is not null);
+        IdleMemory.Busy = () => _captureWindow is not null;
+        WarmUpCaptureSoon();
         ShowStartupBalloon();
         _ = CheckForUpdateOnStartupAsync();
 
@@ -383,14 +410,16 @@ public partial class MainWindow : Window
     }
 
     /// <summary>
-    /// Rebinds every shortcut, after any one of them has been changed.
+    /// Gives every registered key combination back to Windows, for as long as the settings page is
+    /// recording a shortcut; <see cref="ReRegisterHotkey"/> takes them again.
     /// </summary>
     /// <remarks>
-    /// All of them rather than the one that changed, because the cost is two Win32 calls and the
-    /// alternative is a second entry point that has to be kept in step with which setting the
-    /// settings page happened to write.
+    /// A registered combination never reaches the window with the focus: Windows turns it into the
+    /// shortcut's own message instead. So pressing one that is already in use — Alt+F2, 新建便利貼
+    /// by default — into a recording box made a note and recorded nothing. The mouse buttons and key
+    /// sequences are stood down for the same time by <see cref="GlobalAuxiliaryHotkeys.Paused"/>.
     /// </remarks>
-    public void ReRegisterHotkey()
+    public void ReleaseKeyboardHotkeys()
     {
         _hotkey?.Unregister();
         _windowHotkey?.Unregister();
@@ -401,6 +430,19 @@ public partial class MainWindow : Window
         _pinHotkey?.Unregister();
         _stickyNoteHotkey?.Unregister();
         _stickyNoteNewHotkey?.Unregister();
+    }
+
+    /// <summary>
+    /// Rebinds every shortcut, after any one of them has been changed.
+    /// </summary>
+    /// <remarks>
+    /// All of them rather than the one that changed, because the cost is two Win32 calls and the
+    /// alternative is a second entry point that has to be kept in step with which setting the
+    /// settings page happened to write.
+    /// </remarks>
+    public void ReRegisterHotkey()
+    {
+        ReleaseKeyboardHotkeys();
         _auxiliaryHotkeys?.Dispose();
         _auxiliaryHotkeys = null;
         RegisterHotkey();
@@ -896,6 +938,7 @@ public partial class MainWindow : Window
         try
         {
             Log.Info("Capture session starting, origin={Origin}, bounds={Bounds}", origin, screenBounds);
+            _capturedOnce = true;
             var captureWindow = new ScreenCaptureWindow(screenshot, screenBounds);
             timing.Mark("build window");
             captureWindow.StartupTiming = timing;
@@ -1146,8 +1189,10 @@ public partial class MainWindow : Window
         _lastSelPhysHeight = selection.Height;
         _lastVerticalText  = false;
 
-        _annotationTool = AnnotationPanelWindow.DefaultTool;
+        _annotationTool = SettingsService.Instance.Current.Capture.Annotation.StartingTool();
 
+        // From the box being settled to the toolbar being up, step by step: logged when slow.
+        var timing = new CaptureStartupTiming();
         var settings = SettingsService.Instance.Current;
         _lastTargetLang = settings.TargetLanguage;
         ShowOverlay(
@@ -1163,10 +1208,12 @@ public partial class MainWindow : Window
 
         _overlayWindow?.SetAnnotationBounds(
             selection.Left, selection.Top, selection.Width, selection.Height);
+        timing.Mark("overlay");
 
         var toolbar  = new ToolbarWindow(
             selection.Left, selection.Top, selection.Width, selection.Height,
             srcLang, settings.TargetLanguage);
+        timing.Mark("build toolbar");
         toolbar.Owner = captureWindow;
         toolbar.TranslateRequested      += OnTranslateRequested;
         toolbar.OpenWindowRequested     += OnOpenWindowRequested;
@@ -1186,13 +1233,21 @@ public partial class MainWindow : Window
         {
             if (ReferenceEquals(_toolbarWindow, toolbar)) CopyScreenshot(forceClose: false);
         }));
+        timing.Mark("copy key hook");
         toolbar.SetTranslationState(hasTranslated);
         toolbar.SetToggleEnabled(blocks.Count > 0);
         toolbar.SetSpeakableText(SourceTextForSpeech().Length > 0);
         toolbar.Show();
+        timing.Mark("show toolbar");
 
         ApplyCaptureTopmost();
+        timing.Mark("topmost");
+        if (timing.ElapsedMs >= SlowSelectionMs)
+            Log.Info("Capture selection timing, {Steps}", timing.Describe());
     }
+
+    /// <summary>Putting the overlay and the toolbar up for a settled box is logged when it takes this long.</summary>
+    private const double SlowSelectionMs = 60;
 
     // On re-translate: update the existing overlay in-place to avoid z-order fights with
     // ScreenCaptureWindow (both Topmost — close+reopen loses the z-position race).
@@ -1779,12 +1834,12 @@ public partial class MainWindow : Window
     /// own — see CaptureSettings.PinSelectionTrigger.
     /// </summary>
     /// <summary>
-    /// 便利貼: over a note that lets clicks through, gives it its clicks back; otherwise makes a note
-    /// from the clipboard under the pointer.
+    /// 便利貼: over a note, switches its 滑鼠穿透 on or off; otherwise makes a note from the
+    /// clipboard under the pointer.
     /// </summary>
     private void OnStickyNoteHotkeyPressed(object? sender, EventArgs e) => Dispatcher.Invoke(() =>
     {
-        if (Views.StickyNote.StickyNoteManager.TryDisablePassThroughUnderPointer()) return;
+        if (Views.StickyNote.StickyNoteManager.TryTogglePassThroughUnderPointer()) return;
         _ = Views.StickyNote.StickyNoteManager.CreateFromClipboardAsync(
             message => ShowTrayNotification(LocalizationService.Get("S.Note.Title"), message));
     });
@@ -1884,6 +1939,8 @@ public partial class MainWindow : Window
     {
         try
         {
+            // How long the way out took, step by step, for the one log line CloseAll writes.
+            var timing = new CaptureStartupTiming();
             var result = ComposeSelectionImage();
             if (result is null)
             {
@@ -1892,8 +1949,10 @@ public partial class MainWindow : Window
                     LocalizationService.Get("S.Main.NoImageBody"));
                 return;
             }
+            timing.Mark("compose");
 
             ClipboardImage.Set(result, SettingsService.Instance.Current.Capture.RoundedCorners);
+            timing.Mark("clipboard");
             _toolbarWindow?.ShowScreenshotCopied();
 
             var settings = SettingsService.Instance.Current;
@@ -1904,7 +1963,7 @@ public partial class MainWindow : Window
                 // would only flash on a toolbar that is about to go.
                 if (closeAfter)
                 {
-                    CloseAll("copy and close");
+                    CloseAll("copy and close", timing);
                     return;
                 }
 
@@ -1918,12 +1977,13 @@ public partial class MainWindow : Window
             try
             {
                 var savedPath = ScreenshotSaveService.Save(result, settings.ScreenshotSavePath);
+                timing.Mark("save");
 
                 // Closed only once the file is written. A failed save below keeps the capture up,
                 // since its notice is the only place the user would learn the file is not there.
                 if (closeAfter)
                 {
-                    CloseAll("copy and close");
+                    CloseAll("copy and close", timing);
                     return;
                 }
 
@@ -2017,14 +2077,22 @@ public partial class MainWindow : Window
     /// several possible causes — Esc, a second press of the key or the button, an exception — and
     /// without this they all read the same.
     /// </param>
-    private void CloseAll(string reason)
+    /// <param name="timing">
+    /// Already running, with the steps that led here (composing and copying the picture), when the
+    /// caller has some: the log line on how long the way out took then covers them too.
+    /// </param>
+    private void CloseAll(string reason, CaptureStartupTiming? timing = null)
     {
+        bool hadSession = HasActiveSession;
+        timing ??= new CaptureStartupTiming();
+
         // Paired with "Capture session starting": between them they show whether a session the user
         // reports as stuck ever actually ended.
         Log.Info("Tearing down capture session, reason={Reason} (overlay={Overlay}, toolbar={Toolbar}, capture={Capture})",
             reason, _overlayWindow != null, _toolbarWindow != null, _captureWindow != null);
         _selectionSessionId++;
         DisposeSessionHooks();
+        timing.Mark("hooks");
         CancelSession();
         _ocrReuse.Clear();
 
@@ -2044,15 +2112,19 @@ public partial class MainWindow : Window
         // click-through mode, and doing that to a window that has already gone is a needless throw
         // on the one teardown path that must never leave a window behind.
         CloseAnnotationPanel();
+        timing.Mark("annotation panel");
 
         CloseWindow(_overlayWindow, w => w.CloseOverlay(), nameof(OverlayWindow));
         _overlayWindow = null;
+        timing.Mark("overlay");
 
         CloseWindow(_toolbarWindow, w => w.Close(), nameof(ToolbarWindow));
         _toolbarWindow = null;
+        timing.Mark("toolbar");
 
         CloseWindow(_captureWindow, w => w.Close(), nameof(ScreenCaptureWindow));
         _captureWindow = null;
+        timing.Mark("capture window");
 
         // Last, so a shell hidden for this capture comes back only once the screen is clear of the
         // dim layer and overlay it would otherwise be raised behind.
@@ -2062,9 +2134,15 @@ public partial class MainWindow : Window
         // they would come back over a capture still being torn down. Unconditional — it does nothing
         // unless this capture is the one that stood a session down.
         RealtimeSessionController.Instance.ResumeAfterCapture();
+        timing.Mark("restore");
 
         // The frozen desktop and the crop went with the windows; give their memory back.
         IdleMemory.ReleaseSoon();
+
+        // The other half of "Capture start timing": a capture slow to leave the screen is traced to
+        // the step that held it.
+        if (hadSession)
+            Log.Info("Capture end timing, reason={Reason}, {Steps}", reason, timing.Describe());
     }
 
     /// <summary>
@@ -2103,7 +2181,8 @@ public partial class MainWindow : Window
         _captureWindow?.SetAnnotationHold(true);
         _overlayWindow.BeginAnnotating(panel.Tool, panel.InkColor, panel.Thickness, panel.InkOpacity);
         _overlayWindow.SetAnnotationTextStyle(
-            panel.TextSize, panel.TextBold, panel.TextItalic, panel.TextUnderline, panel.TextStrikethrough);
+            panel.TextSize, panel.TextBold, panel.TextItalic, panel.TextUnderline, panel.TextStrikethrough,
+            panel.TextOutlineColor, panel.TextOutlineWidth);
         _overlayWindow.KeepTextEditingOnPress = panel.ContainsPhysical;
         _overlayWindow.AnnotationSizeWheel -= OnAnnotationSizeWheel;
         _overlayWindow.AnnotationSizeWheel += OnAnnotationSizeWheel;
@@ -2139,7 +2218,8 @@ public partial class MainWindow : Window
         _overlayWindow?.SetAnnotationOpacity(_annotationPanel.InkOpacity);
         _overlayWindow?.SetAnnotationTextStyle(
             _annotationPanel.TextSize, _annotationPanel.TextBold, _annotationPanel.TextItalic,
-            _annotationPanel.TextUnderline, _annotationPanel.TextStrikethrough);
+            _annotationPanel.TextUnderline, _annotationPanel.TextStrikethrough,
+            _annotationPanel.TextOutlineColor, _annotationPanel.TextOutlineWidth);
 
         // Deliberately not placed again. 螢光筆 carries a control the other two do not, so the panel
         // is wider in that mode — and left alone it simply grows to the right, because the window
