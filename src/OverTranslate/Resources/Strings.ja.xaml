@@ -769,7 +769,7 @@
     <sys:String x:Key="S.LongShot.Scroll">上下にスクロールすると自動でつなげます。Enter でコピー、Esc でキャンセル。</sys:String>
     <sys:String x:Key="S.LongShot.Progress">{0} × {1} px をつなげました</sys:String>
     <sys:String x:Key="S.LongShot.Lost">位置が合いません。少し戻してください</sys:String>
-    <sys:String x:Key="S.LongShot.TooSmall">範囲が小さすぎます。ホイール 1 回で範囲を越えるため、つなげられません。範囲を広げるか、ゆっくりスクロールしてください。</sys:String>
+    <sys:String x:Key="S.LongShot.TooSmall">範囲が小さすぎます。ホイール 1 回で範囲を越えるため、つなげられません。枠をドラッグして広げるか、ゆっくりスクロールしてください。</sys:String>
     <sys:String x:Key="S.LongShot.Full">最大サイズに達しました。コピー、保存、またはピン留めしてください</sys:String>
     <sys:String x:Key="S.LongShot.Copy">完了してコピー (Enter)</sys:String>
     <sys:String x:Key="S.LongShot.Save">名前を付けて保存…</sys:String>

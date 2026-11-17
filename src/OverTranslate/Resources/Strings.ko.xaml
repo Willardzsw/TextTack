@@ -769,7 +769,7 @@
     <sys:String x:Key="S.LongShot.Scroll">위아래로 스크롤하면 자동으로 이어 붙입니다. Enter 복사, Esc 취소.</sys:String>
     <sys:String x:Key="S.LongShot.Progress">{0} × {1} px 이어 붙임</sys:String>
     <sys:String x:Key="S.LongShot.Lost">위치를 놓쳤습니다. 조금 위로 스크롤하세요</sys:String>
-    <sys:String x:Key="S.LongShot.TooSmall">영역이 너무 작습니다. 휠 한 칸에 영역을 넘어가 이어 붙일 수 없습니다. 더 크게 선택하거나 천천히 스크롤하세요.</sys:String>
+    <sys:String x:Key="S.LongShot.TooSmall">영역이 너무 작습니다. 휠 한 칸에 영역을 넘어가 이어 붙일 수 없습니다. 테두리를 끌어 넓히거나 천천히 스크롤하세요.</sys:String>
     <sys:String x:Key="S.LongShot.Full">최대 크기에 도달했습니다. 복사, 저장 또는 고정하세요</sys:String>
     <sys:String x:Key="S.LongShot.Copy">완료 후 복사 (Enter)</sys:String>
     <sys:String x:Key="S.LongShot.Save">다른 이름으로 저장…</sys:String>

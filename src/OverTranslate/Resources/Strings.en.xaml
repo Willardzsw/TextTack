@@ -767,7 +767,7 @@ same settings, the same seed usually gives the same output.</sys:String>
     <sys:String x:Key="S.LongShot.Scroll">Scroll up or down and it is stitched as you go. Enter copies, Esc cancels.</sys:String>
     <sys:String x:Key="S.LongShot.Progress">Stitched {0} × {1} px</sys:String>
     <sys:String x:Key="S.LongShot.Lost">Lost track — scroll back a little</sys:String>
-    <sys:String x:Key="S.LongShot.TooSmall">The region is too small: one turn of the wheel moves the page past it, so nothing lines up. Select a larger region or scroll slowly.</sys:String>
+    <sys:String x:Key="S.LongShot.TooSmall">The region is too small: one turn of the wheel moves the page past it, so nothing lines up. Drag the frame to enlarge it, or scroll slowly.</sys:String>
     <sys:String x:Key="S.LongShot.Full">Reached the maximum size. Copy, save or pin it.</sys:String>
     <sys:String x:Key="S.LongShot.Copy">Finish and copy (Enter)</sys:String>
     <sys:String x:Key="S.LongShot.Save">Save as…</sys:String>

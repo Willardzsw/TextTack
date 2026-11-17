@@ -48,15 +48,24 @@ public sealed class LongShotSession
     private const int MaxHeight = 20000;
     private const int HotkeyEnter = 0x7A01, HotkeyEscape = 0x7A02;
 
-    private readonly Rectangle _region;
-    private readonly LongShotStitcher _stitcher;
-    private readonly Bitmap _grab;
+    private Rectangle _region;
+    private LongShotStitcher _stitcher;
+    private Bitmap _grab;
     private readonly DispatcherTimer _timer;
     private readonly Window _frame;
     private readonly Window _panel;
     private readonly Image _preview = new() { Stretch = Stretch.None, VerticalAlignment = VerticalAlignment.Bottom };
     private readonly TextBlock _status = new() { TextWrapping = TextWrapping.Wrap, FontSize = 12, Margin = new Thickness(0, 8, 0, 0) };
-    private readonly int _previewWidth, _previewHeight;
+    private readonly int _previewWidth;
+    private int _previewHeight;
+    private Border? _previewBox;
+    private readonly double _scale;
+
+    // 預選: until something is stitched the frame has grips and the region can be resized.
+    private Grid? _grips;
+    private IntPtr _frameHwnd;
+    private bool _frameLocked;
+    private (System.Drawing.Point Cursor, Rectangle Region, int Edges)? _drag;
     private HwndSource? _panelSource;
     private readonly Button _axisButton;
     private LongShotWheelHook? _wheel;
@@ -74,8 +83,9 @@ public sealed class LongShotSession
         _grab = new Bitmap(region.Width, region.Height, PixelFormat.Format32bppArgb);
 
         double scale = ScreenGeometry.ScaleAt(region.Left, region.Top);
+        _scale = scale;
         _previewWidth = (int)Math.Round(150 * scale);
-        _previewHeight = (int)Math.Round(Math.Clamp(region.Height / scale, 160, 420) * scale);
+        _previewHeight = PreviewHeightFor(region);
 
         _axisButton = new Button
         {
@@ -144,6 +154,7 @@ public sealed class LongShotSession
             case StitchResult.Placed:
                 _lostRun = 0;
                 if (_axisButton.IsEnabled && _stitcher.HasMoved) RenderAxis();
+                if (_stitcher.HasMoved) LockFrame();
                 ShowProgress();
                 UpdatePreview();
                 break;
@@ -151,6 +162,7 @@ public sealed class LongShotSession
                 _full = true;
                 _timer.Stop();
                 RenderAxis();
+                LockFrame();
                 UpdatePreview();
                 SetStatus(LocalizationService.Get("S.LongShot.Full"));
                 Log.Info("Long screenshot reached its maximum height");
@@ -177,6 +189,9 @@ public sealed class LongShotSession
             bitmap.UnlockBits(data);
         }
     }
+
+    private int PreviewHeightFor(Rectangle region) =>
+        (int)Math.Round(Math.Clamp(region.Height / _scale, 160, 420) * _scale);
 
     private void UpdatePreview()
     {
@@ -354,35 +369,188 @@ public sealed class LongShotSession
 
     private const int BorderPx = 2;
 
+    /// <summary>How far the frame window reaches past the region: the grips' width, in physical pixels.</summary>
+    private int Grip => (int)Math.Round(8 * _scale);
+
+    private const int EdgeLeft = 1, EdgeTop = 2, EdgeRight = 4, EdgeBottom = 8;
+
     private Window BuildFrame()
     {
         var window = NewToolWindow();
-        var border = new Border { BorderThickness = new Thickness(BorderPx) };
+        double grip = Grip / _scale, line = BorderPx / _scale;
+
+        var root = new Grid();
+
+        // The line just outside the region, at the inner edge of the grip band.
+        var border = new Border { BorderThickness = new Thickness(line), Margin = new Thickness(grip - line) };
         border.SetResourceReference(Border.BorderBrushProperty, "AppAccent");
-        window.Content = border;
+        root.Children.Add(border);
+
+        // The grips: eight cells round the region, all but invisible yet there to the pointer (a
+        // layered window lets clicks through only where it is fully clear), each with a small
+        // handle drawn on it. The middle is left clear, so the page under it scrolls as ever.
+        var grips = new Grid();
+        grips.RowDefinitions.Add(new RowDefinition { Height = new GridLength(grip) });
+        grips.RowDefinitions.Add(new RowDefinition());
+        grips.RowDefinitions.Add(new RowDefinition { Height = new GridLength(grip) });
+        grips.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(grip) });
+        grips.ColumnDefinitions.Add(new ColumnDefinition());
+        grips.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(grip) });
+        for (int row = 0; row < 3; row++)
+            for (int col = 0; col < 3; col++)
+            {
+                if (row == 1 && col == 1) continue;
+                int edges = (col == 0 ? EdgeLeft : col == 2 ? EdgeRight : 0) | (row == 0 ? EdgeTop : row == 2 ? EdgeBottom : 0);
+                grips.Children.Add(GripCell(row, col, edges, grip));
+            }
+        root.Children.Add(grips);
+        _grips = grips;
+
+        window.Content = root;
         window.SourceInitialized += (_, _) =>
         {
-            var hwnd = new WindowInteropHelper(window).Handle;
-            SetWindowLong(hwnd, GWL_EXSTYLE, GetWindowLong(hwnd, GWL_EXSTYLE) | WS_EX_TRANSPARENT | WS_EX_NOACTIVATE | WS_EX_TOOLWINDOW);
-            SetWindowDisplayAffinity(hwnd, WDA_EXCLUDEFROMCAPTURE);
-            PlaceFrame(hwnd);
+            _frameHwnd = new WindowInteropHelper(window).Handle;
+            SetWindowLong(_frameHwnd, GWL_EXSTYLE, GetWindowLong(_frameHwnd, GWL_EXSTYLE) | WS_EX_NOACTIVATE | WS_EX_TOOLWINDOW);
+            SetWindowDisplayAffinity(_frameHwnd, WDA_EXCLUDEFROMCAPTURE);
+            PlaceFrame(_region);
         };
         // Again once shown: WPF applies its own size when it first lays the window out.
-        window.Loaded += (_, _) => PlaceFrame(new WindowInteropHelper(window).Handle);
+        window.Loaded += (_, _) => PlaceFrame(_region);
         return window;
     }
 
-    /// <summary>Just outside the region, so the frame is never part of what is read.</summary>
-    private void PlaceFrame(IntPtr hwnd) =>
-        SetWindowPos(hwnd, HWND_TOPMOST,
-            _region.Left - BorderPx, _region.Top - BorderPx,
-            _region.Width + 2 * BorderPx, _region.Height + 2 * BorderPx, SWP_NOACTIVATE);
+    private FrameworkElement GripCell(int row, int col, int edges, double grip)
+    {
+        var cell = new Grid
+        {
+            Background = new SolidColorBrush(Color.FromArgb(1, 255, 255, 255)),
+            Cursor = edges switch
+            {
+                EdgeLeft or EdgeRight => System.Windows.Input.Cursors.SizeWE,
+                EdgeTop or EdgeBottom => System.Windows.Input.Cursors.SizeNS,
+                EdgeLeft | EdgeTop or EdgeRight | EdgeBottom => System.Windows.Input.Cursors.SizeNWSE,
+                _ => System.Windows.Input.Cursors.SizeNESW,
+            },
+        };
+        Grid.SetRow(cell, row);
+        Grid.SetColumn(cell, col);
+
+        var handle = new System.Windows.Shapes.Rectangle
+        {
+            Width = grip * 0.8,
+            Height = grip * 0.8,
+            HorizontalAlignment = HorizontalAlignment.Center,
+            VerticalAlignment = VerticalAlignment.Center,
+            StrokeThickness = 1,
+            Stroke = Brushes.White,
+        };
+        handle.SetResourceReference(System.Windows.Shapes.Shape.FillProperty, "AppAccent");
+        cell.Children.Add(handle);
+
+        cell.MouseLeftButtonDown += (_, e) =>
+        {
+            if (_frameLocked || _stitcher.HasMoved) return;
+            GetCursorPos(out var p);
+            _drag = (new System.Drawing.Point(p.X, p.Y), _region, edges);
+            _timer.Stop();
+            cell.CaptureMouse();
+            e.Handled = true;
+        };
+        cell.MouseMove += (_, _) =>
+        {
+            if (_drag is not { } drag) return;
+            GetCursorPos(out var p);
+            PlaceFrame(Resized(drag.Region, drag.Edges, p.X - drag.Cursor.X, p.Y - drag.Cursor.Y));
+        };
+        cell.MouseLeftButtonUp += (_, _) =>
+        {
+            if (_drag is not { } drag) return;
+            _drag = null;
+            cell.ReleaseMouseCapture();
+            GetCursorPos(out var p);
+            ApplyRegion(Resized(drag.Region, drag.Edges, p.X - drag.Cursor.X, p.Y - drag.Cursor.Y));
+        };
+        cell.LostMouseCapture += (_, _) =>
+        {
+            // Taken away mid-drag (another window took the mouse): back to the region as it was.
+            if (_drag is not { } drag) return;
+            _drag = null;
+            ApplyRegion(drag.Region);
+        };
+        return cell;
+    }
+
+    /// <summary>The region with the dragged edges moved, kept at least 32 px and on the desktop.</summary>
+    private static Rectangle Resized(Rectangle r, int edges, int dx, int dy)
+    {
+        const int Min = 32;
+        var desk = System.Windows.Forms.SystemInformation.VirtualScreen;
+        int left = r.Left, top = r.Top, right = r.Right, bottom = r.Bottom;
+        if ((edges & EdgeLeft) != 0) left = Math.Clamp(left + dx, desk.Left, right - Min);
+        if ((edges & EdgeRight) != 0) right = Math.Clamp(right + dx, left + Min, desk.Right);
+        if ((edges & EdgeTop) != 0) top = Math.Clamp(top + dy, desk.Top, bottom - Min);
+        if ((edges & EdgeBottom) != 0) bottom = Math.Clamp(bottom + dy, top + Min, desk.Bottom);
+        return Rectangle.FromLTRB(left, top, right, bottom);
+    }
+
+    /// <summary>The frame round <paramref name="region"/>: the grip band outside it, never over it.</summary>
+    private void PlaceFrame(Rectangle region)
+    {
+        if (_frameHwnd == IntPtr.Zero) return;
+        int g = Grip;
+        SetWindowPos(_frameHwnd, HWND_TOPMOST, region.Left - g, region.Top - g,
+            region.Width + 2 * g, region.Height + 2 * g, SWP_NOACTIVATE);
+    }
+
+    /// <summary>
+    /// A new region, chosen by dragging the frame before anything was stitched: everything that
+    /// depends on its size starts over from it.
+    /// </summary>
+    private void ApplyRegion(Rectangle region)
+    {
+        if (_ended) return;
+        if (region != _region && !_stitcher.HasMoved)
+        {
+            var axis = _stitcher.Axis;
+            _region = region;
+            _stitcher = new LongShotStitcher(region.Width, region.Height, MaxHeight) { Axis = axis };
+            _grab.Dispose();
+            _grab = new Bitmap(region.Width, region.Height, PixelFormat.Format32bppArgb);
+            _previewHeight = PreviewHeightFor(region);
+            if (_previewBox is not null) _previewBox.Height = _previewHeight / _scale;
+            _preview.Source = null;
+            if (axis == StitchAxis.Horizontal)
+            {
+                _wheel?.Dispose();
+                _wheel = LongShotWheelHook.Install(region);
+            }
+            _lostRun = 0;
+            Log.Info("Long screenshot region resized to {Region}", region);
+        }
+
+        PlaceFrame(_region);
+        PlacePanel(_panel, _scale);
+        ShowProgress();
+        _idleTicks = 0;
+        _timer.Interval = TimeSpan.FromMilliseconds(FastTickMs);
+        if (!_full) _timer.Start();
+    }
+
+    /// <summary>Once something is stitched: the grips go, and the frame lets every click through.</summary>
+    private void LockFrame()
+    {
+        if (_frameLocked) return;
+        _frameLocked = true;
+        if (_grips is not null) _grips.Visibility = Visibility.Collapsed;
+        if (_frameHwnd != IntPtr.Zero)
+            SetWindowLong(_frameHwnd, GWL_EXSTYLE, GetWindowLong(_frameHwnd, GWL_EXSTYLE) | WS_EX_TRANSPARENT);
+    }
 
     private Window BuildPanel(double scale)
     {
         var window = NewToolWindow();
 
-        var previewBox = new Border
+        var previewBox = _previewBox = new Border
         {
             Height = _previewHeight / scale,
             Width = _previewWidth / scale,
@@ -526,6 +694,8 @@ public sealed class LongShotSession
     private const uint MOD_NOREPEAT = 0x4000, VK_RETURN = 0x0D, VK_ESCAPE = 0x1B;
     private static readonly IntPtr HWND_TOPMOST = new(-1);
 
+    [StructLayout(LayoutKind.Sequential)] private struct POINT { public int X, Y; }
+    [DllImport("user32.dll")] private static extern bool GetCursorPos(out POINT point);
     [DllImport("user32.dll")] private static extern int GetWindowLong(IntPtr hWnd, int index);
     [DllImport("user32.dll")] private static extern int SetWindowLong(IntPtr hWnd, int index, int value);
     [DllImport("user32.dll")] private static extern bool SetWindowDisplayAffinity(IntPtr hWnd, uint affinity);

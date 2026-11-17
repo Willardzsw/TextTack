@@ -765,7 +765,7 @@
     <sys:String x:Key="S.LongShot.Scroll">上下滚动页面会自动拼接。Enter 复制，Esc 取消。</sys:String>
     <sys:String x:Key="S.LongShot.Progress">已拼接 {0} × {1} 像素</sys:String>
     <sys:String x:Key="S.LongShot.Lost">对不上了，请往回滚一点</sys:String>
-    <sys:String x:Key="S.LongShot.TooSmall">框选范围太小，滚一格就超出范围，拼不起来。请框大一点，或慢慢滚。</sys:String>
+    <sys:String x:Key="S.LongShot.TooSmall">框选范围太小，滚一格就超出范围，拼不起来。请拖动边框调大，或慢慢滚。</sys:String>
     <sys:String x:Key="S.LongShot.Full">已到最大尺寸，请复制、保存或贴图</sys:String>
     <sys:String x:Key="S.LongShot.Copy">完成并复制 (Enter)</sys:String>
     <sys:String x:Key="S.LongShot.Save">另存为…</sys:String>

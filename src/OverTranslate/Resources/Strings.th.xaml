@@ -762,7 +762,7 @@
     <sys:String x:Key="S.LongShot.Scroll">เลื่อนขึ้นลงแล้วระบบจะต่อภาพให้ Enter คัดลอก Esc ยกเลิก</sys:String>
     <sys:String x:Key="S.LongShot.Progress">ต่อแล้ว {0} × {1} พิกเซล</sys:String>
     <sys:String x:Key="S.LongShot.Lost">ตำแหน่งไม่ตรง กรุณาเลื่อนกลับเล็กน้อย</sys:String>
-    <sys:String x:Key="S.LongShot.TooSmall">ส่วนที่เลือกเล็กเกินไป หมุนล้อหนึ่งครั้งก็เลื่อนเกินกรอบ จึงต่อภาพไม่ได้ กรุณาเลือกให้ใหญ่ขึ้นหรือเลื่อนช้า ๆ</sys:String>
+    <sys:String x:Key="S.LongShot.TooSmall">ส่วนที่เลือกเล็กเกินไป หมุนล้อหนึ่งครั้งก็เลื่อนเกินกรอบ จึงต่อภาพไม่ได้ กรุณาลากขอบให้ใหญ่ขึ้นหรือเลื่อนช้า ๆ</sys:String>
     <sys:String x:Key="S.LongShot.Full">ถึงขนาดสูงสุดแล้ว คัดลอก บันทึก หรือปักหมุดได้เลย</sys:String>
     <sys:String x:Key="S.LongShot.Copy">เสร็จและคัดลอก (Enter)</sys:String>
     <sys:String x:Key="S.LongShot.Save">บันทึกเป็น…</sys:String>

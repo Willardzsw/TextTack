@@ -758,7 +758,7 @@
     <sys:String x:Key="S.LongShot.Scroll">Прокручивайте вверх и вниз — изображение склеивается по ходу. Enter — копировать, Esc — отмена.</sys:String>
     <sys:String x:Key="S.LongShot.Progress">Склеено {0} × {1} пикс.</sys:String>
     <sys:String x:Key="S.LongShot.Lost">Сбилось — прокрутите немного назад</sys:String>
-    <sys:String x:Key="S.LongShot.TooSmall">Область слишком мала: один шаг колеса уводит страницу за её пределы, и склеить не получается. Выделите область побольше или прокручивайте медленно.</sys:String>
+    <sys:String x:Key="S.LongShot.TooSmall">Область слишком мала: один шаг колеса уводит страницу за её пределы, и склеить не получается. Растяните рамку или прокручивайте медленно.</sys:String>
     <sys:String x:Key="S.LongShot.Full">Достигнут предельный размер. Скопируйте, сохраните или закрепите.</sys:String>
     <sys:String x:Key="S.LongShot.Copy">Готово и копировать (Enter)</sys:String>
     <sys:String x:Key="S.LongShot.Save">Сохранить как…</sys:String>
