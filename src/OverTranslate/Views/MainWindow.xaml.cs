@@ -62,6 +62,10 @@ public partial class MainWindow : Window
     // Kept alive so toolbar translate can re-run OCR/translation on the current selection
     private List<OcrTextBlock> _lastOcrBlocks = [];
 
+    // The ungrouped lines of the recognition that produced Blocks, for 表格識別 on 複製文字. Keyed by
+    // the very list so a reused recognition still finds its lines and nothing else can.
+    private (List<OcrTextBlock> Blocks, List<OcrTextBlock> Lines)? _ocrLines;
+
     // Shared by 翻譯 and 複製原文: both recognise the same crop with the same arguments.
     private readonly CaptureOcrReuse _ocrReuse = new();
 
@@ -500,6 +504,13 @@ public partial class MainWindow : Window
     private async Task RunCaptureYieldingRealtimeAsync(string origin, double? queuedMs = null)
     {
         var timing = new CaptureStartupTiming(queuedMs);
+
+        // A capture over a running 長截圖 would be read into the long picture.
+        if (LongShotSession.Current is not null)
+        {
+            Log.Info("Capture ({Origin}) ignored: a long screenshot is running", origin);
+            return;
+        }
         if (!RealtimeSessionController.Instance.TryYieldToCapture()) return;
         timing.Mark("realtime");
 
@@ -1220,6 +1231,10 @@ public partial class MainWindow : Window
         toolbar.CopyTextRequested       += OnCopyTextRequested;
         toolbar.CopyScreenshotRequested += OnCopyScreenshotRequested;
         toolbar.PinRequested            += (_, _) => PinSelection();
+        toolbar.ScanCodeRequested       += (_, _) => ScanCodesInSelection();
+        toolbar.LongShotRequested       += (_, _) => StartLongShot();
+        // 長截圖 reads the live screen under the selection, which over a pin being edited is the pin.
+        if (_pinBeingEdited is not null) toolbar.HideLongShot();
         toolbar.CloseAllRequested       += (_, _) => CloseAll("toolbar close");
         toolbar.BubblesVisibilityChanged += (_, visible) => _overlayWindow?.SetBubblesVisible(visible);
         toolbar.SpeakToggleRequested    += OnSpeakToggleRequested;
@@ -1641,9 +1656,11 @@ public partial class MainWindow : Window
             _lastSelPhysHeight,
             LocalizationService.Get("S.Main.Recognising"));
 
+        var lines = new List<OcrTextBlock>();
         var recognized = await AppServices.Ocr.RecognizeAsync(
-            workBitmap, sourceLang, cancellationToken, verticalText, layoutMode);
+            workBitmap, sourceLang, cancellationToken, verticalText, layoutMode, lines);
         if (!stillCurrent()) return null;
+        _ocrLines = (recognized, lines);
 
         if (modelIdentity == AppServices.Ocr.ModelIdentity)
             _ocrReuse.Remember(captureWindow, region, sourceLang, verticalText, layoutMode, recognized, modelIdentity);
@@ -1666,7 +1683,7 @@ public partial class MainWindow : Window
             {
                 var cachedText = req.Kind == CopyTextKind.Translation
                     ? JoinWithoutLineBreaks(_lastTranslatedBlocks.Select(block => block.TranslatedText))
-                    : JoinWithoutLineBreaks(_lastOcrBlocks.Select(block => block.Text));
+                    : SourceTextForCopy();
                 CopyCaptureText(cachedText, req.Kind);
             }
             catch (Exception ex)
@@ -1725,9 +1742,7 @@ public partial class MainWindow : Window
                 return;
             }
 
-            CopyCaptureText(
-                JoinWithoutLineBreaks(_lastOcrBlocks.Select(block => block.Text)),
-                CopyTextKind.Source);
+            CopyCaptureText(SourceTextForCopy(), CopyTextKind.Source);
         }
         catch (OperationCanceledException)
         {
@@ -1755,13 +1770,30 @@ public partial class MainWindow : Window
     }
 
     /// <summary>
+    /// The recognised original as 複製文字 copies it: tab-separated rows when the lines stand in
+    /// columns (表格識別, pastes into a spreadsheet cell by cell), otherwise one line as before.
+    /// </summary>
+    private string SourceTextForCopy()
+    {
+        if (_ocrLines is { } recorded && ReferenceEquals(recorded.Blocks, _lastOcrBlocks) &&
+            TableLayout.TryFormat(recorded.Lines) is { } table)
+        {
+            Log.Info("Copying recognised text as a table ({Lines} lines)", recorded.Lines.Count);
+            return table;
+        }
+        return JoinWithoutLineBreaks(_lastOcrBlocks.Select(block => block.Text));
+    }
+
+    /// <summary>
     /// Puts one side of the capture on the clipboard and says which side it was.
     /// </summary>
     /// <param name="text">The recognised original or the translation, already joined into one line</param>
     /// <param name="kind">Which of the two was copied, so the confirmation names the right one</param>
     private void CopyCaptureText(string text, CopyTextKind kind)
     {
-        var payload = text.Trim();
+        // Tabs kept: a table's first cell may be empty, and its tab keeps the row in step.
+        var payload = text.Trim(' ', '\r', '\n');
+        if (payload.Trim().Length == 0) payload = "";
 
         // Blocks made only of whitespace get this far: they count as recognised text but leave
         // nothing to paste, and a "已複製" over an untouched clipboard is the one thing the user
@@ -1826,6 +1858,93 @@ public partial class MainWindow : Window
         {
             Log.Error(ex, "Pinning the selection failed");
         }
+    }
+
+    /// <summary>
+    /// 識別二維碼: the QR and bar codes in the selection, read off the clean capture. Found, the
+    /// capture ends and their text shows where the selection was; not found, the capture stays for
+    /// another try with a notice saying so.
+    /// </summary>
+    private async void ScanCodesInSelection()
+    {
+        var captureWindow = _captureWindow;
+        var toolbar = _toolbarWindow;
+        var image = captureWindow?.CreateSelectionImage();
+        if (captureWindow is null || image is null)
+        {
+            ShowNotice(
+                LocalizationService.Get("S.Code.NoneTitle"),
+                LocalizationService.Get("S.Main.NoImageBody"));
+            return;
+        }
+
+        var selection = captureWindow.Selection;
+        IReadOnlyList<ScannedCode> codes;
+        try
+        {
+            using var bitmap = BitmapInterop.ToGdiBitmap(image);
+            codes = await Task.Run(() => CodeScanService.Scan(bitmap));
+        }
+        catch (Exception ex)
+        {
+            Log.Error(ex, "Scanning the selection for codes failed");
+            if (ReferenceEquals(_toolbarWindow, toolbar))
+                ShowNotice(
+                    LocalizationService.Get("S.Code.NoneTitle"),
+                    LocalizationService.Get("S.Code.NoneBody"));
+            return;
+        }
+
+        // The capture may have been closed or replaced while the picture was being read.
+        if (!ReferenceEquals(_toolbarWindow, toolbar)) return;
+
+        if (codes.Count == 0)
+        {
+            ShowNotice(
+                LocalizationService.Get("S.Code.NoneTitle"),
+                LocalizationService.Get("S.Code.NoneBody"),
+                NoticeKind.Info);
+            return;
+        }
+
+        CloseAll("scan code");
+        CodeResultWindow.Show(codes,
+            (int)Math.Round(selection.Left), (int)Math.Round(selection.Bottom) + 6,
+            TranslateScannedText);
+    }
+
+    /// <summary>
+    /// 長截圖: the capture ends and the selection becomes the region read while the user scrolls.
+    /// Started a moment later, once the capture's own windows are off the screen — otherwise the
+    /// first frame would be the dimmed capture.
+    /// </summary>
+    private void StartLongShot()
+    {
+        var captureWindow = _captureWindow;
+        if (captureWindow is null) return;
+
+        var selection = captureWindow.Selection;
+        var region = new System.Drawing.Rectangle(
+            (int)Math.Round(selection.Left), (int)Math.Round(selection.Top),
+            (int)Math.Round(selection.Width), (int)Math.Round(selection.Height));
+        if (region.Width < 16 || region.Height < 16) return;
+
+        CloseAll("long screenshot");
+        var delay = new System.Windows.Threading.DispatcherTimer { Interval = TimeSpan.FromMilliseconds(200) };
+        delay.Tick += (_, _) =>
+        {
+            delay.Stop();
+            LongShotSession.Start(region);
+        };
+        delay.Start();
+    }
+
+    /// <summary>A scanned code's 翻譯: its text into the translation page, translated there.</summary>
+    private static void TranslateScannedText(string text)
+    {
+        var shell = ShellWindow.ShowOrActivate(ShellPage.Translation);
+        shell.TranslationPage.SetContent(
+            text, "", OverTranslate.Models.LanguageData.AutomaticSourceLanguage, SettingsService.Instance.Current.TargetLanguage);
     }
 
     /// <summary>

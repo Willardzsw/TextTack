@@ -392,6 +392,21 @@ public partial class ToolbarWindow : Window
     private void PinBtn_Click(object sender, RoutedEventArgs e)
         => PinRequested?.Invoke(this, EventArgs.Empty);
 
+    /// <summary>Raised by 長截圖: end the capture and grow the selection while the page scrolls.</summary>
+    public event EventHandler? LongShotRequested;
+
+    private void LongShotBtn_Click(object sender, RoutedEventArgs e)
+        => LongShotRequested?.Invoke(this, EventArgs.Empty);
+
+    /// <summary>For a capture with no live page under it (editing a pin), where 長截圖 has nothing to read.</summary>
+    public void HideLongShot() => LongShotBtn.Visibility = Visibility.Collapsed;
+
+    /// <summary>Raised by 識別二維碼: read the QR and bar codes in the selection.</summary>
+    public event EventHandler? ScanCodeRequested;
+
+    private void ScanCodeBtn_Click(object sender, RoutedEventArgs e)
+        => ScanCodeRequested?.Invoke(this, EventArgs.Empty);
+
     private void AnnotateBtn_Click(object sender, RoutedEventArgs e)
         => AnnotateModeChanged?.Invoke(this, IsAnnotating);
 

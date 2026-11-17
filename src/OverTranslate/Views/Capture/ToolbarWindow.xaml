@@ -512,6 +512,39 @@
                                 </Grid>
                         </Button>
 
+                        <!-- 長截圖: the selection grows while the user scrolls the page under it. Ends
+                             this capture; see LongShotSession. A page with an arrow running down it. -->
+                        <Button x:Name="LongShotBtn"
+                                Style="{StaticResource ToolbarIconActionButton}"
+                                AutomationProperties.Name="{DynamicResource S.Toolbar.LongShot}"
+                                Click="LongShotBtn_Click">
+                                <Grid Style="{StaticResource ToolbarActionIcon}" Margin="0">
+                                  <Grid Style="{StaticResource ToolbarActionDrawing}">
+                                    <Path Style="{StaticResource ToolbarActionStroke}"
+                                          Data="M3.6,1.8 H14.4 A1.6,1.6 0 0 1 16,3.4 V7 M2,7 V3.4 A1.6,1.6 0 0 1 3.6,1.8
+                                                M2,11 V14.6 A1.6,1.6 0 0 0 3.6,16.2 H14.4 A1.6,1.6 0 0 0 16,14.6 V11"/>
+                                    <Path Style="{StaticResource ToolbarActionStroke}"
+                                          Data="M9,4.6 V13.2 M6.4,10.6 L9,13.2 L11.6,10.6"/>
+                                  </Grid>
+                                </Grid>
+                        </Button>
+
+                        <!-- 識別二維碼: QR and bar codes in the selection, read in-process. -->
+                        <Button x:Name="ScanCodeBtn"
+                                Style="{StaticResource ToolbarIconActionButton}"
+                                AutomationProperties.Name="{DynamicResource S.Toolbar.ScanCode}"
+                                Click="ScanCodeBtn_Click">
+                                <Grid Style="{StaticResource ToolbarActionIcon}" Margin="0">
+                                  <Grid Style="{StaticResource ToolbarActionDrawing}">
+                                    <!-- Three finder squares and a scatter of modules: a QR code at a glance. -->
+                                    <Path Style="{StaticResource ToolbarActionStroke}"
+                                          Data="M2,2 H7 V7 H2 Z M11,2 H16 V7 H11 Z M2,11 H7 V16 H2 Z"/>
+                                    <Path Style="{StaticResource ToolbarActionStroke}"
+                                          Data="M11,11 H13 M15,11 V13 M11,14 V16 H13 M16,16 H15.6"/>
+                                  </Grid>
+                                </Grid>
+                        </Button>
+
                         <!-- Open translation window. Named for what it opens rather than for the opening:
                              every button on this bar does something when pressed, so 開啟 was a word spent
                              on the one thing the user already knows, and it cost the bar the width of two

@@ -68,6 +68,15 @@ $items = @(
             @{ Label = "Intel License Agreement"; Url = "https://raw.githubusercontent.com/opencv/opencv/4.13.0/modules/photo/src/inpaint.cpp"; Until = "//M*/" }
         )
     },
+    @{
+        Name = "ZXing.Net"
+        Version = "0.16.11"
+        License = "Apache License 2.0"
+        Project = "https://github.com/micjahn/ZXing.Net"
+        Files = @(
+            @{ Label = "COPYING"; Url = "https://raw.githubusercontent.com/micjahn/ZXing.Net/master/COPYING" }
+        )
+    },
 )
 
 $separator = "-" * 79

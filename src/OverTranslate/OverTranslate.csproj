@@ -33,7 +33,7 @@
     <AssemblyTitle>TextTack</AssemblyTitle>
     <AssemblyName>TextTack</AssemblyName>
     <RootNamespace>OverTranslate</RootNamespace>
-    <Version>1.11.0</Version>
+    <Version>1.12.0</Version>
     <RuntimeIdentifier>win-x64</RuntimeIdentifier>
     <!-- WFAC010 tells WinForms apps to declare DPI awareness through Application.SetHighDpiMode.
          This is a WPF app that only references WinForms types; ApplicationConfiguration.Initialize
@@ -111,6 +111,8 @@
   <ItemGroup>
     <PackageReference Include="NLog" Version="5.0.4" />
     <PackageReference Include="OpenccNetLib" Version="1.6.2" />
+    <!-- 二維碼識別: QR and the other 2D/1D codes, decoded in-process from the selection (Apache-2.0). -->
+    <PackageReference Include="ZXing.Net" Version="0.16.11" />
     <PackageReference Include="RapidOcrNet" Version="3.0.0" ExcludeAssets="build" />
     <!-- One onnxruntime.dll for the whole process, the DirectML build (OCR GPU mode).
          RapidOcrNet 3.0.0 asks for Microsoft.ML.OnnxRuntime 1.27 (CPU native + managed); the DirectML package stops

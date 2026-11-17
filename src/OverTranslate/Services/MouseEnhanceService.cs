@@ -50,6 +50,7 @@ internal sealed class MouseEnhanceService : IDisposable
     private readonly HashSet<int> _keysDown = [];
     private MouseModifierKeys _held;
     private int _wheelRemainder;
+    private int _horizontalRemainder;
     private ResizeDrag? _drag;
 
     private volatile MouseEnhanceSettings? _settings;
@@ -350,8 +351,10 @@ internal sealed class MouseEnhanceService : IDisposable
         {
             int x = data.x, y = data.y;
             // Wheel down (negative) scrolls right (positive) unless reversed.
-            int horizontal = s.HorizontalScrollReversed ? delta : -delta;
-            _worker.Dispatcher?.BeginInvoke(() => ScrollSideways(x, y, horizontal));
+            int horizontal = MouseEnhanceRules.ScaleHorizontal(
+                ref _horizontalRemainder, s.HorizontalScrollReversed ? delta : -delta);
+            if (horizontal != 0)
+                _worker.Dispatcher?.BeginInvoke(() => ScrollSideways(x, y, horizontal));
             MaskMenuKey(held);
             return true;
         }

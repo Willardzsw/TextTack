@@ -43,6 +43,12 @@ public partial class ToolbarWindow
         Labels.Add(PinBtn,
             () => LocalizationService.Get("S.Toolbar.Pin"),
             () => LocalizationService.Get("S.Toolbar.PinHint"));
+        Labels.Add(LongShotBtn,
+            () => LocalizationService.Get("S.Toolbar.LongShot"),
+            () => LocalizationService.Get("S.Toolbar.LongShotHint"));
+        Labels.Add(ScanCodeBtn,
+            () => LocalizationService.Get("S.Toolbar.ScanCode"),
+            () => LocalizationService.Get("S.Toolbar.ScanCodeHint"));
         Labels.Add(OpenWindowBtn,() => LocalizationService.Get("S.Toolbar.OpenWindow"));
         Labels.Add(MoreBtn,
             () => LocalizationService.Get("S.Shell.Settings"),

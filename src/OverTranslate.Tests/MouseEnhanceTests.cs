@@ -109,4 +109,17 @@ public class MouseEnhanceTests
         Assert.Equal("Shift+Alt", MouseEnhanceRules.Display(MouseModifierKeys.Shift | MouseModifierKeys.Alt));
         Assert.DoesNotContain(MouseModifierKeys.None, MouseEnhanceRules.Choices);
     }
+    [Fact]
+    public void SidewaysScrollSendsHalfOfEachTurn()
+    {
+        int remainder = 0;
+        Assert.Equal(-60, MouseEnhanceRules.ScaleHorizontal(ref remainder, -120));
+        Assert.Equal(60, MouseEnhanceRules.ScaleHorizontal(ref remainder, 120));
+
+        // A touchpad's small pieces add up rather than rounding to nothing.
+        remainder = 0;
+        int sent = 0;
+        for (int i = 0; i < 30; i++) sent += MouseEnhanceRules.ScaleHorizontal(ref remainder, 3);
+        Assert.Equal(45, sent);
+    }
 }

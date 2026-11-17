@@ -93,6 +93,24 @@ public static class MouseEnhanceRules
         return notches;
     }
 
+    /// <summary>
+    /// How much of each wheel turn 橫向捲動 passes on: half. A full turn sideways moved most pages
+    /// further than the same turn moves them down, since a page is far less wide than it is long.
+    /// </summary>
+    public const int HorizontalScrollPercent = 50;
+
+    /// <summary>
+    /// The share of <paramref name="delta"/> sent sideways, what is left over kept in
+    /// <paramref name="remainder"/> so a touchpad's small pieces are not rounded away.
+    /// </summary>
+    public static int ScaleHorizontal(ref int remainder, int delta)
+    {
+        remainder += delta * HorizontalScrollPercent;
+        int scaled = remainder / 100;
+        remainder -= scaled * 100;
+        return scaled;
+    }
+
     /// <summary>What a wheel notch with <paramref name="held"/> does. Transparency first.</summary>
     public static MouseWheelAction ForWheel(MouseEnhanceSettings s, MouseModifierKeys held)
     {

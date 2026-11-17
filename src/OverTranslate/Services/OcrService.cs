@@ -131,7 +131,8 @@ public class OcrService : IDisposable
         string sourceLanguage,
         CancellationToken cancellationToken = default,
         bool verticalText = false,
-        CaptureLayoutMode layoutMode = CaptureLayoutMode.General)
+        CaptureLayoutMode layoutMode = CaptureLayoutMode.General,
+        List<OcrTextBlock>? lines = null)
     {
         if (!OcrLanguageRouter.IsSupported(sourceLanguage))
             throw new NotSupportedException(OcrLanguageRouter.GetUnsupportedLanguageMessage(sourceLanguage));
@@ -143,7 +144,7 @@ public class OcrService : IDisposable
         // does not take a parameter for one — see RecognizeVerticalAsync.
         return LevelCrowdedTilts(verticalText
             ? RecognizeVerticalAsync(engine, bitmap, language, cancellationToken)
-            : RecognizeAndGroupAsync(engine, bitmap, language, GroupingProfile.For(layoutMode), cancellationToken));
+            : RecognizeAndGroupAsync(engine, bitmap, language, GroupingProfile.For(layoutMode), cancellationToken, lines));
     }
 
     // Here, where every path's groups are final — columns and the lines across a vertical page
@@ -377,9 +378,13 @@ public class OcrService : IDisposable
         Bitmap bitmap,
         string sourceLanguage,
         GroupingProfile profile,
-        CancellationToken cancellationToken)
+        CancellationToken cancellationToken,
+        List<OcrTextBlock>? lines = null)
     {
         var blocks = await engine.RecognizeAsync(bitmap, sourceLanguage, cancellationToken);
+        // The lines as the recognizer read them, before grouping joins any: what 表格识别 needs,
+        // since grouping merges the cells stacked in one column into a paragraph.
+        lines?.AddRange(blocks);
         blocks = PrepareScreenshotGrouping(bitmap, blocks, profile);
         // After the ink is measured, which has to read the picture inside the upright box.
         return TiltedLayout.Restore(OcrTextBlockGrouper.Group(TiltedLayout.Straighten(blocks), profile));
