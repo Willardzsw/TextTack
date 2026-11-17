@@ -411,7 +411,9 @@ public sealed class OpenAiChatTranslator(HttpClient http)
             {
                 batches++;
                 var texts = batch.Select(i => job.Texts[i]).ToList();
-                var answer = await SendAsync(BuildMessages(prompt.BuildBatch(texts, carried)), job.Request, job.Token);
+                var answer = await SendAsync(
+                    BuildMessages(prompt.BuildBatch(texts, carried)), job.Request, job.Token,
+                    AnswerLimit(job.Request, texts), cutIsRunaway: true);
                 var read = OpenAiAnswer.ReadNumbered(answer, count);
                 for (var k = 0; k < count; k++)
                 {
@@ -627,7 +629,8 @@ public sealed class OpenAiChatTranslator(HttpClient http)
     private async Task<string> SegmentAsync(
         string message, string text, OpenAiChatRequest request, CancellationToken token, bool ofOne = false)
     {
-        var answer = await SendAsync(BuildMessages(message), request, token);
+        var answer = await SendAsync(
+            BuildMessages(message), request, token, AnswerLimit(request, [text]), cutIsRunaway: true);
         var translation = ofOne
             ? OpenAiAnswer.ReadOfOne(answer, text, request.Prompt.IsDefault)
             : request.Prompt.IsDefault ? OpenAiAnswer.Read(answer, text) : StripThinking(answer);
@@ -666,10 +669,72 @@ public sealed class OpenAiChatTranslator(HttpClient http)
             });
     }
 
+    /// <summary>The reasoning effort that turns a model's thinking off — see <see cref="AnswerLimit"/>.</summary>
+    internal const string NoThinking = "none";
+
+    /// <summary>
+    /// The longest answer a translation of <paramref name="texts"/> is allowed, or null for no limit.
+    /// </summary>
+    /// <remarks>
+    /// <para>A model can start repeating itself and not stop: measured on gpt-6-luna, stretched Thai
+    /// came back as 哒哒哒… four times in ten, written until the request timed out a minute later. A
+    /// limit ends that in seconds — 400 tokens took under five.</para>
+    ///
+    /// <para>Only with thinking off: thinking counts against the same limit, and how long a model
+    /// thinks has nothing to do with how long the text is, so any limit there could cut off a
+    /// translation that was on its way.</para>
+    ///
+    /// <para>Generous on purpose — four tokens to a character of the texts, sixteen to a text for its
+    /// number tags, and 256 besides. A translation is about as long as what it translates; the limit
+    /// is only there for an answer that is no longer translating.</para>
+    /// </remarks>
+    internal static int? AnswerLimit(OpenAiChatRequest request, IReadOnlyCollection<string> texts) =>
+        request.ReasoningEffort == NoThinking
+            ? 256 + texts.Sum(text => 4 * text.Length + 16)
+            : null;
+
+    /// <summary>
+    /// Servers, by address and model, that refused a request carrying an answer limit: sent without
+    /// one from then on, for as long as the application runs.
+    /// </summary>
+    private static readonly System.Collections.Concurrent.ConcurrentDictionary<string, byte> RefusesLimit = new();
+
     /// <summary>Sends one request and returns the answer's content, thinking and all.</summary>
     /// <param name="maxTokens">The longest answer to allow, or null to leave it to the server.</param>
+    /// <param name="cutIsRunaway">
+    /// Whether an answer cut at <paramref name="maxTokens"/> is <see cref="OpenAiChatFailure.Runaway"/>
+    /// rather than taken: true for a translation, whose limit is <see cref="AnswerLimit"/>.
+    /// </param>
+    /// <remarks>
+    /// <para>The limit goes as <c>max_completion_tokens</c>, the name OpenAI reads: its newer models
+    /// refuse <c>max_tokens</c> with a 400 — measured on gpt-6-luna. Other servers that do not know
+    /// the field leave it out, and one that refuses it with a 400 is asked again without it, and never
+    /// sent it again.</para>
+    /// </remarks>
     private async Task<string> SendAsync(
-        object[] messages, OpenAiChatRequest request, CancellationToken cancellationToken, int? maxTokens = null)
+        object[] messages, OpenAiChatRequest request, CancellationToken cancellationToken, int? maxTokens = null,
+        bool cutIsRunaway = false)
+    {
+        var server = $"{request.Endpoint.AbsoluteUri} {request.Model}";
+        if (maxTokens is not null && RefusesLimit.ContainsKey(server)) maxTokens = null;
+
+        try
+        {
+            return await SendOnceAsync(messages, request, cancellationToken, maxTokens, cutIsRunaway);
+        }
+        catch (OpenAiChatException ex) when (
+            maxTokens is not null
+            && ex is { Failure: OpenAiChatFailure.Rejected, StatusCode: HttpStatusCode.BadRequest })
+        {
+            if (RefusesLimit.TryAdd(server, 0))
+                Log.Info("OpenAI 相容翻譯：伺服器拒絕回答長度上限（400），之後不再送");
+            return await SendOnceAsync(messages, request, cancellationToken, null, cutIsRunaway);
+        }
+    }
+
+    private async Task<string> SendOnceAsync(
+        object[] messages, OpenAiChatRequest request, CancellationToken cancellationToken, int? maxTokens,
+        bool cutIsRunaway)
     {
         // A dictionary rather than an anonymous type because the sampling fields are conditional.
         var payload = new Dictionary<string, object>
@@ -681,7 +746,7 @@ public sealed class OpenAiChatTranslator(HttpClient http)
         if (request.TopP is { } topP) payload["top_p"] = topP;
         if (request.Seed is { } seed) payload["seed"] = seed;
         if (request.ReasoningEffort is { } effort) payload["reasoning_effort"] = effort;
-        if (maxTokens is { } most) payload["max_tokens"] = most;
+        if (maxTokens is { } most) payload["max_completion_tokens"] = most;
         payload["stream"] = false;
 
         using var httpRequest = new HttpRequestMessage(HttpMethod.Post, request.Endpoint);
@@ -707,8 +772,10 @@ public sealed class OpenAiChatTranslator(HttpClient http)
                 throw new OpenAiChatException(OpenAiChatFailure.Rejected, response.StatusCode, ReadError(error, request));
             }
 
-            var content = ReadCompletion(await response.Content.ReadAsStringAsync(timeout.Token));
+            var (content, cut) = ReadCompletion(await response.Content.ReadAsStringAsync(timeout.Token));
 
+            if (cut && cutIsRunaway && maxTokens is not null)
+                throw new OpenAiChatException(OpenAiChatFailure.Runaway);
             if (StripThinking(content).Length == 0)
                 throw new OpenAiChatException(OpenAiChatFailure.NoTranslation);
             return content;
@@ -720,13 +787,17 @@ public sealed class OpenAiChatTranslator(HttpClient http)
         }
     }
 
-    /// <summary>The content of a whole completion.</summary>
-    private static string ReadCompletion(string json)
+    /// <summary>The content of a whole completion, and whether it stopped at the length limit.</summary>
+    private static (string Content, bool Cut) ReadCompletion(string json)
     {
         try
         {
             using var document = JsonDocument.Parse(json);
-            return ReadContent(document.RootElement.GetProperty("choices")[0].GetProperty("message"));
+            var choice = document.RootElement.GetProperty("choices")[0];
+            var cut = choice.TryGetProperty("finish_reason", out var reason)
+                && reason.ValueKind == JsonValueKind.String
+                && reason.GetString() == "length";
+            return (ReadContent(choice.GetProperty("message")), cut);
         }
         catch (Exception ex) when (
             ex is JsonException or KeyNotFoundException or IndexOutOfRangeException or InvalidOperationException)

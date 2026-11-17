@@ -242,10 +242,50 @@ public class TranslationService
     {
         var chosen   = engine ?? Saved;
         var provider = resilient ? Resilient(chosen) : Single(chosen);
-        var result   = await provider.TranslateAsync(blocks, sourceLang, targetLang, apiKey, cancellationToken, context);
+        var (sent, stretched) = CollapseStretching(blocks);
+        var result   = await provider.TranslateAsync(sent, sourceLang, targetLang, apiKey, cancellationToken, context);
         LastEngineUsage = (provider as ResilientProvider)?.LastUsage;
-        return result;
+        return stretched is null ? result : (RestoreStretching(result.Blocks, stretched), result.DetectedLang);
     }
+
+    /// <summary>
+    /// The blocks as they are sent: stretched Thai collapsed — see <see cref="ThaiElongation"/> — and
+    /// what each collapsed text was written as, or null when nothing was stretched.
+    /// </summary>
+    internal static (List<OcrTextBlock> Sent, Dictionary<string, string>? Stretched) CollapseStretching(
+        List<OcrTextBlock> blocks)
+    {
+        Dictionary<string, string>? stretched = null;
+        var sent = new List<OcrTextBlock>(blocks.Count);
+        foreach (var block in blocks)
+        {
+            var collapsed = ThaiElongation.Collapse(block.Text);
+            if (ReferenceEquals(collapsed, block.Text))
+            {
+                sent.Add(block);
+                continue;
+            }
+
+            (stretched ??= new(StringComparer.Ordinal)).TryAdd(collapsed, block.Text);
+            sent.Add(block with { Text = collapsed });
+        }
+
+        return (sent, stretched);
+    }
+
+    /// <summary>
+    /// The translation with each collapsed text written as it was on screen again; an untranslated
+    /// one stands in as the original too.
+    /// </summary>
+    internal static List<TranslatedBlock> RestoreStretching(
+        List<TranslatedBlock> blocks, Dictionary<string, string> stretched) =>
+        blocks.Select(block => stretched.TryGetValue(block.OriginalText, out var original)
+            ? block with
+            {
+                OriginalText = original,
+                TranslatedText = block.Untranslated ? original : block.TranslatedText,
+            }
+            : block).ToList();
 
     /// <summary>
     /// Has <paramref name="engine"/> ready to answer before the first translation is asked of it:

@@ -628,7 +628,7 @@ public class OpenAiCompatibleProviderTests
 
         var request = Assert.Single(server.Requests);
         Assert.Equal(OpenAiChatTranslator.WarmUpText, request.Text);
-        Assert.Equal(1, request.Payload.GetProperty("max_tokens").GetInt32());
+        Assert.Equal(1, request.Payload.GetProperty("max_completion_tokens").GetInt32());
         Assert.False(request.Streamed);
         Assert.Equal("none", request.Payload.GetProperty("reasoning_effort").GetString());
         Assert.Equal(
@@ -1186,7 +1186,7 @@ public class OpenAiCompatibleProviderTests
 
         var request = Assert.Single(server.Requests);
         Assert.Equal([("user", "Translate:\n\n" + OpenAiChatTranslator.WarmUpText)], Messages(request));
-        Assert.Equal(1, request.Payload.GetProperty("max_tokens").GetInt32());
+        Assert.Equal(1, request.Payload.GetProperty("max_completion_tokens").GetInt32());
     }
 
     /// <summary>Fails every request whose user message ends in <paramref name="text"/>, and passes the rest on.</summary>

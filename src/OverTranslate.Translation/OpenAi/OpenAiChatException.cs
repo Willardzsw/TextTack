@@ -19,6 +19,12 @@ public enum OpenAiChatFailure
     /// cancellation it starts as, which callers take for the user having walked away.
     /// </summary>
     TimedOut,
+
+    /// <summary>
+    /// The answer ran to the length <see cref="OpenAiChatTranslator"/> allows a translation of its
+    /// texts — a model repeating itself — and was cut there. What came back is not a translation.
+    /// </summary>
+    Runaway,
 }
 
 /// <summary>
