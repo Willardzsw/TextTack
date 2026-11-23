@@ -90,8 +90,7 @@
 
     <!-- ── In-place translation ── Only ever seen on the hint card, so each line stays to one: it sits
          over the window the reader is working in. -->
-    <sys:String x:Key="S.QuickTranslate.Replaced">번역해서 붙여넣었습니다.</sys:String>
-    <sys:String x:Key="S.QuickTranslate.Appended">번역해서 원문 뒤에 붙여넣었습니다.</sys:String>
+    <sys:String x:Key="S.QuickTranslate.TargetIs" xml:space="preserve">대상 언어: </sys:String>
     <sys:String x:Key="S.QuickTranslate.EmptyResult">번역 결과가 비어 있어 원래 텍스트를 그대로 두었습니다.</sys:String>
     <sys:String x:Key="S.QuickTranslate.FocusMoved">창이 바뀌어 번역 결과를 붙여넣지 못했습니다.</sys:String>
     <sys:String x:Key="S.QuickTranslate.ClipboardBusy">클립보드를 사용할 수 없어 붙여넣지 않았습니다.</sys:String>
@@ -478,6 +477,10 @@
     <sys:String x:Key="S.Settings.QuickTranslateHotkeyNote" xml:space="preserve">글자를 입력할 수 있는 칸에서만 동작하며, 입력란이 아니면 붙여넣을 수 없습니다.</sys:String>
     <sys:String x:Key="S.Settings.QuickTranslateSettings">번역 설정</sys:String>
     <sys:String x:Key="S.Settings.QuickTranslateLanguageNote">이 설정은 대치 번역과 추가 번역에만 적용되며 스크린샷, 텍스트 또는 실시간 번역에는 영향을 주지 않습니다.</sys:String>
+    <sys:String x:Key="S.Settings.QuickTranslateCycle">두 번 눌러 언어 전환</sys:String>
+    <sys:String x:Key="S.Settings.QuickTranslateCycleHint">대상 언어를 2~5개 고르세요. 대치 번역 또는 추가 번역 단축키를 빠르게 두 번 누르면 다음 언어로 바뀝니다. 켜져 있으면 번역이 약 0.4초 늦게 시작됩니다.</sys:String>
+    <sys:String x:Key="S.Settings.QuickTranslateCycleAdd">추가</sys:String>
+    <sys:String x:Key="S.Settings.QuickTranslateCycleRemove">제거</sys:String>
     <sys:String x:Key="S.Settings.QuickTranslateBilingualHint">선택한 텍스트의 언어를 판별해 지정한 두 언어 사이에서 번역합니다</sys:String>
     <sys:String x:Key="S.Settings.QuickAppendHotkey">추가 번역</sys:String>
     <sys:String x:Key="S.Settings.QuickAppendHotkeyHint">[[선택한 텍스트]]를 번역해 원문은 그대로 두고 뒤에 붙여넣습니다</sys:String>

@@ -89,8 +89,7 @@ Translation failed: {1}</sys:String>
 
     <!-- ── In-place translation ── Only ever seen on the hint card, so each line stays to one: it sits
          over the window the reader is working in. -->
-    <sys:String x:Key="S.QuickTranslate.Replaced">Translated and pasted.</sys:String>
-    <sys:String x:Key="S.QuickTranslate.Appended">Translated and pasted after the original.</sys:String>
+    <sys:String x:Key="S.QuickTranslate.TargetIs" xml:space="preserve">Target: </sys:String>
     <sys:String x:Key="S.QuickTranslate.EmptyResult">The translation came back empty; your text was left as it was.</sys:String>
     <sys:String x:Key="S.QuickTranslate.FocusMoved">You switched windows, so the translation could not be pasted.</sys:String>
     <sys:String x:Key="S.QuickTranslate.ClipboardBusy">The clipboard is unavailable, so nothing was pasted.</sys:String>
@@ -474,6 +473,10 @@ Details: {0}</sys:String>
     <sys:String x:Key="S.Settings.QuickTranslateHotkeyNote" xml:space="preserve">Only in fields that accept typed text; nothing can be pasted outside an input area.</sys:String>
     <sys:String x:Key="S.Settings.QuickTranslateSettings">Translation settings</sys:String>
     <sys:String x:Key="S.Settings.QuickTranslateLanguageNote">These settings apply to in-place and append translation only, without affecting screenshot, text or real-time translation.</sys:String>
+    <sys:String x:Key="S.Settings.QuickTranslateCycle">Double-press to switch language</sys:String>
+    <sys:String x:Key="S.Settings.QuickTranslateCycleHint">Pick 2–5 target languages. Press the in-place or append translation shortcut twice quickly to move to the next one. While on, each translation starts about 0.4 s later.</sys:String>
+    <sys:String x:Key="S.Settings.QuickTranslateCycleAdd">Add</sys:String>
+    <sys:String x:Key="S.Settings.QuickTranslateCycleRemove">Remove</sys:String>
     <sys:String x:Key="S.Settings.QuickTranslateBilingualHint">Detects the language of the selected text and translates between the two languages you choose</sys:String>
     <sys:String x:Key="S.Settings.QuickAppendHotkey">Append translation</sys:String>
     <sys:String x:Key="S.Settings.QuickAppendHotkeyHint">Translates the [[selected text]] and pastes it after the original, keeping both</sys:String>

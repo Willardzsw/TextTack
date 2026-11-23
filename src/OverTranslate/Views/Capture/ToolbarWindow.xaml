@@ -28,13 +28,13 @@
                  un-rasterised. The same trick as ShellWindow's content host, for the same reason. -->
             <Border Background="{DynamicResource ToolbarBg}"
                     Margin="2"
-                    CornerRadius="6">
+                    CornerRadius="4">
                 <Border.Effect>
                     <!-- Shadow color is black in both themes; hardcoded avoids Freezable binding edge cases.
                          Straight down rather than the default 315°, so the same margin serves the
                          left and right sides instead of one of them needing the offset too. -->
                     <DropShadowEffect BlurRadius="8" ShadowDepth="2" Direction="270"
-                                      Opacity="0.20" Color="#000000"/>
+                                      Opacity="0.16" Color="#000000"/>
                 </Border.Effect>
             </Border>
 
@@ -45,7 +45,7 @@
                     Background="{DynamicResource ToolbarBg}"
                     BorderBrush="{DynamicResource ToolbarBorder}"
                     BorderThickness="1"
-                    CornerRadius="8"
+                    CornerRadius="4"
                     Padding="4,4"
                     RenderOptions.ClearTypeHint="Enabled">
                 <StackPanel>
@@ -127,7 +127,7 @@
                                 Background="#33F59E0B"
                                 BorderBrush="#F59E0B"
                                 BorderThickness="1"
-                                CornerRadius="6"
+                                CornerRadius="4"
                                 Padding="6,1"
                                 Margin="6,0,0,0"
                                 VerticalAlignment="Center">
@@ -158,7 +158,7 @@
                              Built exactly like the direction tray beside it — shared columns, a pill that
                              slides, the click taken on press. -->
                         <Border Background="{DynamicResource ToolbarGroupBg}"
-                                CornerRadius="10"
+                                CornerRadius="4"
                                 Padding="3"
                                 Margin="10,0,0,0"
                                 VerticalAlignment="Center"
@@ -176,7 +176,7 @@
 
                                 <Border x:Name="LayoutModeThumb"
                                         Grid.Column="0"
-                                        CornerRadius="7"
+                                        CornerRadius="4"
                                         Background="{DynamicResource ToolbarSegmentThumbBg}"
                                         BorderBrush="{DynamicResource ToolbarSegmentThumbBorder}"
                                         BorderThickness="1">
@@ -274,7 +274,7 @@
                              to show. -->
                         <Border x:Name="DirectionSwitch"
                                 Background="{DynamicResource ToolbarGroupBg}"
-                                CornerRadius="10"
+                                CornerRadius="4"
                                 Padding="3"
                                 Margin="10,0,0,0"
                                 VerticalAlignment="Center"
@@ -284,7 +284,7 @@
                                      it lands on whole pixels like the halves around it. -->
                                 <Border x:Name="DirectionThumb"
                                         HorizontalAlignment="Left"
-                                        CornerRadius="7"
+                                        CornerRadius="4"
                                         Background="{DynamicResource ToolbarDirectionThumbBg}"
                                         BorderBrush="{DynamicResource ToolbarDirectionThumbBorder}"
                                         BorderThickness="1"/>
@@ -604,7 +604,7 @@
                             <!-- At least 280 and otherwise as wide as its longest line: the switch names are one line
                                  each, and a fixed width cut the Korean ones off at the switch. -->
                             <Border x:Name="MorePanel" MinWidth="280" Background="{DynamicResource ToolbarBg}"
-                                    BorderBrush="{DynamicResource ToolbarBorder}" BorderThickness="1" CornerRadius="12"
+                                    BorderBrush="{DynamicResource ToolbarBorder}" BorderThickness="1" CornerRadius="6"
                                     Padding="6" PreviewKeyDown="MorePopup_KeyDown">
                                 <!-- Scrolls only when there is not room for all of it beside the bar: PlaceMoreMenu caps its
                                      height to the space on the roomier side, so the menu never jumps away from the bar. -->
@@ -703,7 +703,7 @@
                                                   Checked="DebugAssistToggle_Changed" Unchecked="DebugAssistToggle_Changed">
                                         <ToggleButton.Template>
                                             <ControlTemplate TargetType="ToggleButton">
-                                                <Border x:Name="Root" Background="Transparent" CornerRadius="8" Padding="6,6,10,6">
+                                                <Border x:Name="Root" Background="Transparent" CornerRadius="4" Padding="6,6,10,6">
                                                     <ContentPresenter/>
                                                 </Border>
                                                 <ControlTemplate.Triggers>

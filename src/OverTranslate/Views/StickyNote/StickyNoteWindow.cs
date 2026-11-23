@@ -166,6 +166,7 @@ public sealed class StickyNoteWindow : Window
         _placing = true;
         ScreenGeometry.MoveToPhysical(this, Data.X, Data.Y);
         _placing = false;
+        WindowStyles.ApplyToolWindow(this);
         if (Data.PassThrough) WindowStyles.SetClickThrough(this, true);
         LocationChanged += (_, _) =>
         {
@@ -250,7 +251,7 @@ public sealed class StickyNoteWindow : Window
     {
         if (_toolTemplate is not null) return _toolTemplate;
         var border = new FrameworkElementFactory(typeof(Border), "Root");
-        border.SetValue(Border.CornerRadiusProperty, new CornerRadius(12));
+        border.SetValue(Border.CornerRadiusProperty, new CornerRadius(6));
         border.SetValue(Border.BackgroundProperty, Brushes.Transparent);
         var presenter = new FrameworkElementFactory(typeof(ContentPresenter));
         presenter.SetValue(HorizontalAlignmentProperty, HorizontalAlignment.Center);

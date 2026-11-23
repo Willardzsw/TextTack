@@ -89,8 +89,7 @@
 
     <!-- ── In-place translation ── Only ever seen on the hint card, so each line stays to one: it sits
          over the window the reader is working in. -->
-    <sys:String x:Key="S.QuickTranslate.Replaced">已完成翻译并粘贴译文。</sys:String>
-    <sys:String x:Key="S.QuickTranslate.Appended">已完成翻译并在原文后粘贴译文。</sys:String>
+    <sys:String x:Key="S.QuickTranslate.TargetIs">目标语言：</sys:String>
     <sys:String x:Key="S.QuickTranslate.EmptyResult">翻译结果是空的，已保留原本的文字。</sys:String>
     <sys:String x:Key="S.QuickTranslate.FocusMoved">已切换窗口，无法粘贴翻译结果。</sys:String>
     <sys:String x:Key="S.QuickTranslate.ClipboardBusy">剪贴板目前无法使用，没有粘贴翻译。</sys:String>
@@ -474,6 +473,10 @@
     <sys:String x:Key="S.Settings.QuickTranslateHotkeyNote" xml:space="preserve">仅适用于可输入文字的字段，非输入区域则无法粘贴。</sys:String>
     <sys:String x:Key="S.Settings.QuickTranslateSettings">翻译设置</sys:String>
     <sys:String x:Key="S.Settings.QuickTranslateLanguageNote">这些设置适用于替换翻译和追加翻译，不会影响截图翻译、文字翻译或实时翻译。</sys:String>
+    <sys:String x:Key="S.Settings.QuickTranslateCycle">连按切换语言</sys:String>
+    <sys:String x:Key="S.Settings.QuickTranslateCycleHint">选 2～5 个目标语言，连按两下替换翻译或追加翻译的快捷键，就换到下一个。开启后每次翻译会晚约 0.4 秒开始。</sys:String>
+    <sys:String x:Key="S.Settings.QuickTranslateCycleAdd">添加</sys:String>
+    <sys:String x:Key="S.Settings.QuickTranslateCycleRemove">移除</sys:String>
     <sys:String x:Key="S.Settings.QuickTranslateBilingualHint">自动判断选中文字的语言，在指定的两种语言之间互译</sys:String>
     <sys:String x:Key="S.Settings.QuickAppendHotkey">追加翻译</sys:String>
     <sys:String x:Key="S.Settings.QuickAppendHotkeyHint">将[[选中的文字]]翻译后粘贴在原文后面，保留原文</sys:String>

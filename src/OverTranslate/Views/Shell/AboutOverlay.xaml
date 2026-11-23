@@ -18,7 +18,7 @@
                 UseLayoutRounding="True"
                 HorizontalAlignment="Center"
                 VerticalAlignment="Center"
-                CornerRadius="14"
+                CornerRadius="6"
                 Background="{DynamicResource AppCardBg}"
                 BorderBrush="{DynamicResource AppBorder}"
                 BorderThickness="1"
@@ -28,7 +28,7 @@
                 <ScaleTransform x:Name="CardScale" ScaleX="1" ScaleY="1"/>
             </Border.RenderTransform>
             <Border.Effect>
-                <DropShadowEffect BlurRadius="28" ShadowDepth="6" Opacity="0.3" Color="#000000"/>
+                <DropShadowEffect BlurRadius="16" ShadowDepth="2" Opacity="0.16" Color="#000000"/>
             </Border.Effect>
 
             <Grid Margin="26,22,26,26">

@@ -21,7 +21,7 @@
                     Background="{DynamicResource HintCardBg}"
                     BorderBrush="{DynamicResource HintCardBorder}"
                     BorderThickness="1"
-                    CornerRadius="6">
+                    CornerRadius="4">
                 <Border.Effect>
                     <DropShadowEffect BlurRadius="8" ShadowDepth="1" Direction="270"
                                       Opacity="0.18" Color="#000000"/>

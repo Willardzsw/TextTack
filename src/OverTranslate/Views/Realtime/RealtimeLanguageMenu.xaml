@@ -28,7 +28,7 @@
                     <ControlTemplate TargetType="Button">
                         <Border x:Name="Root"
                                 Background="Transparent"
-                                CornerRadius="7"
+                                CornerRadius="4"
                                 Padding="10,0">
                             <ContentPresenter VerticalAlignment="Center"
                                               HorizontalAlignment="Stretch"/>
@@ -68,7 +68,7 @@
                                 Background="{DynamicResource AppInputBg}"
                                 BorderBrush="{DynamicResource AppInputBorder}"
                                 BorderThickness="1"
-                                CornerRadius="7">
+                                CornerRadius="4">
                             <Grid>
                                 <Path Width="13" Height="13"
                                       Margin="10,0,0,0"
@@ -120,10 +120,10 @@
                  surface that carries the text would cost it ClearType. -->
             <Border Background="{DynamicResource ToolbarBg}"
                     Margin="2"
-                    CornerRadius="12">
+                    CornerRadius="6">
                 <Border.Effect>
                     <DropShadowEffect x:Name="Shadow"
-                                      BlurRadius="24" ShadowDepth="4" Direction="270"
+                                      BlurRadius="12" ShadowDepth="2" Direction="270"
                                       Opacity="0.45" Color="#000000"/>
                 </Border.Effect>
             </Border>
@@ -132,7 +132,7 @@
                     Background="{DynamicResource ToolbarBg}"
                     BorderBrush="{DynamicResource ToolbarMenuBorder}"
                     BorderThickness="1"
-                    CornerRadius="12"
+                    CornerRadius="6"
                     Padding="6"
                     RenderOptions.ClearTypeHint="Enabled">
                 <StackPanel>

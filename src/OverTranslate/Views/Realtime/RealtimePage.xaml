@@ -568,7 +568,7 @@
                                             <Border x:Name="FontSizeModeThumb"
                                                     Grid.Column="0"
                                                     Background="{DynamicResource AppAccent}"
-                                                    CornerRadius="6"
+                                                    CornerRadius="4"
                                                     SizeChanged="FontSizeModeThumb_SizeChanged">
                                                 <Border.RenderTransform>
                                                     <TranslateTransform x:Name="FontSizeModeThumbShift"/>
@@ -632,7 +632,7 @@
                                         <Border x:Name="TextColorModeThumb"
                                                 Grid.Column="0"
                                                 Background="{DynamicResource AppAccent}"
-                                                CornerRadius="6"
+                                                CornerRadius="4"
                                                 SizeChanged="TextColorModeThumb_SizeChanged">
                                             <Border.RenderTransform>
                                                 <TranslateTransform x:Name="TextColorModeThumbShift"/>
@@ -722,7 +722,7 @@
                                             <Border x:Name="ScrimColorModeThumb"
                                                     Grid.Column="0"
                                                     Background="{DynamicResource AppAccent}"
-                                                    CornerRadius="6"
+                                                    CornerRadius="4"
                                                     SizeChanged="ScrimColorModeThumb_SizeChanged">
                                                 <Border.RenderTransform>
                                                     <TranslateTransform x:Name="ScrimColorModeThumbShift"/>
@@ -871,7 +871,7 @@
                                         <Border x:Name="BorderModeThumb"
                                                 Grid.Column="0"
                                                 Background="{DynamicResource AppAccent}"
-                                                CornerRadius="6"
+                                                CornerRadius="4"
                                                 SizeChanged="BorderModeThumb_SizeChanged">
                                             <Border.RenderTransform>
                                                 <TranslateTransform x:Name="BorderModeThumbShift"/>

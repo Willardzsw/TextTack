@@ -89,8 +89,7 @@
     <sys:String x:Key="S.Translation.SpeakFailed">Не удалось прочитать вслух: {0}</sys:String>
 
     <!-- ── In-place translation ── -->
-    <sys:String x:Key="S.QuickTranslate.Replaced">Переведено и вставлено.</sys:String>
-    <sys:String x:Key="S.QuickTranslate.Appended">Переведено и вставлено после оригинала.</sys:String>
+    <sys:String x:Key="S.QuickTranslate.TargetIs" xml:space="preserve">Язык перевода: </sys:String>
     <sys:String x:Key="S.QuickTranslate.EmptyResult">Перевод пришел пустым; ваш текст оставлен без изменений.</sys:String>
     <sys:String x:Key="S.QuickTranslate.FocusMoved">Вы переключились на другое окно, поэтому перевод не удалось вставить.</sys:String>
     <sys:String x:Key="S.QuickTranslate.ClipboardBusy">Буфер обмена недоступен, поэтому ничего не вставлено.</sys:String>
@@ -469,6 +468,10 @@
     <sys:String x:Key="S.Settings.QuickTranslateHotkeyNote" xml:space="preserve">Работает только в полях для ввода текста; вне поля ввода вставить ничего нельзя.</sys:String>
     <sys:String x:Key="S.Settings.QuickTranslateSettings">Настройки перевода</sys:String>
     <sys:String x:Key="S.Settings.QuickTranslateLanguageNote">Эти настройки используются только для перевода с заменой и с добавлением и не влияют на перевод снимка экрана, текста и перевод в реальном времени.</sys:String>
+    <sys:String x:Key="S.Settings.QuickTranslateCycle">Смена языка двойным нажатием</sys:String>
+    <sys:String x:Key="S.Settings.QuickTranslateCycleHint">Выберите от 2 до 5 языков перевода. Дважды быстро нажмите сочетание перевода с заменой или с добавлением, чтобы перейти к следующему. Пока функция включена, перевод начинается примерно на 0,4 с позже.</sys:String>
+    <sys:String x:Key="S.Settings.QuickTranslateCycleAdd">Добавить</sys:String>
+    <sys:String x:Key="S.Settings.QuickTranslateCycleRemove">Удалить</sys:String>
     <sys:String x:Key="S.Settings.QuickTranslateBilingualHint">Определяет язык выделенного текста и переводит между двумя выбранными языками</sys:String>
     <sys:String x:Key="S.Settings.QuickAppendHotkey">Перевод с добавлением</sys:String>
     <sys:String x:Key="S.Settings.QuickAppendHotkeyHint">Переводит [[выделенный текст]] и вставляет перевод после оригинала, сохраняя его</sys:String>

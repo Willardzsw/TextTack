@@ -241,6 +241,7 @@ public partial class SettingsPage : UserControl
             SettingsService.Instance.OcrDebugChanged += OnOcrDebugChanged;
             SettingsService.Instance.CaptureOptionsChanged += OnCaptureOptionsChanged;
             SettingsService.Instance.FeatureTogglesChanged += OnFeatureTogglesChanged;
+            SettingsService.Instance.QuickTranslateTargetChanged += OnQuickTranslateTargetChanged;
             OnOcrDebugChanged(this, EventArgs.Empty);
             OnCaptureOptionsChanged(this, EventArgs.Empty);
         };
@@ -250,6 +251,7 @@ public partial class SettingsPage : UserControl
             SettingsService.Instance.OcrDebugChanged -= OnOcrDebugChanged;
             SettingsService.Instance.CaptureOptionsChanged -= OnCaptureOptionsChanged;
             SettingsService.Instance.FeatureTogglesChanged -= OnFeatureTogglesChanged;
+            SettingsService.Instance.QuickTranslateTargetChanged -= OnQuickTranslateTargetChanged;
             StopRecording();
         };
 
@@ -347,6 +349,7 @@ public partial class SettingsPage : UserControl
                 s.QuickTranslate.BilingualFirstLanguage, s.QuickTranslate.BilingualSecondLanguage));
             QuickTranslateBilingualFirstBox.Items.Refresh();
             QuickTranslateBilingualSecondBox.Items.Refresh();
+            ShowQuickTranslateCycle(s);
             RenderQuickTranslateMode();
 
             StartupCheckBox.IsChecked = StartupService.IsEnabled;
@@ -555,6 +558,112 @@ public partial class SettingsPage : UserControl
         });
     }
 
+    /// <summary>
+    /// Writes the 連按切換 languages as chips, each with a remove button, and fills the add picker
+    /// with the languages not yet picked.
+    /// </summary>
+    private void ShowQuickTranslateCycle(AppSettings s)
+    {
+        var picked = QuickTranslateCycle.Languages(s.QuickTranslate);
+
+        QuickTranslateCycleChips.Children.Clear();
+        foreach (var code in picked)
+        {
+            var label = new TextBlock
+            {
+                Text = LanguageData.GetTargetDisplayName(code),
+                FontFamily = (System.Windows.Media.FontFamily)FindResource("AppFont"),
+                FontSize = 12,
+                VerticalAlignment = VerticalAlignment.Center,
+                Margin = new Thickness(10, 0, 2, 0),
+            };
+            label.SetResourceReference(TextBlock.ForegroundProperty, "AppTextPrimary");
+
+            var remove = new System.Windows.Controls.Button
+            {
+                Content = "",
+                Style = (Style)FindResource("IconButton"),
+                FontFamily = new System.Windows.Media.FontFamily("Segoe Fluent Icons, Segoe MDL2 Assets"),
+                FontSize = 8,
+                Width = 22,
+                Height = 22,
+                Margin = new Thickness(0, 0, 3, 0),
+                ToolTip = LocalizationService.Get("S.Settings.QuickTranslateCycleRemove"),
+            };
+            System.Windows.Automation.AutomationProperties.SetName(remove,
+                LocalizationService.Get("S.Settings.QuickTranslateCycleRemove") + " " + label.Text);
+            var removed = code;
+            remove.Click += (_, _) => Persist(settings =>
+            {
+                settings.QuickTranslate.CycleLanguages = QuickTranslateCycle.Languages(settings.QuickTranslate)
+                    .Where(c => c != removed).ToList();
+                ShowQuickTranslateCycle(settings);
+            });
+
+            var row = new StackPanel { Orientation = System.Windows.Controls.Orientation.Horizontal };
+            row.Children.Add(label);
+            row.Children.Add(remove);
+
+            var chip = new Border
+            {
+                CornerRadius = new CornerRadius(4),
+                BorderThickness = new Thickness(1),
+                Height = 28,
+                Margin = new Thickness(0, 0, 6, 6),
+                Child = row,
+            };
+            chip.SetResourceReference(Border.BorderBrushProperty, "AppButtonBorder");
+            QuickTranslateCycleChips.Children.Add(chip);
+        }
+        QuickTranslateCycleChips.Visibility = picked.Count > 0 ? Visibility.Visible : Visibility.Collapsed;
+
+        var wasLoading = _loading;
+        _loading = true;
+        try
+        {
+            QuickTranslateCycleAddBox.ItemsSource = LanguageData.TargetLanguages
+                .Where(l => !picked.Contains(l.Code)).ToList();
+            QuickTranslateCycleAddBox.SelectedIndex = 0;
+        }
+        finally
+        {
+            _loading = wasLoading;
+        }
+
+        var full = picked.Count >= QuickTranslateCycle.MaxLanguages;
+        QuickTranslateCycleAddBox.IsEnabled = !full;
+        QuickTranslateCycleAddBtn.IsEnabled = !full;
+    }
+
+    private void QuickTranslateCycleAdd_Click(object sender, RoutedEventArgs e)
+    {
+        if (QuickTranslateCycleAddBox.SelectedValue is not string code) return;
+
+        Persist(s =>
+        {
+            var picked = QuickTranslateCycle.Languages(s.QuickTranslate);
+            if (picked.Count < QuickTranslateCycle.MaxLanguages && !picked.Contains(code)) picked.Add(code);
+            s.QuickTranslate.CycleLanguages = picked;
+            ShowQuickTranslateCycle(s);
+        });
+    }
+
+    /// <summary>A double press switched 替換翻譯's target: show it in the picker.</summary>
+    private void OnQuickTranslateTargetChanged(object? sender, EventArgs e)
+    {
+        var wasLoading = _loading;
+        _loading = true;
+        try
+        {
+            QuickTranslateTargetBox.SelectedValue = LanguageData.GetValidTargetCode(
+                SettingsService.Instance.Current.QuickTranslate.TargetLanguage);
+        }
+        finally
+        {
+            _loading = wasLoading;
+        }
+    }
+
     /// <summary>The 雙語互譯 pair as the pickers show it — see <see cref="BilingualPair.Pick"/>.</summary>
     private BilingualPair _quickTranslatePair = BilingualPair.Load(null, null);
 
@@ -612,6 +721,7 @@ public partial class SettingsPage : UserControl
 
         var bilingual = QuickTranslateBilingualToggle.IsChecked == true;
         QuickTranslateFixedPair.Visibility = bilingual ? Visibility.Collapsed : Visibility.Visible;
+        QuickTranslateCyclePanel.Visibility = QuickTranslateFixedPair.Visibility;
         QuickTranslateBilingualPair.Visibility = bilingual ? Visibility.Visible : Visibility.Collapsed;
         QuickTranslateBilingualFallbackHint.Visibility = QuickTranslateBilingualPair.Visibility;
     }

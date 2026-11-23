@@ -29,6 +29,9 @@ internal static class WindowStyles
     /// <summary>The window never takes activation, so showing it cannot pull focus off a game.</summary>
     private const int WS_EX_NOACTIVATE = 0x8000000;
 
+    /// <summary>Kept out of Alt+Tab and the task view.</summary>
+    private const int WS_EX_TOOLWINDOW = 0x80;
+
     [DllImport("user32.dll")]
     private static extern int GetWindowLong(IntPtr hwnd, int index);
 
@@ -41,6 +44,12 @@ internal static class WindowStyles
     /// sitting on top of.
     /// </summary>
     public static void ApplyNoActivate(Window window) => Add(window, WS_EX_NOACTIVATE);
+
+    /// <summary>
+    /// Keeps the window out of Alt+Tab and the task view. WPF's ShowInTaskbar=false only hides the
+    /// taskbar button (through a hidden owner); an activatable window still shows up in Alt+Tab.
+    /// </summary>
+    public static void ApplyToolWindow(Window window) => Add(window, WS_EX_TOOLWINDOW);
 
     /// <summary>
     /// Turns <see cref="ApplyNoActivate"/> off or back on, for a window that takes the keyboard only
@@ -85,8 +94,62 @@ internal static class WindowStyles
     }
 
     /// <summary>
+    /// For a small hint shown over another program while the user types there: no activation, and
+    /// if Windows activates it anyway, the foreground goes straight back to the window it was taken
+    /// from.
+    /// </summary>
+    /// <remarks>
+    /// WS_EX_NOACTIVATE alone was not enough: the focus trace (2026-11-23) showed WeChat (not Edge)
+    /// losing the foreground to the 替換翻譯 label each time it appeared — usually taken back at once
+    /// (the window's backdrop flickering), once not at all, leaving the user's typing going nowhere —
+    /// and, when the label closed, the foreground going to its hidden owner. Dropping Topmost did not
+    /// stop it (and let WeChat cover the label), so the window keeps Topmost="True" in XAML and this
+    /// hands the foreground back. Call from <c>OnSourceInitialized</c>.
+    /// </remarks>
+    public static void ApplyHintWindow(Window window)
+    {
+        var hwnd = new WindowInteropHelper(window).Handle;
+        if (hwnd == IntPtr.Zero) return;
+
+        Add(window, WS_EX_NOACTIVATE | WS_EX_TOOLWINDOW);
+        SetWindowPos(hwnd, HWND_TOPMOST, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_NOACTIVATE);
+
+        HwndSource.FromHwnd(hwnd)?.AddHook((IntPtr _, int msg, IntPtr wParam, IntPtr lParam, ref bool handled) =>
+        {
+            switch (msg)
+            {
+                case WM_MOUSEACTIVATE:
+                    handled = true;
+                    return new IntPtr(MA_NOACTIVATE);
+
+                case WM_ACTIVATE when (wParam.ToInt64() & 0xFFFF) != WA_INACTIVE:
+                    // lParam is the window being deactivated: the one the user was typing in.
+                    if (lParam != IntPtr.Zero && IsWindow(lParam)) SetForegroundWindow(lParam);
+                    break;
+            }
+            return IntPtr.Zero;
+        });
+    }
+
+    private const int WM_ACTIVATE = 0x0006;
+    private const int WM_MOUSEACTIVATE = 0x0021;
+    private const int MA_NOACTIVATE = 3;
+    private const int WA_INACTIVE = 0;
+    private static readonly IntPtr HWND_TOPMOST = new(-1);
+    private const uint SWP_NOSIZE = 0x0001, SWP_NOMOVE = 0x0002, SWP_NOACTIVATE = 0x0010;
+
+    [DllImport("user32.dll")]
+    private static extern bool SetWindowPos(IntPtr hwnd, IntPtr after, int x, int y, int cx, int cy, uint flags);
+
+    [DllImport("user32.dll")]
+    private static extern bool SetForegroundWindow(IntPtr hwnd);
+
+    [DllImport("user32.dll")]
+    private static extern bool IsWindow(IntPtr hwnd);
+
+    /// <summary>
     /// Adds bits to the existing extended style rather than replacing it: WPF has already put its own
-    /// there — WS_EX_TOOLWINDOW from ShowInTaskbar, WS_EX_LAYERED from AllowsTransparency — and
+    /// there — WS_EX_LAYERED from AllowsTransparency, for one — and
     /// overwriting them would undo settings made in XAML.
     /// </summary>
     private static void Add(Window window, int exStyle)

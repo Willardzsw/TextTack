@@ -149,7 +149,7 @@ public partial class SelectionLabelWindow : Window
     protected override void OnSourceInitialized(EventArgs e)
     {
         base.OnSourceInitialized(e);
-        WindowStyles.ApplyNoActivate(this);
+        WindowStyles.ApplyHintWindow(this);
         _hwnd = new System.Windows.Interop.WindowInteropHelper(this).Handle;
         Handles[_hwnd] = this;
     }

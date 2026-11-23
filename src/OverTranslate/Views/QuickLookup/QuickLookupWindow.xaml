@@ -19,7 +19,7 @@
              user summoned over somebody else's window, so the controls draw themselves only when
              they are being reached for — see RenderChrome. -->
         <ControlTemplate x:Key="QuietComboToggle" TargetType="ToggleButton">
-            <Border x:Name="Root" Background="Transparent" CornerRadius="6">
+            <Border x:Name="Root" Background="Transparent" CornerRadius="4">
                 <Path x:Name="Arrow"
                       Data="M0,0 L4,4 L8,0"
                       Stroke="{DynamicResource AppTextSecondary}"
@@ -96,7 +96,7 @@
                                         Background="{DynamicResource AppCardBg}"
                                         BorderBrush="{DynamicResource AppBorder}"
                                         BorderThickness="1"
-                                        CornerRadius="8"
+                                        CornerRadius="4"
                                         Padding="0,4">
                                     <Border.Effect>
                                         <DropShadowEffect BlurRadius="12" ShadowDepth="2"
@@ -168,7 +168,7 @@
                         <Border x:Name="Root"
                                 Background="{TemplateBinding Background}"
                                 Padding="{TemplateBinding Padding}"
-                                CornerRadius="8"
+                                CornerRadius="4"
                                 SnapsToDevicePixels="True">
                             <ContentPresenter HorizontalAlignment="Center"
                                               VerticalAlignment="Center"/>
@@ -229,7 +229,7 @@
                                 Background="{TemplateBinding Background}"
                                 BorderBrush="{TemplateBinding BorderBrush}"
                                 BorderThickness="{TemplateBinding BorderThickness}"
-                                CornerRadius="6">
+                                CornerRadius="4">
                             <!-- The clear button's room is a margin here rather than padding, so
                                  the scroll bar sits left of the button instead of under it. -->
                             <ScrollViewer x:Name="PART_ContentHost"
@@ -263,13 +263,13 @@
                 Background="{DynamicResource AppSurfaceBg}"
                 BorderBrush="{DynamicResource AppBorder}"
                 BorderThickness="1"
-                CornerRadius="14"
+                CornerRadius="6"
                 RenderTransformOrigin="0,0">
             <Border.Effect>
                 <!-- Straight down rather than the default 315°, so the margin above only has to
                      cover the blur and the same margin can serve both sides. -->
-                <DropShadowEffect BlurRadius="24" ShadowDepth="4" Direction="270"
-                                  Opacity="0.22" Color="#000000"/>
+                <DropShadowEffect BlurRadius="12" ShadowDepth="2" Direction="270"
+                                  Opacity="0.16" Color="#000000"/>
             </Border.Effect>
 
             <!-- Enter and exit run along this one transform: the popup grows out of the pointer it
@@ -910,7 +910,7 @@
                         Background="{DynamicResource AppHeaderBg}"
                         BorderBrush="{DynamicResource AppButtonBorder}"
                         BorderThickness="1"
-                        CornerRadius="8"
+                        CornerRadius="4"
                         IsHitTestVisible="False"
                         Visibility="Collapsed">
                     <StackPanel Orientation="Horizontal">

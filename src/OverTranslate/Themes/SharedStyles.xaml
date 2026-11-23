@@ -53,7 +53,7 @@
         <Setter Property="Background"      Value="{DynamicResource AppCardBg}"/>
         <Setter Property="BorderBrush"     Value="{DynamicResource AppBorder}"/>
         <Setter Property="BorderThickness" Value="1"/>
-        <Setter Property="CornerRadius"    Value="8"/>
+        <Setter Property="CornerRadius"    Value="4"/>
         <Setter Property="Padding"         Value="16,12"/>
         <Setter Property="Margin"          Value="0,0,0,12"/>
     </Style>
@@ -67,10 +67,10 @@
     <!-- ═══════════════════════════════════════════ -->
     <Style x:Key="InnerGroupBorder" TargetType="Border">
         <Setter Property="Background"      Value="Transparent"/>
-        <Setter Property="BorderBrush"     Value="{DynamicResource AppSubtleBorder}"/>
+        <Setter Property="BorderBrush"     Value="Transparent"/>
         <Setter Property="BorderThickness" Value="1"/>
         <Setter Property="CornerRadius"    Value="6"/>
-        <Setter Property="Padding"         Value="12,10"/>
+        <Setter Property="Padding"         Value="0,4"/>
         <Setter Property="Margin"          Value="0,0,0,10"/>
     </Style>
 
@@ -83,12 +83,12 @@
     <!--  the group that holds it.                   -->
     <!-- ═══════════════════════════════════════════ -->
     <Style x:Key="ToggleRowBorder" TargetType="Border">
-        <Setter Property="Background"      Value="{DynamicResource AppSurfaceBg}"/>
+        <Setter Property="Background"      Value="Transparent"/>
         <Setter Property="BorderBrush"     Value="{DynamicResource AppSubtleBorder}"/>
-        <Setter Property="BorderThickness" Value="1"/>
-        <Setter Property="CornerRadius"    Value="6"/>
-        <Setter Property="Padding"         Value="12,10"/>
-        <Setter Property="Margin"          Value="0,0,0,8"/>
+        <Setter Property="BorderThickness" Value="0,0,0,1"/>
+        <Setter Property="CornerRadius"    Value="0"/>
+        <Setter Property="Padding"         Value="2,8"/>
+        <Setter Property="Margin"          Value="0"/>
     </Style>
 
     <!-- ═══════════════════════════════════════════ -->
@@ -101,7 +101,7 @@
     <!-- ═══════════════════════════════════════════ -->
     <Style x:Key="ToggleRowGlyph" TargetType="TextBlock">
         <Setter Property="FontFamily"        Value="Segoe Fluent Icons, Segoe MDL2 Assets"/>
-        <Setter Property="FontSize"          Value="18"/>
+        <Setter Property="FontSize"          Value="16"/>
         <Setter Property="Foreground"        Value="{DynamicResource AppTextSecondary}"/>
         <Setter Property="VerticalAlignment" Value="Center"/>
         <Setter Property="Margin"            Value="2,0,14,0"/>
@@ -120,7 +120,7 @@
         <Setter Property="Background"      Value="{DynamicResource AppInfoBg}"/>
         <Setter Property="BorderBrush"     Value="{DynamicResource AppSubtleBorder}"/>
         <Setter Property="BorderThickness" Value="1"/>
-        <Setter Property="CornerRadius"    Value="6"/>
+        <Setter Property="CornerRadius"    Value="4"/>
         <Setter Property="Padding"         Value="12,10"/>
         <Setter Property="Margin"          Value="0,0,0,14"/>
     </Style>
@@ -134,8 +134,8 @@
     <!-- ═══════════════════════════════════════════ -->
     <Style x:Key="CardHeaderIcon" TargetType="TextBlock">
         <Setter Property="FontFamily"        Value="Segoe Fluent Icons, Segoe MDL2 Assets"/>
-        <Setter Property="FontSize"          Value="18"/>
-        <Setter Property="Foreground"        Value="{DynamicResource AppAccent}"/>
+        <Setter Property="FontSize"          Value="14"/>
+        <Setter Property="Foreground"        Value="{DynamicResource AppTextSecondary}"/>
         <Setter Property="VerticalAlignment" Value="Center"/>
         <Setter Property="Margin"            Value="0,0,9,0"/>
     </Style>
@@ -151,8 +151,8 @@
     <!-- ═══════════════════════════════════════════ -->
     <Style x:Key="CardTitle" TargetType="TextBlock">
         <Setter Property="FontFamily"        Value="{DynamicResource AppFont}"/>
-        <Setter Property="FontSize"          Value="15"/>
-        <Setter Property="FontWeight"        Value="Bold"/>
+        <Setter Property="FontSize"          Value="13"/>
+        <Setter Property="FontWeight"        Value="SemiBold"/>
         <Setter Property="Foreground"        Value="{DynamicResource AppTextPrimary}"/>
         <Setter Property="VerticalAlignment" Value="Center"/>
     </Style>
@@ -400,7 +400,7 @@
         <Setter Property="Background"      Value="{DynamicResource AppSurfaceBg}"/>
         <Setter Property="BorderBrush"     Value="{DynamicResource AppSubtleBorder}"/>
         <Setter Property="BorderThickness" Value="1"/>
-        <Setter Property="CornerRadius"    Value="8"/>
+        <Setter Property="CornerRadius"    Value="4"/>
         <Setter Property="Padding"         Value="14,12"/>
     </Style>
 
@@ -475,36 +475,36 @@
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="CheckBox">
-                    <Grid Width="44" Height="24" Background="Transparent">
+                    <Grid Width="36" Height="18" Background="Transparent">
                         <Border x:Name="TrackOff"
-                                CornerRadius="12"
+                                CornerRadius="9"
                                 Background="{DynamicResource AppButtonBg}"
                                 BorderBrush="{DynamicResource AppButtonBorder}"
                                 BorderThickness="1"/>
                         <Border x:Name="TrackOn"
-                                CornerRadius="12"
+                                CornerRadius="9"
                                 Background="{DynamicResource AppAccent}"
                                 BorderBrush="{DynamicResource AppAccent}"
                                 BorderThickness="1"
                                 Opacity="0"/>
                         <Border x:Name="TrackHover"
-                                CornerRadius="12"
+                                CornerRadius="9"
                                 Background="Transparent"
                                 BorderBrush="{DynamicResource AppInputFocusBorder}"
                                 BorderThickness="1"
                                 Opacity="0"/>
                         <Grid x:Name="KnobHost"
-                              Width="16" Height="16"
+                              Width="12" Height="12"
                               HorizontalAlignment="Left"
                               Margin="3,0,0,0">
                             <Grid.RenderTransform>
                                 <TranslateTransform x:Name="KnobShift" X="0"/>
                             </Grid.RenderTransform>
                             <Border x:Name="KnobOff"
-                                    CornerRadius="8"
+                                    CornerRadius="6"
                                     Background="{DynamicResource AppTextPrimary}"/>
                             <Border x:Name="KnobOn"
-                                    CornerRadius="8"
+                                    CornerRadius="6"
                                     Background="{DynamicResource AppToggleKnobOn}"
                                     Opacity="0"/>
                         </Grid>
@@ -516,7 +516,7 @@
                                     <Storyboard>
                                         <DoubleAnimation Storyboard.TargetName="KnobShift"
                                                          Storyboard.TargetProperty="X"
-                                                         To="22" Duration="0:0:0.16">
+                                                         To="18" Duration="0:0:0.16">
                                             <DoubleAnimation.EasingFunction>
                                                 <CubicEase EasingMode="EaseOut"/>
                                             </DoubleAnimation.EasingFunction>
@@ -589,7 +589,7 @@
                 <ControlTemplate TargetType="Button">
                     <Border x:Name="Root"
                             Background="{TemplateBinding Background}"
-                            CornerRadius="6"
+                            CornerRadius="4"
                             Padding="{TemplateBinding Padding}">
                         <ContentPresenter HorizontalAlignment="Center"
                                           VerticalAlignment="Center"/>
@@ -637,7 +637,7 @@
                             Background="{TemplateBinding Background}"
                             BorderBrush="{TemplateBinding BorderBrush}"
                             BorderThickness="{TemplateBinding BorderThickness}"
-                            CornerRadius="6">
+                            CornerRadius="4">
                         <ScrollViewer x:Name="PART_ContentHost"
                                       VerticalAlignment="Center"
                                       HorizontalScrollBarVisibility="Hidden"
@@ -680,7 +680,7 @@
                             Background="{TemplateBinding Background}"
                             BorderBrush="{TemplateBinding BorderBrush}"
                             BorderThickness="{TemplateBinding BorderThickness}"
-                            CornerRadius="6">
+                            CornerRadius="4">
                         <ScrollViewer x:Name="PART_ContentHost"
                                       HorizontalScrollBarVisibility="Disabled"
                                       VerticalScrollBarVisibility="Auto"
@@ -780,7 +780,7 @@
                             Background="{TemplateBinding Background}"
                             BorderBrush="{TemplateBinding BorderBrush}"
                             BorderThickness="{TemplateBinding BorderThickness}"
-                            CornerRadius="6"
+                            CornerRadius="4"
                             Padding="{TemplateBinding Padding}">
                         <ContentPresenter HorizontalAlignment="Center"
                                           VerticalAlignment="Center"/>
@@ -821,7 +821,7 @@
                     <Border x:Name="Root"
                             Background="{TemplateBinding Background}"
                             BorderThickness="{TemplateBinding BorderThickness}"
-                            CornerRadius="6"
+                            CornerRadius="4"
                             Padding="{TemplateBinding Padding}">
                         <ContentPresenter HorizontalAlignment="Center"
                                           VerticalAlignment="Center"/>
@@ -865,7 +865,7 @@
                 <ControlTemplate TargetType="Button">
                     <Border x:Name="Root"
                             Background="{TemplateBinding Background}"
-                            CornerRadius="6"
+                            CornerRadius="4"
                             Padding="{TemplateBinding Padding}">
                         <ContentPresenter HorizontalAlignment="Stretch"
                                           VerticalAlignment="Center"/>
@@ -905,7 +905,7 @@
                 <ControlTemplate TargetType="Button">
                     <Border x:Name="Root"
                             Background="{TemplateBinding Background}"
-                            CornerRadius="6">
+                            CornerRadius="4">
                         <ContentPresenter HorizontalAlignment="Center"
                                           VerticalAlignment="Center"/>
                     </Border>
@@ -939,7 +939,7 @@
                 Background="{DynamicResource AppInputBg}"
                 BorderBrush="{DynamicResource AppInputBorder}"
                 BorderThickness="1"
-                CornerRadius="6">
+                CornerRadius="4">
             <Path x:Name="Arrow"
                   Data="M0,0 L4,4 L8,0"
                   Stroke="{DynamicResource AppTextSecondary}"
@@ -1156,7 +1156,7 @@
                                     Background="{DynamicResource AppCardBg}"
                                     BorderBrush="{DynamicResource AppBorder}"
                                     BorderThickness="1"
-                                    CornerRadius="8"
+                                    CornerRadius="4"
                                     Padding="0,4">
                                 <Border.Effect>
                                     <DropShadowEffect BlurRadius="12" ShadowDepth="2"
@@ -1247,7 +1247,7 @@
                             Background="{DynamicResource AppButtonBg}"
                             BorderBrush="{DynamicResource AppButtonBorder}"
                             BorderThickness="1"
-                            CornerRadius="6"
+                            CornerRadius="4"
                             Padding="12,6">
                         <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
                             <Ellipse x:Name="Indicator"
@@ -1368,7 +1368,7 @@
                             Background="{DynamicResource AppInputBg}"
                             BorderBrush="{DynamicResource AppBorder}"
                             BorderThickness="1"
-                            CornerRadius="8"
+                            CornerRadius="4"
                             Padding="14,12">
                         <Grid>
                             <Grid.ColumnDefinitions>
@@ -1384,7 +1384,7 @@
                                     Grid.Column="1"
                                     Width="18" Height="18"
                                     Margin="12,0,2,0"
-                                    CornerRadius="9"
+                                    CornerRadius="5"
                                     BorderThickness="1.5"
                                     BorderBrush="{DynamicResource AppTextSecondary}"
                                     Background="Transparent"
@@ -1427,7 +1427,7 @@
     <Style x:Key="ChoiceTileIconBox" TargetType="Border">
         <Setter Property="Width"              Value="40"/>
         <Setter Property="Height"             Value="40"/>
-        <Setter Property="CornerRadius"       Value="8"/>
+        <Setter Property="CornerRadius"       Value="4"/>
         <Setter Property="Background"         Value="{DynamicResource AppButtonBg}"/>
         <Setter Property="VerticalAlignment"  Value="Center"/>
         <Setter Property="Margin"             Value="0,0,14,0"/>
@@ -1547,7 +1547,7 @@
                                 Margin="3"
                                 CornerRadius="13">
                             <Border.Effect>
-                                <DropShadowEffect BlurRadius="14" ShadowDepth="0" Opacity="0.5" Color="#3B82F6"/>
+                                <DropShadowEffect BlurRadius="6" ShadowDepth="0" Opacity="0.16" Color="#3B82F6"/>
                             </Border.Effect>
                         </Border>
 
@@ -2288,7 +2288,7 @@
     <!-- ═══════════════════════════════════════════ -->
     <Style x:Key="PageTitle" TargetType="TextBlock">
         <Setter Property="FontFamily" Value="{DynamicResource AppFont}"/>
-        <Setter Property="FontSize"   Value="26"/>
+        <Setter Property="FontSize"   Value="18"/>
         <Setter Property="FontWeight" Value="SemiBold"/>
         <Setter Property="Foreground" Value="{DynamicResource AppTextPrimary}"/>
     </Style>
@@ -2304,18 +2304,17 @@
     <!-- ═══════════════════════════════════════════ -->
     <!--  SHELL SURFACES                             -->
     <!-- ═══════════════════════════════════════════ -->
-    <!-- The two panels the shell window is built from: the nav rail and the page. Both are cards
-         floating on the window's own surface with a gap between them, rather than two regions
-         meeting at a seam — so no edge here is ever drawn on the side that faces the other panel,
-         and the boundary the user sees is the gap itself.
+    <!-- The two panels the shell window is built from: the nav rail and the page. Flat, on one
+         surface with the window (user-approved simplified look, 2026-11-23): no edge, no rounding,
+         and the page alone draws a hairline on the side facing the rail.
 
          Opaque, not tinted: the page card is what the content transition's bitmap cache renders
          into, and ClearType cannot run over a surface WPF believes may be transparent. -->
     <Style x:Key="ShellCard" TargetType="Border">
         <Setter Property="Background"      Value="{DynamicResource AppCardBg}"/>
-        <Setter Property="BorderBrush"     Value="{DynamicResource AppBorder}"/>
-        <Setter Property="BorderThickness" Value="1"/>
-        <Setter Property="CornerRadius"    Value="10"/>
+        <Setter Property="BorderBrush"     Value="Transparent"/>
+        <Setter Property="BorderThickness" Value="0"/>
+        <Setter Property="CornerRadius"    Value="0"/>
     </Style>
 
     <!-- ═══════════════════════════════════════════ -->
@@ -2445,7 +2444,7 @@
                 <ControlTemplate TargetType="RadioButton">
                     <Border x:Name="Root"
                             Background="{TemplateBinding Background}"
-                            CornerRadius="6"
+                            CornerRadius="4"
                             Margin="8,2"
                             Padding="12,0"
                             Height="40">
@@ -2500,7 +2499,7 @@
                 <ControlTemplate TargetType="Button">
                     <Border x:Name="Root"
                             Background="{TemplateBinding Background}"
-                            CornerRadius="6"
+                            CornerRadius="4"
                             Margin="8,2"
                             Padding="12,0"
                             Height="36">
@@ -2556,7 +2555,7 @@
                             Background="{TemplateBinding Background}"
                             BorderBrush="{TemplateBinding BorderBrush}"
                             BorderThickness="{TemplateBinding BorderThickness}"
-                            CornerRadius="8"
+                            CornerRadius="4"
                             Margin="8,3"
                             Padding="11,0"
                             Height="46">
@@ -2592,7 +2591,7 @@
     <Style x:Key="RailQuickToolIcon" TargetType="Border">
         <Setter Property="Width"               Value="30"/>
         <Setter Property="Height"              Value="30"/>
-        <Setter Property="CornerRadius"        Value="7"/>
+        <Setter Property="CornerRadius"        Value="4"/>
         <Setter Property="Background"          Value="{DynamicResource AppAccentSubtle}"/>
         <Setter Property="BorderBrush"         Value="{DynamicResource AppAccentSubtleHover}"/>
         <Setter Property="BorderThickness"     Value="1"/>
@@ -2704,7 +2703,7 @@
         <Grid Background="Transparent">
             <Border x:Name="TrackBg"
                     Background="{DynamicResource AppScrollTrack}"
-                    CornerRadius="6"
+                    CornerRadius="4"
                     Margin="1,0"
                     Opacity="0"/>
             <Track x:Name="PART_Track" IsDirectionReversed="True">
@@ -2769,7 +2768,7 @@
         <Grid Background="Transparent">
             <Border x:Name="TrackBg"
                     Background="{DynamicResource AppScrollTrack}"
-                    CornerRadius="6"
+                    CornerRadius="4"
                     Margin="0,1"
                     Opacity="0"/>
             <Track x:Name="PART_Track">
@@ -2845,16 +2844,16 @@
             <Setter.Value>
                 <ControlTemplate TargetType="ToolTip">
                     <Grid Margin="6,4,6,8">
-                        <Border Background="{DynamicResource TooltipBg}" CornerRadius="8">
+                        <Border Background="{DynamicResource TooltipBg}" CornerRadius="4">
                             <Border.Effect>
                                 <DropShadowEffect BlurRadius="10" ShadowDepth="2" Direction="270"
-                                                  Opacity="0.25" Color="#000000"/>
+                                                  Opacity="0.16" Color="#000000"/>
                             </Border.Effect>
                         </Border>
                         <Border Background="{DynamicResource TooltipBg}"
                                 BorderBrush="{DynamicResource TooltipBorder}"
                                 BorderThickness="1"
-                                CornerRadius="8"
+                                CornerRadius="4"
                                 Padding="10,6"
                                 RenderOptions.ClearTypeHint="Enabled">
                             <ContentPresenter>
@@ -3050,7 +3049,7 @@
     <Style x:Key="PromptRoleFrame" TargetType="Border">
         <Setter Property="BorderBrush"   Value="{DynamicResource AppBorder}"/>
         <Setter Property="BorderThickness" Value="1"/>
-        <Setter Property="CornerRadius"  Value="6"/>
+        <Setter Property="CornerRadius"  Value="4"/>
         <!-- The header fills to the corners, so the frame has to cut it. -->
         <Setter Property="ClipToBounds"  Value="True"/>
         <Setter Property="Background"    Value="{DynamicResource AppInputBg}"/>
@@ -3132,7 +3131,7 @@
         <Setter Property="Background"        Value="{DynamicResource AppButtonBg}"/>
         <Setter Property="BorderBrush"       Value="{DynamicResource AppButtonBorder}"/>
         <Setter Property="BorderThickness"   Value="1"/>
-        <Setter Property="CornerRadius"      Value="8"/>
+        <Setter Property="CornerRadius"      Value="4"/>
         <Setter Property="Padding"           Value="3"/>
         <Setter Property="VerticalAlignment" Value="Center"/>
     </Style>

@@ -61,7 +61,7 @@
 
         <!-- ── Split content card ── -->
         <Border Grid.Row="2"
-                CornerRadius="8"
+                CornerRadius="4"
                 Background="{DynamicResource AppSurfaceBg}"
                 BorderBrush="{DynamicResource AppBorder}"
                 BorderThickness="1">

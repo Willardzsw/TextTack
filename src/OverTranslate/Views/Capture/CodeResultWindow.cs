@@ -77,12 +77,12 @@ public sealed class CodeResultWindow : Window
 
         var card = new Border
         {
-            CornerRadius = new CornerRadius(8),
+            CornerRadius = new CornerRadius(4),
             BorderThickness = new Thickness(1),
             Child = grid,
             MinWidth = 280,
             MaxWidth = 460,
-            Effect = new DropShadowEffect { BlurRadius = 14, ShadowDepth = 2, Direction = 270, Opacity = 0.2, Color = Colors.Black },
+            Effect = new DropShadowEffect { BlurRadius = 12, ShadowDepth = 2, Direction = 270, Opacity = 0.16, Color = Colors.Black },
         };
         card.SetResourceReference(Border.BackgroundProperty, "HintCardBg");
         card.SetResourceReference(Border.BorderBrushProperty, "HintCardBorder");

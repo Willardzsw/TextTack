@@ -18,7 +18,7 @@
         WindowStartupLocation="CenterScreen"
         ShowInTaskbar="True"
         WindowStyle="None"
-        Background="{DynamicResource AppWindowBg}">
+        Background="{DynamicResource AppCardBg}">
 
     <!-- The system title bar is replaced rather than hidden. WindowChrome keeps everything the
          non-client area does — drag, double-click to maximise, Aero Snap, the resize borders and
@@ -145,7 +145,7 @@
             <DockPanel Grid.Column="0"
                        x:Name="RailPanel"
                        ClipToBounds="True"
-                       Margin="16,4,0,16">
+                       Margin="8,4,8,8">
 
                 <!-- Brand.
                      On the window's own surface rather than on the card below it, so the card
@@ -316,7 +316,9 @@
             <Border Grid.Column="1"
                     x:Name="ContentHost"
                     Style="{StaticResource ShellCard}"
-                    Margin="16,4,16,16"
+                    BorderThickness="1,0,0,0"
+                    BorderBrush="{DynamicResource AppSeparator}"
+                    Margin="0"
                     RenderOptions.ClearTypeHint="Enabled">
                 <Border.RenderTransform>
                     <TranslateTransform x:Name="ContentTransform"/>

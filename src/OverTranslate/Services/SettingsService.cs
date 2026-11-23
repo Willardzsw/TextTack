@@ -332,6 +332,20 @@ public class SettingsService
         FeatureTogglesChanged?.Invoke(this, EventArgs.Empty);
     }
 
+    /// <summary>
+    /// 替換翻譯's target language was switched by a double press of its shortcut, so an open
+    /// settings page shows it.
+    /// </summary>
+    public event EventHandler? QuickTranslateTargetChanged;
+
+    /// <summary>Sets 替換翻譯's target language, saves, and tells whoever shows it.</summary>
+    public void SetQuickTranslateTarget(string code)
+    {
+        Current.QuickTranslate.TargetLanguage = code;
+        Save();
+        QuickTranslateTargetChanged?.Invoke(this, EventArgs.Empty);
+    }
+
     public void UpdateCaptureOptions(
         bool? autoTranslate = null, bool? saveScreenshot = null, bool? closeAfterCopy = null,
         bool? doubleClickToFinish = null, bool? rightClickToCancel = null,

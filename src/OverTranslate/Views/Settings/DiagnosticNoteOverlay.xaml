@@ -14,7 +14,7 @@
                 UseLayoutRounding="True"
                 HorizontalAlignment="Center"
                 VerticalAlignment="Center"
-                CornerRadius="12"
+                CornerRadius="6"
                 Background="{DynamicResource AppCardBg}"
                 BorderBrush="{DynamicResource AppBorder}"
                 BorderThickness="1"
@@ -24,7 +24,7 @@
                 <ScaleTransform x:Name="CardScale" ScaleX="1" ScaleY="1"/>
             </Border.RenderTransform>
             <Border.Effect>
-                <DropShadowEffect BlurRadius="28" ShadowDepth="6" Opacity="0.3" Color="#000000"/>
+                <DropShadowEffect BlurRadius="16" ShadowDepth="2" Opacity="0.16" Color="#000000"/>
             </Border.Effect>
 
             <Grid Margin="24,18,24,18">
@@ -36,10 +36,10 @@
 
                 <Grid Grid.Row="0" Margin="0,0,0,2">
                     <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                        <TextBlock Text="&#xE8BD;" Style="{StaticResource CardHeaderIcon}" FontSize="18"/>
+                        <TextBlock Text="&#xE8BD;" Style="{StaticResource CardHeaderIcon}" FontSize="14"/>
                         <TextBlock Text="{DynamicResource S.Settings.NoteTitle}"
                                    FontFamily="{DynamicResource AppFont}"
-                                   FontSize="17"
+                                   FontSize="15"
                                    FontWeight="SemiBold"
                                    Foreground="{DynamicResource AppTextPrimary}"
                                    VerticalAlignment="Center"/>
@@ -127,7 +127,7 @@
                             Background="{DynamicResource AppInputBg}"
                             BorderBrush="{DynamicResource AppBorder}"
                             BorderThickness="1"
-                            CornerRadius="6"
+                            CornerRadius="4"
                             Padding="12,10">
                         <StackPanel Orientation="Horizontal">
                             <TextBlock Text="&#xE7BA;"

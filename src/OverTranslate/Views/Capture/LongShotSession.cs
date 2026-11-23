@@ -582,10 +582,10 @@ public sealed class LongShotSession
 
         var card = new Border
         {
-            CornerRadius = new CornerRadius(8),
+            CornerRadius = new CornerRadius(4),
             BorderThickness = new Thickness(1),
             Child = stack,
-            Effect = new DropShadowEffect { BlurRadius = 12, ShadowDepth = 2, Direction = 270, Opacity = 0.2, Color = Colors.Black },
+            Effect = new DropShadowEffect { BlurRadius = 12, ShadowDepth = 2, Direction = 270, Opacity = 0.16, Color = Colors.Black },
         };
         card.SetResourceReference(Border.BackgroundProperty, "HintCardBg");
         card.SetResourceReference(Border.BorderBrushProperty, "HintCardBorder");

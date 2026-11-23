@@ -123,6 +123,7 @@ public partial class App
     protected override void OnExit(ExitEventArgs e)
     {
         _activateEvent?.Dispose();
+        Services.ClipboardBackup.HandOverOnExit();
         base.OnExit(e);
     }
 }

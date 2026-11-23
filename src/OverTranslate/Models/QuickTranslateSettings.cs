@@ -33,4 +33,10 @@ public class QuickTranslateSettings
 
     /// <inheritdoc cref="QuickLookupSettings.BilingualFirstLanguage"/>
     public string BilingualSecondLanguage { get; set; } = QuickLookupSettings.DefaultSecondLanguage;
+
+    /// <summary>
+    /// The target languages a double press of the shortcut goes round, in order — see
+    /// <see cref="Services.QuickTranslateCycle"/>. Empty, or one language, leaves the switch off.
+    /// </summary>
+    public List<string> CycleLanguages { get; set; } = [];
 }

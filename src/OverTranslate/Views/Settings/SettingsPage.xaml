@@ -51,7 +51,7 @@
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="ToggleButton">
-                        <Border x:Name="Root" CornerRadius="6"
+                        <Border x:Name="Root" CornerRadius="4"
                                 Padding="{TemplateBinding Padding}"
                                 Background="{DynamicResource AppAccentSubtle}"
                                 BorderBrush="{DynamicResource AppAccentSubtleHover}"
@@ -95,7 +95,7 @@
                                 Background="{TemplateBinding Background}"
                                 BorderBrush="Transparent"
                                 BorderThickness="1"
-                                CornerRadius="6"
+                                CornerRadius="4"
                                 Padding="7,5"
                                 Margin="-8,-6,-8,-6">
                             <ContentPresenter/>
@@ -131,7 +131,7 @@
         <Style x:Key="HotkeyRowIcon" TargetType="Border">
             <Setter Property="Width"              Value="34"/>
             <Setter Property="Height"             Value="34"/>
-            <Setter Property="CornerRadius"       Value="8"/>
+            <Setter Property="CornerRadius"       Value="4"/>
             <Setter Property="Background"         Value="{DynamicResource AppAccentSubtle}"/>
             <Setter Property="BorderBrush"        Value="{DynamicResource AppAccentSubtleHover}"/>
             <Setter Property="BorderThickness"    Value="1"/>
@@ -219,7 +219,7 @@
                     <ControlTemplate TargetType="Button">
                         <Border x:Name="Hit"
                                 Background="{TemplateBinding Background}"
-                                CornerRadius="6"
+                                CornerRadius="4"
                                 Padding="8,4,7,4">
                             <StackPanel Orientation="Horizontal">
                                 <ContentPresenter VerticalAlignment="Center"/>
@@ -281,7 +281,7 @@
         <Style x:Key="HotkeyGuideTag" TargetType="Border">
             <Setter Property="BorderBrush"            Value="{DynamicResource AppBorder}"/>
             <Setter Property="BorderThickness"        Value="1"/>
-            <Setter Property="CornerRadius"           Value="9"/>
+            <Setter Property="CornerRadius"           Value="4"/>
             <Setter Property="Padding"                Value="8,1,8,2"/>
             <Setter Property="Margin"                 Value="12,2,0,0"/>
             <Setter Property="VerticalAlignment"      Value="Top"/>
@@ -356,7 +356,7 @@
                                 Background="{DynamicResource AppSurfaceBg}"
                                 BorderBrush="{DynamicResource AppSubtleBorder}"
                                 BorderThickness="1"
-                                CornerRadius="8"
+                                CornerRadius="4"
                                 Padding="14,10"
                                 SnapsToDevicePixels="True">
                             <Grid>
@@ -526,7 +526,7 @@
                                             Background="{DynamicResource AppSurfaceBg}"
                                             BorderBrush="{DynamicResource AppBorder}"
                                             BorderThickness="1"
-                                            CornerRadius="10"
+                                            CornerRadius="4"
                                             Padding="16,14,18,14"
                                             Focusable="True"
                                             FocusVisualStyle="{x:Null}"
@@ -536,8 +536,8 @@
                                             <ScaleTransform/>
                                         </Border.RenderTransform>
                                         <Border.Effect>
-                                            <DropShadowEffect BlurRadius="18" ShadowDepth="4"
-                                                              Direction="270" Opacity="0.28"/>
+                                            <DropShadowEffect BlurRadius="12" ShadowDepth="2"
+                                                              Direction="270" Opacity="0.16"/>
                                         </Border.Effect>
 
                                             <!-- Three columns: what kind of input, examples of it drawn as keys, and whether it is
@@ -752,7 +752,7 @@
                                                   AutomationProperties.Name="{DynamicResource S.Settings.QuickLookupSettings}">
                                         <ToggleButton.Template>
                                             <ControlTemplate TargetType="ToggleButton">
-                                                <Border x:Name="Root" CornerRadius="6"
+                                                <Border x:Name="Root" CornerRadius="4"
                                                         Padding="{TemplateBinding Padding}"
                                                         Background="{DynamicResource AppAccentSubtle}"
                                                         BorderBrush="{DynamicResource AppAccentSubtleHover}"
@@ -786,7 +786,7 @@
                                         Height="0" Visibility="Collapsed" ClipToBounds="True">
                                     <Border x:Name="QuickLookupSettingsBody" Opacity="0" Margin="0,8,0,0" Padding="12,10"
                                             BorderBrush="{DynamicResource AppButtonBorder}"
-                                            BorderThickness="1" CornerRadius="6">
+                                            BorderThickness="1" CornerRadius="4">
                                         <StackPanel>
                                             <!-- 顯示方式: the popup, or 簡單顯示's label beside the selection. -->
                                             <Grid Margin="0,0,0,12">
@@ -953,7 +953,7 @@
                                                   AutomationProperties.Name="{DynamicResource S.Settings.QuickTranslateSettings}">
                                         <ToggleButton.Template>
                                             <ControlTemplate TargetType="ToggleButton">
-                                                <Border x:Name="Root" CornerRadius="6"
+                                                <Border x:Name="Root" CornerRadius="4"
                                                         Padding="{TemplateBinding Padding}"
                                                         Background="{DynamicResource AppAccentSubtle}"
                                                         BorderBrush="{DynamicResource AppAccentSubtleHover}"
@@ -987,7 +987,7 @@
                                         Height="0" Visibility="Collapsed" ClipToBounds="True">
                                     <Border x:Name="QuickTranslateSettingsBody" Opacity="0" Margin="0,8,0,0" Padding="12,10"
                                             BorderBrush="{DynamicResource AppButtonBorder}"
-                                            BorderThickness="1" CornerRadius="6">
+                                            BorderThickness="1" CornerRadius="4">
                                         <StackPanel>
                                             <!-- The service first: 跟隨全域 keeps the one 文字翻譯, 取詞翻譯 and 截圖翻譯
                                                  share; anything else is 替換翻譯's and 追加翻譯's own. -->
@@ -1050,6 +1050,32 @@
                                                               SelectionChanged="QuickTranslateLanguage_Changed"/>
                                                 </StackPanel>
                                             </Grid>
+                                            <!-- 連按切換: the target languages a double press of the shortcut goes round, in
+                                                 the order they were added. Chips are written from code; hidden with the
+                                                 fixed pair, since 雙語互譯 never switches. -->
+                                            <StackPanel x:Name="QuickTranslateCyclePanel" Margin="0,12,0,0">
+                                                <TextBlock Text="{DynamicResource S.Settings.QuickTranslateCycle}"
+                                                           Style="{StaticResource OptionTitle}"/>
+                                                <TextBlock Text="{DynamicResource S.Settings.QuickTranslateCycleHint}"
+                                                           Style="{StaticResource OptionDescription}"/>
+                                                <WrapPanel x:Name="QuickTranslateCycleChips" Margin="0,6,0,0"/>
+                                                <Grid Margin="0,6,0,0">
+                                                    <Grid.ColumnDefinitions>
+                                                        <ColumnDefinition Width="*"/>
+                                                        <ColumnDefinition Width="Auto"/>
+                                                    </Grid.ColumnDefinitions>
+                                                    <ComboBox x:Name="QuickTranslateCycleAddBox"
+                                                              ctl:ComboBoxSearch.IsEnabled="True"
+                                                              Style="{StaticResource ModernComboBox}"
+                                                              DisplayMemberPath="Display" SelectedValuePath="Code"
+                                                              AutomationProperties.Name="{DynamicResource S.Settings.QuickTranslateCycle}"/>
+                                                    <Button Grid.Column="1" x:Name="QuickTranslateCycleAddBtn"
+                                                            Content="{DynamicResource S.Settings.QuickTranslateCycleAdd}"
+                                                            Style="{StaticResource FlatButton}"
+                                                            Height="30" MinWidth="72" Padding="12,0" Margin="8,0,0,0"
+                                                            Click="QuickTranslateCycleAdd_Click"/>
+                                                </Grid>
+                                            </StackPanel>
                                             <Grid x:Name="QuickTranslateBilingualPair" Visibility="Collapsed">
                                                 <Grid.ColumnDefinitions>
                                                     <ColumnDefinition Width="*"/>
@@ -1359,7 +1385,7 @@
                                 <Border x:Name="PinOpsFold" Height="0" Visibility="Collapsed" ClipToBounds="True">
                                     <Border x:Name="PinOpsBody" Opacity="0" Margin="0,8,0,0" Padding="12,10"
                                             BorderBrush="{DynamicResource AppButtonBorder}"
-                                            BorderThickness="1" CornerRadius="6">
+                                            BorderThickness="1" CornerRadius="4">
                                         <StackPanel>
                                             <!-- 截圖中貼出選區 first: it is a 貼圖 control like the rest. -->
                                             <local:PinSelectionTriggerRow x:Name="PinSelectionRow"/>
@@ -1445,7 +1471,7 @@
                                 <Border x:Name="StickyNoteOpsFold" Height="0" Visibility="Collapsed" ClipToBounds="True">
                                     <Border x:Name="StickyNoteOpsBody" Opacity="0" Margin="0,8,0,0" Padding="12,10"
                                             BorderBrush="{DynamicResource AppButtonBorder}"
-                                            BorderThickness="1" CornerRadius="6">
+                                            BorderThickness="1" CornerRadius="4">
                                         <!-- The label column is shared with the panel below so the
                                              新建便利貼 row lines up with its rows. -->
                                         <StackPanel Grid.IsSharedSizeScope="True">
@@ -1517,7 +1543,7 @@
                                     <!-- What the tools are set to, in a box that sits where the other rows' shortcut boxes
                                          do: one line, "…" when narrow, the full text on hover. Clicking it opens the settings. -->
                                     <Border Grid.Column="2" x:Name="MouseEnhanceSummaryBox"
-                                            Height="34" CornerRadius="6" BorderThickness="1" Padding="9,0"
+                                            Height="34" CornerRadius="4" BorderThickness="1" Padding="9,0"
                                             VerticalAlignment="Center" Cursor="Hand"
                                             Background="{DynamicResource AppInputBg}"
                                             BorderBrush="{DynamicResource AppInputBorder}"
@@ -1564,7 +1590,7 @@
                                 <Border x:Name="MouseOpsFold" Height="0" Visibility="Collapsed" ClipToBounds="True">
                                     <Border x:Name="MouseOpsBody" Opacity="0" Margin="0,8,0,0" Padding="12,10"
                                             BorderBrush="{DynamicResource AppButtonBorder}"
-                                            BorderThickness="1" CornerRadius="6">
+                                            BorderThickness="1" CornerRadius="4">
                                         <local:MouseEnhancePanel x:Name="MouseEnhancePanel"/>
                                     </Border>
                                 </Border>
@@ -1981,7 +2007,7 @@
                                     Background="{DynamicResource AppInputBg}"
                                     BorderBrush="{DynamicResource AppBorder}"
                                     BorderThickness="1"
-                                    CornerRadius="6"
+                                    CornerRadius="4"
                                     Padding="12,10">
                                 <StackPanel>
                                     <!-- Docked rather than laid out in columns. In a row of Auto
@@ -2462,7 +2488,7 @@
                                     <ColumnDefinition Width="*"/>
                                 </Grid.ColumnDefinitions>
                                 <Border Background="{DynamicResource AppSurfaceBg}"
-                                        CornerRadius="12"
+                                        CornerRadius="6"
                                         Padding="12,4">
                                     <TextBlock Text="{DynamicResource S.Shell.CaptureTranslate}"
                                                FontFamily="{DynamicResource AppFont}"
@@ -2565,7 +2591,7 @@
                                             Background="{DynamicResource AppButtonBg}"
                                             BorderBrush="{DynamicResource AppButtonBorder}"
                                             BorderThickness="1"
-                                            CornerRadius="8"
+                                            CornerRadius="4"
                                             Padding="3"
                                             VerticalAlignment="Center"
                                             Grid.IsSharedSizeScope="True">
@@ -2588,7 +2614,7 @@
                                             <Border x:Name="DebugScopeThumb"
                                                     Grid.Column="0"
                                                     Background="{DynamicResource AppAccent}"
-                                                    CornerRadius="6"
+                                                    CornerRadius="4"
                                                     SizeChanged="DebugScopeThumb_SizeChanged">
                                                 <Border.RenderTransform>
                                                     <TranslateTransform x:Name="DebugScopeThumbShift"/>
@@ -2620,7 +2646,7 @@
                 Background="{DynamicResource AppCardBg}"
                 BorderBrush="{DynamicResource AppBorder}"
                 BorderThickness="1"
-                CornerRadius="8"
+                CornerRadius="4"
                 Padding="14,9">
             <Grid>
                 <StackPanel x:Name="AutoSaveHint" Orientation="Horizontal">

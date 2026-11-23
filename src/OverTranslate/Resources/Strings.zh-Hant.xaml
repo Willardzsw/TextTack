@@ -95,8 +95,7 @@
     <sys:String x:Key="S.Translation.SpeakFailed">朗讀失敗：{0}</sys:String>
 
     <!-- ── 替換翻譯 ── 只在提示卡片上出現的字，一行以內，因為它蓋在使用者自己的視窗上。 -->
-    <sys:String x:Key="S.QuickTranslate.Replaced">已完成翻譯並貼上譯文。</sys:String>
-    <sys:String x:Key="S.QuickTranslate.Appended">已完成翻譯並在原文後貼上譯文。</sys:String>
+    <sys:String x:Key="S.QuickTranslate.TargetIs">目標語言：</sys:String>
     <sys:String x:Key="S.QuickTranslate.EmptyResult">翻譯結果是空的，已保留原本的文字。</sys:String>
     <sys:String x:Key="S.QuickTranslate.FocusMoved">已切換視窗，無法貼上翻譯結果。</sys:String>
     <sys:String x:Key="S.QuickTranslate.ClipboardBusy">剪貼簿目前無法使用，沒有貼上翻譯。</sys:String>
@@ -496,6 +495,10 @@
     <sys:String x:Key="S.Settings.QuickTranslateHotkeyNote" xml:space="preserve">僅適用於可輸入文字的欄位，非輸入區域則無法貼上。</sys:String>
     <sys:String x:Key="S.Settings.QuickTranslateSettings">翻譯設定</sys:String>
     <sys:String x:Key="S.Settings.QuickTranslateLanguageNote">這些設定適用於替換翻譯和追加翻譯，不會影響截圖翻譯、文字翻譯或即時翻譯。</sys:String>
+    <sys:String x:Key="S.Settings.QuickTranslateCycle">連按切換語言</sys:String>
+    <sys:String x:Key="S.Settings.QuickTranslateCycleHint">選 2～5 個目標語言，連按兩下替換翻譯或追加翻譯的快捷鍵，就換到下一個。開啟後每次翻譯會晚約 0.4 秒開始。</sys:String>
+    <sys:String x:Key="S.Settings.QuickTranslateCycleAdd">新增</sys:String>
+    <sys:String x:Key="S.Settings.QuickTranslateCycleRemove">移除</sys:String>
     <sys:String x:Key="S.Settings.QuickTranslateBilingualHint">自動判斷選取文字的語言，在指定的兩種語言之間互譯</sys:String>
     <sys:String x:Key="S.Settings.QuickAppendHotkey">追加翻譯</sys:String>
     <sys:String x:Key="S.Settings.QuickAppendHotkeyHint">將[[選取文字]]翻譯後貼在原文後面，保留原文</sys:String>

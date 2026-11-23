@@ -1,3 +1,4 @@
+using System.Runtime.InteropServices;
 using NLog;
 using Clipboard = System.Windows.Clipboard;
 
@@ -40,6 +41,17 @@ internal static class ClipboardBackup
     /// </remarks>
     public static object? Capture()
     {
+        if (HeldByAGoneProcess())
+        {
+            // Reading it would be an OLE call into a process that no longer exists, which Windows
+            // only gives up on after about twenty seconds — with the UI thread stuck the whole time
+            // (seen 2026-11-23: the first 替換翻譯 after restarting TextTack hung). There is nothing
+            // to save anyway; restoring "nothing" clears the dead entry, which also unsticks every
+            // other program's paste.
+            Log.Info("The clipboard belongs to a process that has exited; it is not read");
+            return null;
+        }
+
         var source = Clipboard.GetDataObject();
         if (source is null) return null;
 
@@ -63,6 +75,82 @@ internal static class ClipboardBackup
 
         return kept > 0 ? copy : null;
     }
+
+    /// <summary>
+    /// Whether the clipboard was published through OLE by a process whose clipboard window is gone,
+    /// so that any read of it waits for an RPC timeout.
+    /// </summary>
+    private static bool HeldByAGoneProcess()
+    {
+        try
+        {
+            if (OlePrivateData == 0 || !IsClipboardFormatAvailable(OlePrivateData)) return false;
+            var owner = GetClipboardOwner();
+            return owner == IntPtr.Zero || !IsWindow(owner);
+        }
+        catch
+        {
+            return false;
+        }
+    }
+
+    /// <summary>
+    /// Called on exit. If the clipboard still holds a snapshot this process put back, it is only
+    /// lent out through OLE (see <see cref="Restore"/>), and once the process is gone every program
+    /// that pastes would wait out a timeout. So the plain parts of it — text of every kind, streams,
+    /// pictures — are written onto the clipboard for real, and anything else is let go.
+    /// </summary>
+    public static void HandOverOnExit()
+    {
+        var owner = _restoredOwner;
+        if (owner is null) return;
+
+        try
+        {
+            if (!Clipboard.IsCurrent(owner)) return;
+
+            var plain = new System.Windows.DataObject();
+            var kept = 0;
+            foreach (var format in owner.GetFormats(false))
+            {
+                try
+                {
+                    var data = owner.GetData(format, false);
+                    if (data is string or System.IO.MemoryStream or System.Windows.Media.Imaging.BitmapSource)
+                    {
+                        plain.SetData(format, data, false);
+                        kept++;
+                    }
+                }
+                catch
+                {
+                    // One format that will not come out is not a reason to lose the rest.
+                }
+            }
+
+            if (kept > 0) Clipboard.SetDataObject(plain, copy: true);
+            else Clipboard.Clear();
+            _restoredOwner = null;
+        }
+        catch (Exception ex)
+        {
+            Log.Warn(ex, "Could not hand the restored clipboard over on exit");
+        }
+    }
+
+    private static readonly uint OlePrivateData = RegisterClipboardFormat("Ole Private Data");
+
+    [DllImport("user32.dll", CharSet = CharSet.Unicode)]
+    private static extern uint RegisterClipboardFormat(string name);
+
+    [DllImport("user32.dll")]
+    private static extern bool IsClipboardFormatAvailable(uint format);
+
+    [DllImport("user32.dll")]
+    private static extern IntPtr GetClipboardOwner();
+
+    [DllImport("user32.dll")]
+    private static extern bool IsWindow(IntPtr hwnd);
 
     /// <remarks>
     /// An empty snapshot clears the clipboard rather than leaving the borrowed text on it. The user

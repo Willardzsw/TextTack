@@ -1,120 +1,56 @@
 using System.Windows;
-using System.Windows.Media;
+using System.Windows.Documents;
+using System.Windows.Input;
 using System.Windows.Media.Animation;
 using System.Windows.Threading;
-using NLog;
 using OverTranslate.Layout;
+using OverTranslate.Models;
 using OverTranslate.Services;
-using Clipboard = System.Windows.Clipboard;
 using Point = System.Windows.Point;
 using Size = System.Windows.Size;
 
 namespace OverTranslate.Views.QuickTranslate;
 
 /// <summary>
-/// The one thing 替換翻譯 puts on the screen: a line saying what is happening to the text the user
-/// just selected.
+/// The one thing 替換翻譯 puts on the screen: a small label by the pointer saying what is happening
+/// to the text the user just selected.
 /// </summary>
 /// <remarks>
-/// The feature itself is invisible — a shortcut goes in, somebody else's document changes — and
-/// without this the user would press a key and watch nothing happen for as long as a translation
-/// takes. So the card exists to answer three questions in the order they occur to them: is it
-/// working, did it work, and if not, why not.
+/// The same small label as 取詞翻譯's 簡單顯示 — text only, no icons, no buttons, no progress ring —
+/// so every hint the application puts over another program looks alike. It says 翻譯中… while the
+/// translation is in flight, goes away without a word once the replacement is pasted (the document
+/// underneath already shows it worked), and stays only to say why something failed or which
+/// language a double press switched to.
 ///
-/// It appears without an entrance. Something is already in flight by the time it is shown and the
-/// user is waiting on it, so a card that grows or slides in spends that time on the announcement
-/// rather than on the answer. It leaves with a fade, which is the opposite case: nothing is waiting
-/// on it, and a card that vanished between two frames would leave the reader unsure what they saw.
+/// A failure waits while the pointer rests on it; a right-click or a double-click closes it.
 ///
-/// It sits by the pointer, which is where the hand and the eye already are at the end of the gesture
-/// that made the selection — and the one anchor that is always available. See
-/// <see cref="HintPlacement"/>.
-///
-/// One at a time. A second shortcut press replaces the card outright rather than stacking another on
-/// top of it — see <see cref="Summon"/> — because the newer one is the only one whose outcome the user
-/// is still waiting for.
-///
-/// It never takes activation. The paste that replaces the selection is sent to whatever window has
-/// the foreground, so a hint that took the foreground would be pasting the translation into itself.
+/// One at a time: a second shortcut press replaces the label outright — see <see cref="Summon"/>.
+/// It never takes activation, because the paste goes to whatever window has the foreground.
 /// </remarks>
 public partial class QuickTranslateHintWindow : Window
 {
-    private static readonly Logger Log = LogManager.GetCurrentClassLogger();
-
-    /// <inheritdoc cref="QuickTranslateHintWindow"/>
     private static QuickTranslateHintWindow? _current;
 
-    /// <summary>
-    /// How long a success stays up.
-    /// </summary>
-    /// <remarks>
-    /// Long enough to be seen and no longer: the answer to "did it work" is already in the document
-    /// underneath, where the user is looking, and this is only the part that says the change came
-    /// from the key they pressed.
-    /// </remarks>
-    private static readonly TimeSpan SuccessHold = TimeSpan.FromMilliseconds(700);
-
-    /// <summary>
-    /// How long a failure stays up.
-    /// </summary>
-    /// <remarks>
-    /// A failure has to be read rather than glanced at, and unlike a success nothing else on the
-    /// screen carries it — the document is simply unchanged, which is also what a shortcut that
-    /// missed looks like.
-    /// </remarks>
+    /// <summary>How long a failure stays up: it has to be read, not glanced at.</summary>
     private static readonly TimeSpan FailureHold = TimeSpan.FromMilliseconds(2000);
 
-    private const int FadeMs = 260;
+    /// <summary>How long the language switch stays up: a list to glance at, not to study.</summary>
+    private static readonly TimeSpan SwitchHold = TimeSpan.FromMilliseconds(1000);
 
-    /// <summary>Shorter than the timed fade: the reader has already decided.</summary>
-    private const int CloseFadeMs = 120;
+    private const int FadeMs = 200;
 
-    /// <summary>One turn of the ring, fast enough to read as working and slow enough not to buzz.</summary>
-    private static readonly TimeSpan SpinCycle = TimeSpan.FromMilliseconds(900);
-
-    /// <summary>
-    /// How far the card sits from the pointer, and the closest it comes to a screen edge.
-    /// </summary>
-    /// <remarks>
-    /// Small because it is not the whole distance: the window carries a transparent margin around
-    /// the card for its shadow to fall into, so what the reader sees between the two is this plus
-    /// that margin.
-    /// </remarks>
+    /// <summary>Space, in DIP, between the label and the pointer.</summary>
     private const double Gap = 6;
 
-    /// <summary>How long the copy button says it copied before going back to being a button.</summary>
-    private static readonly TimeSpan CopiedHold = TimeSpan.FromMilliseconds(1400);
-
-    private const string CopyGlyph = "";
-    private const string DoneGlyph = "";
-    private const string FailedGlyph = "";
-
-    /// <summary>
-    /// Where the pointer was when the card was put up.
-    /// </summary>
-    /// <remarks>
-    /// Taken once rather than read again on every placement: the card is placed a second time when
-    /// its state changes, and a pointer that has moved since would take the card with it — away from
-    /// the text the reader pressed the shortcut over.
-    /// </remarks>
+    /// <summary>Where the pointer was when the label was put up; it stays there.</summary>
     private readonly System.Drawing.Point _pointer;
 
     private DispatcherTimer? _hold;
-    private DispatcherTimer? _copiedHold;
-
-    /// <summary>What the copy button puts on the clipboard, or empty while there is nothing to copy.</summary>
-    private string _copyText = "";
-
-    /// <summary>True while this card is reporting a failure, which is the only state that waits.</summary>
     private bool _holdsForPointer;
-
     private bool _closed;
     private bool _fadingOut;
 
-    /// <summary>Set once the reader has dismissed it, so hovering stops reviving it.</summary>
-    private bool _userDismissed;
-
-    /// <summary>Puts a card up in its working state, replacing whichever one is on screen.</summary>
+    /// <summary>Puts a label up saying 翻譯中…, replacing whichever one is on screen.</summary>
     public static QuickTranslateHintWindow Summon()
     {
         Dismiss();
@@ -125,11 +61,7 @@ public partial class QuickTranslateHintWindow : Window
         return hint;
     }
 
-    /// <summary>Takes the card off the screen, if one is up.</summary>
-    /// <remarks>
-    /// For when the card cannot go on existing — a realtime session taking the screen, a newer press
-    /// of the shortcut — rather than when it has merely outstayed its welcome.
-    /// </remarks>
+    /// <summary>Takes the label off the screen, if one is up.</summary>
     public static void Dismiss()
     {
         var existing = _current;
@@ -137,33 +69,27 @@ public partial class QuickTranslateHintWindow : Window
         existing?.Close();
     }
 
-    // Private on purpose: constructing one directly and calling the inherited Window.Show() would
-    // bypass the single-card bookkeeping and leave two of them on the same spot.
+    // Private on purpose: Window.Show() on one made directly would bypass the one-at-a-time rule.
     private QuickTranslateHintWindow()
     {
         InitializeComponent();
         _pointer = System.Windows.Forms.Cursor.Position;
 
         MessageText.Text = LocalizationService.Get("S.Translation.Translating");
-        StartSpinning();
 
         Closed += (_, _) =>
         {
             _closed = true;
             _hold?.Stop();
-            _copiedHold?.Stop();
             if (ReferenceEquals(_current, this)) _current = null;
         };
 
-        // Only a failure waits for a pointer resting on it. A success is gone in well under a second
-        // by design, and the card sits where the pointer already is — so holding on hover would
-        // leave every successful translation on screen until the user moved the mouse.
         MouseEnter += (_, _) => { if (_holdsForPointer) PauseHold(); };
-        MouseLeave += (_, _) => { if (_holdsForPointer) ResumeHold(); };
+        MouseLeave += (_, _) => { if (_holdsForPointer) _hold?.Start(); };
+        MouseRightButtonUp += (_, e) => { e.Handled = true; CloseNow(); };
+        MouseLeftButtonDown += (_, e) => { if (e.ClickCount == 2) CloseNow(); };
 
-        // Parked off-screen until Loaded can measure it, and invisible until the position is
-        // settled: the first placement can still be moved by WPF resizing the window on a DPI
-        // change, and watching the card travel to its final spot reads as a glitch.
+        // Parked off-screen until Loaded can measure it, and invisible until the position is settled.
         Left = -9999;
         Top = -9999;
         Opacity = 0;
@@ -175,95 +101,73 @@ public partial class QuickTranslateHintWindow : Window
                 new Action(() => { Position(); Opacity = 1; }), DispatcherPriority.Loaded);
         };
 
-        // Every state change resizes the card, and it has to stay against the same spot afterwards.
         SizeChanged += (_, _) => { if (IsLoaded && !_fadingOut) Position(); };
     }
 
     protected override void OnSourceInitialized(EventArgs e)
     {
         base.OnSourceInitialized(e);
-        WindowStyles.ApplyNoActivate(this);
+        WindowStyles.ApplyHintWindow(this);
     }
 
-    // ══════════════════════════ What the card says ══════════════════════════
+    // ══════════════════════════ What it says ══════════════════════════
 
-    /// <summary>Reports that the selection now holds its translation.</summary>
-    /// <remarks>
-    /// With no copy button. The words are already in the document the user was writing in, which is
-    /// the whole point of this feature — offering to put them on the clipboard as well would be a
-    /// control for something that has already happened.
-    /// </remarks>
-    /// <param name="appended">追加翻譯: the translation went after the selection, not over it.</param>
+    /// <summary>The replacement is in the document: nothing left to say, so the label goes.</summary>
     public void ReportSuccess(bool appended = false)
     {
         if (_closed) return;
-
-        ShowGlyph(DoneGlyph, "AppSuccess");
-        MessageText.Text = LocalizationService.Get(appended ? "S.QuickTranslate.Appended" : "S.QuickTranslate.Replaced");
-
-        _copyText = "";
-        CopyBtn.Visibility = Visibility.Collapsed;
-
-        _holdsForPointer = false;
-        StartHold(SuccessHold);
+        CloseNow();
     }
 
-    /// <summary>Reports that the selection was left as it was, and why.</summary>
-    /// <remarks>
-    /// The one state with a copy button: this is the only text on the card that exists nowhere else,
-    /// and it is the text somebody reporting a problem needs to be able to quote.
-    /// </remarks>
+    /// <summary>Says why the selection was left as it was.</summary>
     public void ReportFailure(string message)
     {
         if (_closed) return;
 
-        ShowGlyph(FailedGlyph, "AppError");
         MessageText.Text = message;
-
-        _copyText = message;
-        CopyBtn.Visibility = Visibility.Visible;
-
         _holdsForPointer = true;
         StartHold(FailureHold);
     }
 
-    // Resource reference rather than a resolved brush, so the mark follows a live theme switch.
-    private void ShowGlyph(string glyph, string brushKey)
+    /// <summary>
+    /// Says that a double press moved the target language on: every picked language in order, the
+    /// one now in use stressed, so the reader also sees which comes next.
+    /// </summary>
+    public void ReportLanguageSwitch(IReadOnlyList<string> languages, string current)
     {
-        StopSpinning();
+        if (_closed) return;
 
-        StatusGlyph.Text = glyph;
-        StatusGlyph.SetResourceReference(ForegroundProperty, brushKey);
-        StatusGlyph.Visibility = Visibility.Visible;
-    }
+        MessageText.Inlines.Clear();
+        MessageText.Inlines.Add(new Run(LocalizationService.Get("S.QuickTranslate.TargetIs")));
+        for (var i = 0; i < languages.Count; i++)
+        {
+            if (i > 0)
+            {
+                var separator = new Run("  ·  ");
+                separator.SetResourceReference(TextElement.ForegroundProperty, "AppTextSecondary");
+                MessageText.Inlines.Add(separator);
+            }
 
-    /// <remarks>
-    /// Windows' "animation effects" setting is the local equivalent of a reduced-motion preference.
-    /// The ring stays where it is rather than disappearing with the motion: it is the only thing on
-    /// the card saying that something is under way, and the accent colour carries that on its own.
-    /// </remarks>
-    private void StartSpinning()
-    {
-        if (!SystemParameters.ClientAreaAnimation) return;
+            var name = new Run(LanguageData.GetTargetDisplayName(languages[i]));
+            if (languages[i].Equals(current, StringComparison.OrdinalIgnoreCase))
+            {
+                name.FontWeight = FontWeights.SemiBold;
+                name.SetResourceReference(TextElement.ForegroundProperty, "AppAccent");
+            }
+            else
+            {
+                name.SetResourceReference(TextElement.ForegroundProperty, "AppTextSecondary");
+            }
+            MessageText.Inlines.Add(name);
+        }
 
-        SpinnerAngle.BeginAnimation(
-            RotateTransform.AngleProperty,
-            new DoubleAnimation(0, 360, SpinCycle) { RepeatBehavior = RepeatBehavior.Forever });
-    }
-
-    private void StopSpinning()
-    {
-        SpinnerAngle.BeginAnimation(RotateTransform.AngleProperty, null);
-        Spinner.Visibility = Visibility.Collapsed;
+        _holdsForPointer = false;
+        StartHold(SwitchHold);
     }
 
     // ══════════════════════════ Placement ══════════════════════════
 
-    /// <remarks>
-    /// All physical pixels, scaled by the monitor being placed on. Reading the scale off this window
-    /// instead reports the monitor it currently sits on — which until this runs is the one holding
-    /// the off-screen parking position, not the one it is headed for.
-    /// </remarks>
+    /// <remarks>All physical pixels, scaled by the monitor the pointer is on.</remarks>
     private void Position()
     {
         var area = System.Windows.Forms.Screen.FromPoint(_pointer).WorkingArea;
@@ -280,7 +184,6 @@ public partial class QuickTranslateHintWindow : Window
 
     // ══════════════════════════ Going away ══════════════════════════
 
-    // A timer rather than an awaited delay, because the countdown has to be stoppable on hover.
     private void StartHold(TimeSpan duration)
     {
         _hold?.Stop();
@@ -292,41 +195,30 @@ public partial class QuickTranslateHintWindow : Window
         };
         _hold.Start();
 
-        // A pointer already resting on the card when it changed state gets no MouseEnter of its own,
-        // so a failure it is sitting on would count down under it.
         if (_holdsForPointer && IsMouseOver) PauseHold();
     }
 
     private void PauseHold()
     {
-        if (_closed || _userDismissed) return;
+        if (_closed) return;
 
         _hold?.Stop();
-
-        // Cancels a fade already in flight. The flag is what actually calls it off: removing the
-        // animation does not reliably suppress its Completed handler, so without this the card would
-        // close under a pointer that is resting on it to read.
         _fadingOut = false;
         BeginAnimation(OpacityProperty, null);
         Opacity = 1;
     }
 
-    /// <remarks>
-    /// The full countdown again rather than what was left of it: the pointer leaving means the
-    /// reader just finished, and giving them the leftover 200ms of a spent timer reads as a glitch.
-    /// </remarks>
-    private void ResumeHold()
+    private void CloseNow()
     {
-        if (_closed || _userDismissed) return;
-        _hold?.Start();
+        if (ReferenceEquals(_current, this)) _current = null;
+        _hold?.Stop();
+        Close();
     }
 
-    private void FadeOutAndClose(int durationMs = FadeMs)
+    private void FadeOutAndClose()
     {
         if (_closed) return;
 
-        // Windows' "animation effects" setting is the local equivalent of a reduced-motion
-        // preference; a fade is motion the user has asked not to be shown.
         if (!SystemParameters.ClientAreaAnimation)
         {
             Close();
@@ -334,56 +226,8 @@ public partial class QuickTranslateHintWindow : Window
         }
 
         _fadingOut = true;
-        var fade = new DoubleAnimation(Opacity, 0.0, TimeSpan.FromMilliseconds(durationMs));
+        var fade = new DoubleAnimation(Opacity, 0.0, TimeSpan.FromMilliseconds(FadeMs));
         fade.Completed += (_, _) => { if (_fadingOut) Close(); };
         BeginAnimation(OpacityProperty, fade);
-    }
-
-    // ══════════════════════════ The two buttons ══════════════════════════
-
-    /// <remarks>
-    /// The clipboard belongs to whatever else is running, and any of it can hold the clipboard open
-    /// long enough for this to fail — WPF already retries for about a second before throwing. Left
-    /// unhandled that throw reaches the dispatcher and takes the whole application down, over a copy
-    /// button on a card that was about to dismiss itself anyway.
-    /// </remarks>
-    private void CopyButton_Click(object sender, RoutedEventArgs e)
-    {
-        if (_copyText.Length == 0) return;
-
-        try
-        {
-            Clipboard.SetText(_copyText);
-        }
-        catch (Exception ex)
-        {
-            Log.Warn(ex, "替換翻譯 could not copy the hint's text to the clipboard");
-            return;
-        }
-
-        // Confirmed on the button that was pressed: there is no room on a card this size for a line
-        // saying what happened, and the button is where the reader is already looking.
-        CopyBtn.Content = DoneGlyph;
-        PauseHold();
-
-        _copiedHold?.Stop();
-        _copiedHold = new DispatcherTimer { Interval = CopiedHold };
-        _copiedHold.Tick += (_, _) =>
-        {
-            _copiedHold!.Stop();
-            CopyBtn.Content = CopyGlyph;
-            if (!IsMouseOver) ResumeHold();
-        };
-        _copiedHold.Start();
-    }
-
-    // Hovering has already stopped the countdown on a failure, so without this the only way out of a
-    // card the reader is done with is to move the pointer away and wait.
-    private void CloseButton_Click(object sender, RoutedEventArgs e)
-    {
-        if (ReferenceEquals(_current, this)) _current = null;
-        _userDismissed = true;
-        _hold?.Stop();
-        FadeOutAndClose(CloseFadeMs);
     }
 }

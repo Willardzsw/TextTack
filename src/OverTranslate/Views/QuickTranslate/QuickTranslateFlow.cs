@@ -44,6 +44,25 @@ internal static class QuickTranslateFlow
     /// </remarks>
     private static readonly LatestRequest Request = new();
 
+    /// <summary>Pairs two presses into the language switch — see <see cref="QuickTranslateCycle"/>.</summary>
+    private static readonly DoublePressDetector Presses = new();
+
+    private static readonly System.Diagnostics.Stopwatch Clock = System.Diagnostics.Stopwatch.StartNew();
+
+    /// <summary>Moves the target language on to the next picked one and says which it is now.</summary>
+    private static void SwitchLanguage()
+    {
+        var settings = SettingsService.Instance.Current.QuickTranslate;
+        var languages = QuickTranslateCycle.Languages(settings);
+        if (languages.Count < 2) return;
+
+        var next = QuickTranslateCycle.Next(languages, settings.TargetLanguage);
+        SettingsService.Instance.SetQuickTranslateTarget(next);
+        Log.Info("替換翻譯 switched its target language to {Language}", next);
+
+        QuickTranslateHintWindow.Summon().ReportLanguageSwitch(languages, next);
+    }
+
     /// <summary>Reads the selection, translates it, and pastes the result over it.</summary>
     /// <param name="copiedSince">
     /// Set when the shortcut was Ctrl+C+C, whose first Ctrl+C already copied the selection — see
@@ -55,7 +74,34 @@ internal static class QuickTranslateFlow
     /// </param>
     public static async Task RunAsync(uint? copiedSince = null, bool append = false)
     {
+        // Ctrl+C+C is already a double press of its own, so only the other triggers can switch.
+        var cycling = copiedSince == null &&
+                      QuickTranslateCycle.IsActive(SettingsService.Instance.Current.QuickTranslate);
+        var window = (long)QuickTranslateCycle.DoublePressWindow.TotalMilliseconds;
+
+        if (!cycling)
+        {
+            Presses.Reset();
+        }
+        else if (Presses.Register(Clock.ElapsedMilliseconds, append, window))
+        {
+            // The second press of a double press: the first one's run is called off before it has
+            // touched anything (it is still waiting below), and the language moves on instead.
+            Request.Supersede();
+            SwitchLanguage();
+            return;
+        }
+
         var (seq, token) = Request.Start();
+
+        if (cycling)
+        {
+            // Waited out before the copy, not after it. The copy releases the Ctrl the user is
+            // holding (see KeyboardInput), so a second press made with Ctrl still down would arrive
+            // as a plain letter and be typed into their document instead of reaching us.
+            await Task.Delay(QuickTranslateCycle.DoublePressWindow);
+            if (!Request.IsCurrent(seq)) return;
+        }
 
         // Before anything is shown. Putting a window on the screen takes the foreground away from
         // the application holding the selection, and the copy would then be sent to our own card.

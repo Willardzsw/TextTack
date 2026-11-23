@@ -24,7 +24,7 @@
             <Setter Property="Background"      Value="{DynamicResource AppHeaderBg}"/>
             <Setter Property="BorderBrush"     Value="{DynamicResource AppSubtleBorder}"/>
             <Setter Property="BorderThickness" Value="1"/>
-            <Setter Property="CornerRadius"    Value="10"/>
+            <Setter Property="CornerRadius"    Value="4"/>
             <Setter Property="Padding"         Value="12,9"/>
         </Style>
 
@@ -64,7 +64,7 @@
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="Button">
-                        <Border x:Name="Root" Background="{TemplateBinding Background}" CornerRadius="10">
+                        <Border x:Name="Root" Background="{TemplateBinding Background}" CornerRadius="4">
                             <TextBlock Text="&#xE946;"
                                        FontFamily="Segoe Fluent Icons, Segoe MDL2 Assets"
                                        FontSize="12"
@@ -190,7 +190,7 @@
                                 Background="{DynamicResource AppHeaderBg}"
                                 BorderBrush="{DynamicResource AppBorder}"
                                 BorderThickness="1.5"
-                                CornerRadius="10"
+                                CornerRadius="4"
                                 Padding="14,12">
                             <DockPanel>
                                 <StackPanel DockPanel.Dock="Top" Orientation="Horizontal">
@@ -248,7 +248,7 @@
                     <ControlTemplate TargetType="Button">
                         <Border x:Name="Root"
                                 Background="{TemplateBinding Background}"
-                                CornerRadius="6"
+                                CornerRadius="4"
                                 Padding="{TemplateBinding Padding}">
                             <ContentPresenter VerticalAlignment="Center"/>
                         </Border>
@@ -311,7 +311,7 @@
                     <ControlTemplate TargetType="Button">
                         <Border x:Name="Root"
                                 Background="{TemplateBinding Background}"
-                                CornerRadius="6"
+                                CornerRadius="4"
                                 Padding="{TemplateBinding Padding}">
                             <ContentPresenter HorizontalAlignment="Center"
                                               VerticalAlignment="Center"/>
@@ -348,7 +348,7 @@
                     UseLayoutRounding="True"
                     HorizontalAlignment="Center"
                     VerticalAlignment="Center"
-                    CornerRadius="12"
+                    CornerRadius="6"
                     Background="{DynamicResource AppCardBg}"
                     BorderBrush="{DynamicResource AppBorder}"
                     BorderThickness="1"
@@ -357,7 +357,7 @@
                     <ScaleTransform x:Name="CardScale" ScaleX="1" ScaleY="1"/>
                 </Border.RenderTransform>
                 <Border.Effect>
-                    <DropShadowEffect BlurRadius="28" ShadowDepth="6" Opacity="0.3" Color="#000000"/>
+                    <DropShadowEffect BlurRadius="16" ShadowDepth="2" Opacity="0.16" Color="#000000"/>
                 </Border.Effect>
 
                 <Grid Margin="24,18,24,18">
@@ -371,10 +371,10 @@
 
                     <Grid Grid.Row="0" Margin="0,0,0,14">
                         <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                            <TextBlock Text="&#xE70F;" Style="{StaticResource CardHeaderIcon}" FontSize="18"/>
+                            <TextBlock Text="&#xE70F;" Style="{StaticResource CardHeaderIcon}" FontSize="14"/>
                             <TextBlock x:Name="TitleText"
                                        FontFamily="{DynamicResource AppFont}"
-                                       FontSize="17"
+                                       FontSize="15"
                                        FontWeight="SemiBold"
                                        Foreground="{DynamicResource AppTextPrimary}"
                                        VerticalAlignment="Center"/>
@@ -806,7 +806,7 @@
                                 <!-- {} escapes the brace: XAML reads a leading { as a markup extension. -->
                                 <Border BorderBrush="{DynamicResource AppBorder}"
                                         BorderThickness="1"
-                                        CornerRadius="8"
+                                        CornerRadius="4"
                                         ClipToBounds="True">
                                     <Grid Grid.IsSharedSizeScope="True">
                                         <StackPanel>
@@ -955,12 +955,12 @@
                     UseLayoutRounding="True"
                     HorizontalAlignment="Center"
                     VerticalAlignment="Center"
-                    CornerRadius="12"
+                    CornerRadius="6"
                     Background="{DynamicResource AppCardBg}"
                     BorderBrush="{DynamicResource AppBorder}"
                     BorderThickness="1">
                 <Border.Effect>
-                    <DropShadowEffect BlurRadius="28" ShadowDepth="6" Opacity="0.3" Color="#000000"/>
+                    <DropShadowEffect BlurRadius="16" ShadowDepth="2" Opacity="0.16" Color="#000000"/>
                 </Border.Effect>
 
                 <StackPanel Margin="24,20,24,20">
@@ -1019,12 +1019,12 @@
                     UseLayoutRounding="True"
                     HorizontalAlignment="Center"
                     VerticalAlignment="Center"
-                    CornerRadius="12"
+                    CornerRadius="6"
                     Background="{DynamicResource AppCardBg}"
                     BorderBrush="{DynamicResource AppBorder}"
                     BorderThickness="1">
                 <Border.Effect>
-                    <DropShadowEffect BlurRadius="28" ShadowDepth="6" Opacity="0.3" Color="#000000"/>
+                    <DropShadowEffect BlurRadius="16" ShadowDepth="2" Opacity="0.16" Color="#000000"/>
                 </Border.Effect>
 
                 <StackPanel Margin="24,20,24,20">

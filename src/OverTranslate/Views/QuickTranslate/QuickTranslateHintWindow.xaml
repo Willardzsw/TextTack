@@ -9,111 +9,31 @@
         ShowActivated="False"
         ResizeMode="NoResize"
         SizeToContent="WidthAndHeight"
-        MaxWidth="360"
         UseLayoutRounding="True"
+        FontFamily="{DynamicResource AppFont}"
         TextOptions.TextFormattingMode="Display">
 
-    <Window.Resources>
-        <!-- The application's own icon button at the size this surface can carry. A hint is one
-             line of text tall, so the 32px control would set the height of the whole thing and turn
-             a remark into a panel. -->
-        <Style x:Key="HintIconButton" TargetType="Button" BasedOn="{StaticResource IconButton}">
-            <Setter Property="Width"      Value="22"/>
-            <Setter Property="Height"     Value="22"/>
-            <Setter Property="FontSize"   Value="11"/>
-            <Setter Property="FontFamily" Value="Segoe Fluent Icons, Segoe MDL2 Assets"/>
-        </Style>
-    </Window.Resources>
-
-    <!-- At least the blur radius on every side, plus the offset below: short of it the blur is
-         cut off by the window's edge and the cut reads as a faint grey rectangle around the card. -->
-    <Border Margin="14,12,14,16">
-        <!-- A capsule rather than a rounded rectangle. This is the smallest thing the
-             application puts on screen and it carries one line, so the shape says so: the corner
-             radius is half the height it has when nothing has gone wrong, which is the shape of a
-             remark rather than of a panel. A failure wraps to two lines and the same radius then
-             reads as a rounded card, which is the right weight for something that has to be read.
-
-             The theme's own surface colours rather than a dark slab: this is a reply to something
-             the user just did, in the middle of their own text, and a dark slab over a light desktop
-             is far heavier than that moment deserves. Not quite solid, for the same reason — see
-             HintCardBg. -->
+    <!-- The same small label as 取詞翻譯's 簡單顯示 (SelectionLabelWindow): text and nothing else.
+         The margin is room for the shadow; short of the blur radius it is cut off by the window's
+         edge. -->
+    <Border Margin="8,6,8,10">
         <Border x:Name="Card"
                 Background="{DynamicResource HintCardBg}"
-                CornerRadius="17"
                 BorderBrush="{DynamicResource HintCardBorder}"
-                BorderThickness="1">
+                BorderThickness="1"
+                CornerRadius="4">
             <Border.Effect>
-                <DropShadowEffect BlurRadius="14" ShadowDepth="2" Direction="270"
-                                  Opacity="0.20" Color="#000000"/>
+                <DropShadowEffect BlurRadius="8" ShadowDepth="1" Direction="270"
+                                  Opacity="0.18" Color="#000000"/>
             </Border.Effect>
-
-            <Grid MinHeight="34" Margin="13,5,7,5">
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="Auto"/>
-                    <ColumnDefinition Width="*"/>
-                    <ColumnDefinition Width="Auto"/>
-                </Grid.ColumnDefinitions>
-
-                <!-- The state, in the one place the reader's eye lands first. The ring turns while
-                     the translation is in flight and is replaced — not joined — by the mark that
-                     says how it ended, so the card never shows two answers at once. -->
-                <Grid Grid.Column="0" Width="14" Height="14" VerticalAlignment="Center">
-                    <Path x:Name="Spinner"
-                          Data="M7,1.5 A5.5,5.5 0 1 1 1.5,7"
-                          Stroke="{DynamicResource AppAccent}"
-                          StrokeThickness="1.8"
-                          StrokeStartLineCap="Round"
-                          StrokeEndLineCap="Round"
-                          Stretch="None"
-                          RenderTransformOrigin="0.5,0.5">
-                        <!-- Three quarters of a circle rather than a full ring: a closed circle
-                             turning is indistinguishable from one standing still. -->
-                        <Path.RenderTransform>
-                            <RotateTransform x:Name="SpinnerAngle"/>
-                        </Path.RenderTransform>
-                    </Path>
-
-                    <TextBlock x:Name="StatusGlyph"
-                               FontFamily="Segoe Fluent Icons, Segoe MDL2 Assets"
-                               FontSize="13"
-                               HorizontalAlignment="Center"
-                               VerticalAlignment="Center"
-                               Visibility="Collapsed"/>
-                </Grid>
-
-                <TextBlock x:Name="MessageText"
-                           Grid.Column="1"
-                           FontFamily="{DynamicResource AppFont}"
-                           FontSize="12"
-                           Foreground="{DynamicResource AppTextPrimary}"
-                           TextWrapping="Wrap"
-                           MaxHeight="60"
-                           TextTrimming="CharacterEllipsis"
-                           VerticalAlignment="Center"
-                           Margin="9,0,4,0"/>
-
-                <!-- Close is here in every state, because a card the reader is done with must always
-                     have a way out. Copy joins it only on a failure — see the code behind. -->
-                <StackPanel Grid.Column="2"
-                            Orientation="Horizontal"
-                            VerticalAlignment="Center">
-                    <Button x:Name="CopyBtn"
-                            Content="&#xE8C8;"
-                            Style="{StaticResource HintIconButton}"
-                            Visibility="Collapsed"
-                            ToolTip="{DynamicResource S.Toast.CopyMessage}"
-                            Click="CopyButton_Click"/>
-
-                    <!-- E8BB, not E711, which sits 0.34px up and left of centre; 7.5 keeps
-                         E711's 7.6px of ink at the style's 11. -->
-                    <Button Content="&#xE8BB;"
-                            Style="{StaticResource HintIconButton}"
-                            FontSize="7.5"
-                            ToolTip="{DynamicResource S.Common.Close}"
-                            Click="CloseButton_Click"/>
-                </StackPanel>
-            </Grid>
+            <TextBlock x:Name="MessageText"
+                       MaxWidth="400"
+                       MaxHeight="80"
+                       Margin="8,4,8,5"
+                       FontSize="13"
+                       TextWrapping="Wrap"
+                       TextTrimming="CharacterEllipsis"
+                       Foreground="{DynamicResource AppTextPrimary}"/>
         </Border>
     </Border>
 </Window>
