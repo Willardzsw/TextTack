@@ -81,7 +81,7 @@
     <sys:String x:Key="S.Translation.SpeakSource">朗讀原文</sys:String>
     <!-- 來源語言為「自動」時，朗讀原文靠的是引擎回報的偵測結果；OpenAI 相容服務不會回報，所以那個
          組合是唯一永遠等不到答案、必須直接停用的狀態，這句就是使用者唯一能得知原因的地方。 -->
-    <sys:String x:Key="S.Translation.SpeakSourceOpenAi">使用 OpenAI 翻譯服務時，請先指定來源語言，才能朗讀原文。</sys:String>
+    <sys:String x:Key="S.Translation.SpeakSourceOpenAi">使用 OpenAI / DeepSeek 翻譯服務時，請先指定來源語言，才能朗讀原文。</sys:String>
     <!-- 另一種還沒有語言可用的狀態：引擎只是還沒回答，等翻譯回來就會好，所以只給 tooltip 不給短註記。 -->
     <sys:String x:Key="S.Translation.SpeakSourceUnknown">還不知道原文是什麼語言，翻譯完成後就可以朗讀。</sys:String>
     <sys:String x:Key="S.Translation.Source">原文</sys:String>
@@ -133,7 +133,7 @@
          只有還沒翻譯、或引擎沒講的時候才無語可讀。 -->
     <!-- OpenAI 相容服務不會回報偵測到的原文語言，所以「自動」在這個服務下是永遠等不到的狀態，
          訊息必須指向真正能解決的動作（指定來源語言），而不是叫使用者再等。 -->
-    <sys:String x:Key="S.QuickLookup.SpeakSourceOpenAi">使用 OpenAI 翻譯服務時，請先指定來源語言，才能朗讀原文。</sys:String>
+    <sys:String x:Key="S.QuickLookup.SpeakSourceOpenAi">使用 OpenAI / DeepSeek 翻譯服務時，請先指定來源語言，才能朗讀原文。</sys:String>
     <sys:String x:Key="S.QuickLookup.SpeakSourceUnknown">還不知道原文是什麼語言，翻譯完成後就可以朗讀。</sys:String>
     <sys:String x:Key="S.QuickLookup.Provider">翻譯服務</sys:String>
     <sys:String x:Key="S.QuickLookup.ProviderHint">與螢幕翻譯及文字翻譯共用此服務</sys:String>
@@ -252,8 +252,8 @@
     <sys:String x:Key="S.Overlay.Recognising">辨識中</sys:String>
 
     <!-- ── Secret box ── -->
-    <sys:String x:Key="S.Secret.Show">顯示內容</sys:String>
-    <sys:String x:Key="S.Secret.Hide">隱藏內容</sys:String>
+    <sys:String x:Key="S.Secret.Clear">清除，重新輸入</sys:String>
+    <sys:String x:Key="S.Secret.SavedHint">Key 已儲存。為了安全，無法查看或複製。</sys:String>
 
     <!-- ── Tray notifications and capture balloons ── -->
     <sys:String x:Key="S.App.Name">TextTack 貼譯</sys:String>
@@ -449,6 +449,27 @@
     <sys:String x:Key="S.Provider.DeepLHint">需至 DeepL 官方註冊並取得 API Key</sys:String>
     <sys:String x:Key="S.Provider.OpenAI">OpenAI</sys:String>
     <sys:String x:Key="S.Provider.OpenAIHint">支援 OpenAI 相容 API（如 Ollama、LM Studio、OpenRouter），建議使用本地 LLM。</sys:String>
+    <sys:String x:Key="S.Provider.DeepSeek">DeepSeek</sys:String>
+    <sys:String x:Key="S.Provider.DeepSeekHint">DeepSeek 官方 API，需填入自己的 API Key，按用量計費。</sys:String>
+    <sys:String x:Key="S.Settings.DeepSeekKeyHint">在 platform.deepseek.com 建立 API Key 並貼上。網址、提示詞和參數已預先設定好。</sys:String>
+    <sys:String x:Key="S.Settings.DeepSeekModel">模型</sys:String>
+    <sys:String x:Key="S.Settings.DeepSeekModelFlash">Flash（預設，便宜快速）</sys:String>
+    <sys:String x:Key="S.Settings.DeepSeekModelPro">Pro（更強，價格約 4 倍）</sys:String>
+    <sys:String x:Key="S.Settings.DeepSeekBalance">帳戶餘額</sys:String>
+    <sys:String x:Key="S.Settings.DeepSeekBalanceQuery">查詢餘額</sys:String>
+    <sys:String x:Key="S.Settings.DeepSeekBalanceQuerying">查詢中…</sys:String>
+    <sys:String x:Key="S.Settings.DeepSeekBalanceResult">目前餘額：{0}</sys:String>
+    <sys:String x:Key="S.Settings.DeepSeekBalanceEmpty">餘額不足（{0}），請先儲值</sys:String>
+    <sys:String x:Key="S.Settings.DeepSeekBalanceFailed">查詢失敗：{0}</sys:String>
+    <sys:String x:Key="S.Settings.DeepSeekPriceHint">北京時間週一至週五 9–12 點、14–18 點為尖峰時段，價格是其他時段的兩倍。實際價格以 DeepSeek 官網為準。</sys:String>
+    <sys:String x:Key="S.Error.DeepSeekNoKey">尚未填入 DeepSeek API Key。請到「設定 › 翻譯服務 › DeepSeek」填入。</sys:String>
+    <sys:String x:Key="S.Error.DeepSeekUnauthorized">DeepSeek API Key 無效，請檢查後重新填入。</sys:String>
+    <sys:String x:Key="S.Error.DeepSeekNoBalance">DeepSeek 帳戶餘額不足，請儲值後再試。</sys:String>
+    <sys:String x:Key="S.Error.DeepSeekRateLimited">DeepSeek 請求太頻繁，請稍後再試。</sys:String>
+    <sys:String x:Key="S.Error.DeepSeekBusy">DeepSeek 伺服器忙碌中，請稍後再試。</sys:String>
+    <sys:String x:Key="S.Error.DeepSeekHttp">DeepSeek 回傳 {0}：{1}</sys:String>
+    <sys:String x:Key="S.Error.DeepSeekTimeout">DeepSeek 在 {0} 秒內沒有回應，請檢查網路後再試。</sys:String>
+    <sys:String x:Key="S.Error.DeepSeekBalanceUnreadable">無法讀取 DeepSeek 回傳的餘額。</sys:String>
 
     <!-- ── Settings page ── -->
     <sys:String x:Key="S.Settings.Title">設定</sys:String>
@@ -591,6 +612,10 @@
     <sys:String x:Key="S.Settings.ThinkingOffDetail">送出 reasoning_effort: none</sys:String>
     <sys:String x:Key="S.Settings.ThinkingOffTip" xml:space="preserve">要求模型直接回答、不先思考。部分通用模型預設會先思考再回答，翻譯會明顯變慢，甚至逾時；翻譯專用模型通常不需要。
 有些服務不認得這個參數會回錯誤，這時請取消勾選。</sys:String>
+    <sys:String x:Key="S.Settings.FastMode">快速模式</sys:String>
+    <sys:String x:Key="S.Settings.FastModeDetail">送出 service_tier: fast</sys:String>
+    <sys:String x:Key="S.Settings.FastModeTip" xml:space="preserve">OpenAI 的 Fast mode：回答更快、更穩定，價格是一般的 2 倍。
+只有支援的服務（例如 OpenAI 官方 API）有效；其他服務可能會回傳錯誤，這時請取消勾選。</sys:String>
     <sys:String x:Key="S.Settings.AdvancedHint">沒勾的參數不會送出。各模型支援的參數與範圍不同，請以模型文件為準。</sys:String>
     <sys:String x:Key="S.Settings.Temperature">Temperature</sys:String>
     <sys:String x:Key="S.Settings.TemperatureRange">範圍：0.0 ~ 2.0</sys:String>

@@ -73,7 +73,7 @@
     <sys:String x:Key="S.Translation.SwapTip">Swap languages and text</sys:String>
     <sys:String x:Key="S.Translation.ClearSource">Clear the source text</sys:String>
     <sys:String x:Key="S.Translation.SpeakSource">Read the source aloud</sys:String>
-    <sys:String x:Key="S.Translation.SpeakSourceOpenAi">With the OpenAI service, choose a source language to read the source aloud.</sys:String>
+    <sys:String x:Key="S.Translation.SpeakSourceOpenAi">With the OpenAI / DeepSeek service, choose a source language to read the source aloud.</sys:String>
     <sys:String x:Key="S.Translation.SpeakSourceUnknown">The language of the source is not known yet. It can be read aloud once the translation is back.</sys:String>
     <!-- The note at the foot of the page and the greyed speaker's tooltip are the same sentence:
          the note is what is read, the tooltip is for whoever hovers the button instead. -->
@@ -126,7 +126,7 @@ Translation failed: {1}</sys:String>
     <!-- Automatic is not switched off here the way it is on the text translation page: once the
          translation is back the engine has said which language the original was in, so the only
          gap is before the first result. -->
-    <sys:String x:Key="S.QuickLookup.SpeakSourceOpenAi">With the OpenAI service, choose a source language to read the original aloud.</sys:String>
+    <sys:String x:Key="S.QuickLookup.SpeakSourceOpenAi">With the OpenAI / DeepSeek service, choose a source language to read the original aloud.</sys:String>
     <sys:String x:Key="S.QuickLookup.SpeakSourceUnknown">The language of the original is not known yet. It can be read aloud once the translation is back.</sys:String>
     <sys:String x:Key="S.QuickLookup.Provider">Translation service</sys:String>
     <sys:String x:Key="S.QuickLookup.ProviderHint">Shared with screen translation and text translation</sys:String>
@@ -242,8 +242,8 @@ Actually used this time: {2}</sys:String>
     <sys:String x:Key="S.Overlay.Recognising">Reading</sys:String>
 
     <!-- ── Secret box ── -->
-    <sys:String x:Key="S.Secret.Show">Show</sys:String>
-    <sys:String x:Key="S.Secret.Hide">Hide</sys:String>
+    <sys:String x:Key="S.Secret.Clear">Clear and enter again</sys:String>
+    <sys:String x:Key="S.Secret.SavedHint">The key is saved. For safety it cannot be shown or copied.</sys:String>
 
     <!-- ── Tray notifications and capture balloons ── -->
     <sys:String x:Key="S.App.Name">TextTack</sys:String>
@@ -427,6 +427,27 @@ Details: {0}</sys:String>
     <sys:String x:Key="S.Provider.DeepLHint">Requires an API key from DeepL</sys:String>
     <sys:String x:Key="S.Provider.OpenAI">OpenAI</sys:String>
     <sys:String x:Key="S.Provider.OpenAIHint">Any OpenAI-compatible API (Ollama, LM Studio, OpenRouter…). A local LLM is recommended.</sys:String>
+    <sys:String x:Key="S.Provider.DeepSeek">DeepSeek</sys:String>
+    <sys:String x:Key="S.Provider.DeepSeekHint">The official DeepSeek API. Needs your own API key; billed by usage.</sys:String>
+    <sys:String x:Key="S.Settings.DeepSeekKeyHint">Create an API key at platform.deepseek.com and paste it here. The address, prompt and parameters are already set.</sys:String>
+    <sys:String x:Key="S.Settings.DeepSeekModel">Model</sys:String>
+    <sys:String x:Key="S.Settings.DeepSeekModelFlash">Flash (default, cheap and fast)</sys:String>
+    <sys:String x:Key="S.Settings.DeepSeekModelPro">Pro (stronger, about 4× the price)</sys:String>
+    <sys:String x:Key="S.Settings.DeepSeekBalance">Balance</sys:String>
+    <sys:String x:Key="S.Settings.DeepSeekBalanceQuery">Check balance</sys:String>
+    <sys:String x:Key="S.Settings.DeepSeekBalanceQuerying">Checking…</sys:String>
+    <sys:String x:Key="S.Settings.DeepSeekBalanceResult">Balance: {0}</sys:String>
+    <sys:String x:Key="S.Settings.DeepSeekBalanceEmpty">Insufficient balance ({0}). Please top up.</sys:String>
+    <sys:String x:Key="S.Settings.DeepSeekBalanceFailed">Could not check: {0}</sys:String>
+    <sys:String x:Key="S.Settings.DeepSeekPriceHint">Peak hours are 9–12 and 14–18 Beijing time, Monday to Friday, at twice the off-peak price. See the DeepSeek website for current prices.</sys:String>
+    <sys:String x:Key="S.Error.DeepSeekNoKey">No DeepSeek API key yet. Add one in Settings › Translation services › DeepSeek.</sys:String>
+    <sys:String x:Key="S.Error.DeepSeekUnauthorized">The DeepSeek API key is invalid. Please check it and enter it again.</sys:String>
+    <sys:String x:Key="S.Error.DeepSeekNoBalance">Your DeepSeek balance has run out. Please top up and try again.</sys:String>
+    <sys:String x:Key="S.Error.DeepSeekRateLimited">Too many requests to DeepSeek. Please try again shortly.</sys:String>
+    <sys:String x:Key="S.Error.DeepSeekBusy">The DeepSeek server is busy. Please try again shortly.</sys:String>
+    <sys:String x:Key="S.Error.DeepSeekHttp">DeepSeek returned {0}: {1}</sys:String>
+    <sys:String x:Key="S.Error.DeepSeekTimeout">DeepSeek did not answer within {0} seconds. Check your connection and try again.</sys:String>
+    <sys:String x:Key="S.Error.DeepSeekBalanceUnreadable">Could not read the balance DeepSeek returned.</sys:String>
 
     <!-- ── Settings page ── -->
     <sys:String x:Key="S.Settings.Title">Settings</sys:String>
@@ -566,6 +587,10 @@ Details: {0}</sys:String>
     <sys:String x:Key="S.Settings.ThinkingOffDetail">Sends reasoning_effort: none</sys:String>
     <sys:String x:Key="S.Settings.ThinkingOffTip" xml:space="preserve">Asks the model to answer straight away, without thinking first. Some general-purpose models think before they answer by default, which makes translation much slower or even times out; models made for translation usually don’t need this.
 Some services don’t recognise this parameter and return an error. If so, untick it.</sys:String>
+    <sys:String x:Key="S.Settings.FastMode">Fast mode</sys:String>
+    <sys:String x:Key="S.Settings.FastModeDetail">Sends service_tier: fast</sys:String>
+    <sys:String x:Key="S.Settings.FastModeTip" xml:space="preserve">OpenAI’s Fast mode: faster, steadier answers at twice the usual price.
+Only services that support it (such as the official OpenAI API) honour it; others may return an error — untick it then.</sys:String>
     <sys:String x:Key="S.Settings.AdvancedHint">Unticked parameters are not sent. Models differ in which parameters they accept and in what range — go by your model’s documentation.</sys:String>
     <sys:String x:Key="S.Settings.Temperature">Temperature</sys:String>
     <sys:String x:Key="S.Settings.TemperatureRange">Range: 0.0 ~ 2.0</sys:String>

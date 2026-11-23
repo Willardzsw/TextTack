@@ -76,7 +76,7 @@
     <sys:String x:Key="S.Translation.SwapTip">Поменять местами языки и текст</sys:String>
     <sys:String x:Key="S.Translation.ClearSource">Очистить исходный текст</sys:String>
     <sys:String x:Key="S.Translation.SpeakSource">Прочитать исходный текст вслух</sys:String>
-    <sys:String x:Key="S.Translation.SpeakSourceOpenAi">Со службой OpenAI выберите язык оригинала, чтобы прочитать исходный текст вслух.</sys:String>
+    <sys:String x:Key="S.Translation.SpeakSourceOpenAi">Со службой OpenAI / DeepSeek выберите язык оригинала, чтобы прочитать исходный текст вслух.</sys:String>
     <sys:String x:Key="S.Translation.SpeakSourceUnknown">Язык исходного текста пока не определен. Его можно будет прочитать вслух, когда придет перевод.</sys:String>
     <sys:String x:Key="S.Translation.Source">Оригинал</sys:String>
     <sys:String x:Key="S.Translation.SpeakResult">Прочитать перевод вслух</sys:String>
@@ -123,7 +123,7 @@
     <sys:String x:Key="S.QuickLookup.SpeakSource">Прочитать оригинал</sys:String>
     <sys:String x:Key="S.QuickLookup.SpeakResult">Прочитать перевод</sys:String>
     <sys:String x:Key="S.QuickLookup.SpeakSourceTip">Прочитать оригинал вслух</sys:String>
-    <sys:String x:Key="S.QuickLookup.SpeakSourceOpenAi">Со службой OpenAI выберите язык оригинала, чтобы прочитать его вслух.</sys:String>
+    <sys:String x:Key="S.QuickLookup.SpeakSourceOpenAi">Со службой OpenAI / DeepSeek выберите язык оригинала, чтобы прочитать его вслух.</sys:String>
     <sys:String x:Key="S.QuickLookup.SpeakSourceUnknown">Язык оригинала пока не определен. Его можно будет прочитать вслух, когда придет перевод.</sys:String>
     <sys:String x:Key="S.QuickLookup.Provider">Служба перевода</sys:String>
     <sys:String x:Key="S.QuickLookup.ProviderHint">Общая с переводом снимка экрана и переводом текста</sys:String>
@@ -239,8 +239,8 @@
     <sys:String x:Key="S.Overlay.Recognising">Распознавание</sys:String>
 
     <!-- ── Secret box ── -->
-    <sys:String x:Key="S.Secret.Show">Показать</sys:String>
-    <sys:String x:Key="S.Secret.Hide">Скрыть</sys:String>
+    <sys:String x:Key="S.Secret.Clear">Очистить и ввести заново</sys:String>
+    <sys:String x:Key="S.Secret.SavedHint">Ключ сохранён. В целях безопасности его нельзя показать или скопировать.</sys:String>
 
     <!-- ── Tray notifications and capture balloons ── -->
     <sys:String x:Key="S.App.Name">TextTack</sys:String>
@@ -424,6 +424,27 @@
     <sys:String x:Key="S.Provider.DeepLHint">Нужен ключ API от DeepL</sys:String>
     <sys:String x:Key="S.Provider.OpenAI">OpenAI</sys:String>
     <sys:String x:Key="S.Provider.OpenAIHint">Любой API, совместимый с OpenAI (Ollama, LM Studio, OpenRouter…). Рекомендуется локальная LLM.</sys:String>
+    <sys:String x:Key="S.Provider.DeepSeek">DeepSeek</sys:String>
+    <sys:String x:Key="S.Provider.DeepSeekHint">Официальный API DeepSeek. Нужен собственный API-ключ, оплата по объёму.</sys:String>
+    <sys:String x:Key="S.Settings.DeepSeekKeyHint">Создайте API-ключ на platform.deepseek.com и вставьте его сюда. Адрес, промпт и параметры уже настроены.</sys:String>
+    <sys:String x:Key="S.Settings.DeepSeekModel">Модель</sys:String>
+    <sys:String x:Key="S.Settings.DeepSeekModelFlash">Flash (по умолчанию, дёшево и быстро)</sys:String>
+    <sys:String x:Key="S.Settings.DeepSeekModelPro">Pro (мощнее, примерно в 4 раза дороже)</sys:String>
+    <sys:String x:Key="S.Settings.DeepSeekBalance">Баланс</sys:String>
+    <sys:String x:Key="S.Settings.DeepSeekBalanceQuery">Проверить баланс</sys:String>
+    <sys:String x:Key="S.Settings.DeepSeekBalanceQuerying">Проверка…</sys:String>
+    <sys:String x:Key="S.Settings.DeepSeekBalanceResult">Баланс: {0}</sys:String>
+    <sys:String x:Key="S.Settings.DeepSeekBalanceEmpty">Недостаточно средств ({0}). Пополните баланс</sys:String>
+    <sys:String x:Key="S.Settings.DeepSeekBalanceFailed">Не удалось проверить: {0}</sys:String>
+    <sys:String x:Key="S.Settings.DeepSeekPriceHint">Часы пик — 9–12 и 14–18 по пекинскому времени, с понедельника по пятницу; цена в это время вдвое выше. Актуальные цены — на сайте DeepSeek.</sys:String>
+    <sys:String x:Key="S.Error.DeepSeekNoKey">API-ключ DeepSeek не указан. Добавьте его в «Настройки › Службы перевода › DeepSeek».</sys:String>
+    <sys:String x:Key="S.Error.DeepSeekUnauthorized">API-ключ DeepSeek недействителен. Проверьте его и введите снова.</sys:String>
+    <sys:String x:Key="S.Error.DeepSeekNoBalance">На счёте DeepSeek недостаточно средств. Пополните баланс и повторите попытку.</sys:String>
+    <sys:String x:Key="S.Error.DeepSeekRateLimited">Слишком много запросов к DeepSeek. Повторите попытку чуть позже.</sys:String>
+    <sys:String x:Key="S.Error.DeepSeekBusy">Сервер DeepSeek перегружен. Повторите попытку чуть позже.</sys:String>
+    <sys:String x:Key="S.Error.DeepSeekHttp">DeepSeek вернул {0}: {1}</sys:String>
+    <sys:String x:Key="S.Error.DeepSeekTimeout">DeepSeek не ответил за {0} с. Проверьте подключение и повторите попытку.</sys:String>
+    <sys:String x:Key="S.Error.DeepSeekBalanceUnreadable">Не удалось прочитать баланс, который вернул DeepSeek.</sys:String>
 
     <!-- ── Settings page ── -->
     <sys:String x:Key="S.Settings.Title">Настройки</sys:String>
@@ -561,6 +582,10 @@
     <sys:String x:Key="S.Settings.ThinkingOffDetail">Отправляет reasoning_effort: none</sys:String>
     <sys:String x:Key="S.Settings.ThinkingOffTip" xml:space="preserve">Просит модель отвечать сразу, без размышлений. Некоторые универсальные модели по умолчанию сначала размышляют, и перевод заметно замедляется или даже не укладывается в тайм-аут; моделям для перевода это обычно не нужно.
 Некоторые сервисы не знают этот параметр и возвращают ошибку — тогда снимите флажок.</sys:String>
+    <sys:String x:Key="S.Settings.FastMode">Быстрый режим</sys:String>
+    <sys:String x:Key="S.Settings.FastModeDetail">Отправляет service_tier: fast</sys:String>
+    <sys:String x:Key="S.Settings.FastModeTip" xml:space="preserve">Fast mode от OpenAI: ответы быстрее и стабильнее, но вдвое дороже.
+Работает только в сервисах, которые его поддерживают (например, официальный API OpenAI); другие могут вернуть ошибку — тогда снимите флажок.</sys:String>
     <sys:String x:Key="S.Settings.AdvancedHint">Параметры без флажка не отправляются. Модели поддерживают разные параметры и диапазоны — ориентируйтесь на документацию своей модели.</sys:String>
     <sys:String x:Key="S.Settings.Temperature">Temperature</sys:String>
     <sys:String x:Key="S.Settings.TemperatureRange">Диапазон: 0.0 ~ 2.0</sys:String>

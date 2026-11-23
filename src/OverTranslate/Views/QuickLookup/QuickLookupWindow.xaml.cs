@@ -1393,7 +1393,7 @@ public partial class QuickLookupWindow : Window
         // written in two scripts, so only a pair that shares one can still be waiting on an engine
         // that is never going to say.
         var openAiAutomatic =
-            SettingsService.Instance.Current.Provider == TranslationProvider.OpenAI &&
+            LanguageData.IsLanguageModel(SettingsService.Instance.Current.Provider) &&
             (BilingualToggle.IsChecked == true
                 ? _bilingualSource is null
                 : LanguageData.IsAutomaticSource(SrcLangBox.SelectedValue as string));

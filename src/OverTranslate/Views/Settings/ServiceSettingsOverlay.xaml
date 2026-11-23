@@ -202,6 +202,70 @@
                                        Style="{StaticResource FieldHint}"/>
                         </Grid>
 
+                        <!-- ══════════ DeepSeek ══════════ -->
+                        <!-- The address, prompt and parameters are fixed in DeepSeekProvider, so all
+                             there is to set is the key and which of the two models. -->
+                        <Grid x:Name="DeepSeekPanel">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto" SharedSizeGroup="ServiceLabel"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                            </Grid.RowDefinitions>
+
+                            <TextBlock Grid.Column="0" Grid.Row="0"
+                                       Text="{DynamicResource S.Common.ApiKey}"
+                                       Style="{StaticResource FieldLabel}"/>
+                            <controls:SecretBox Grid.Column="1" Grid.Row="0" x:Name="DeepSeekApiKeyBox"
+                                                SecretChanged="DeepSeekApiKeyBox_SecretChanged"/>
+                            <TextBlock Grid.Column="1" Grid.Row="1"
+                                       Text="{DynamicResource S.Settings.DeepSeekKeyHint}"
+                                       Style="{StaticResource FieldHint}"/>
+
+                            <TextBlock Grid.Column="0" Grid.Row="2"
+                                       Text="{DynamicResource S.Settings.DeepSeekModel}"
+                                       Margin="0,16,12,0"
+                                       Style="{StaticResource FieldLabel}"/>
+                            <ComboBox Grid.Column="1" Grid.Row="2" x:Name="DeepSeekModelBox"
+                                      Margin="0,16,0,0"
+                                      Style="{StaticResource ModernComboBox}"
+                                      DisplayMemberPath="Display"
+                                      SelectedValuePath="Model"
+                                      AutomationProperties.Name="{DynamicResource S.Settings.DeepSeekModel}"
+                                      SelectionChanged="DeepSeekModelBox_SelectionChanged"/>
+
+                            <TextBlock Grid.Column="0" Grid.Row="3"
+                                       Text="{DynamicResource S.Settings.DeepSeekBalance}"
+                                       Margin="0,16,12,0"
+                                       Style="{StaticResource FieldLabel}"/>
+                            <StackPanel Grid.Column="1" Grid.Row="3" Orientation="Horizontal" Margin="0,16,0,0">
+                                <Button x:Name="DeepSeekBalanceBtn"
+                                        Content="{DynamicResource S.Settings.DeepSeekBalanceQuery}"
+                                        Style="{StaticResource FlatButton}"
+                                        Height="30"
+                                        MinWidth="96"
+                                        Cursor="Hand"
+                                        VerticalAlignment="Center"
+                                        Click="DeepSeekBalanceBtn_Click"/>
+                                <TextBlock x:Name="DeepSeekBalanceText"
+                                           Margin="12,0,0,0"
+                                           VerticalAlignment="Center"
+                                           TextWrapping="Wrap"
+                                           MaxWidth="300"
+                                           FontFamily="{DynamicResource AppFont}"
+                                           FontSize="{StaticResource AppFontSize}"
+                                           Foreground="{DynamicResource AppTextPrimary}"/>
+                            </StackPanel>
+                            <TextBlock Grid.Column="1" Grid.Row="4"
+                                       Text="{DynamicResource S.Settings.DeepSeekPriceHint}"
+                                       Style="{StaticResource FieldHint}"/>
+                        </Grid>
+
                         <!-- ══════════ OpenAI ══════════ -->
                         <Grid x:Name="OpenAiPanel">
                             <Grid.ColumnDefinitions>

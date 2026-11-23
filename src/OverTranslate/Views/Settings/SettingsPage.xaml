@@ -2392,6 +2392,48 @@
                                             </WrapPanel>
                                         </DockPanel>
                                     </CheckBox>
+
+                                    <!-- After OpenAI, in the order of LanguageData.Providers: the rows
+                                         are matched to services by position. -->
+                                    <CheckBox Style="{StaticResource ProviderCard}" IsChecked="True"
+                                              AutomationProperties.Name="{DynamicResource S.Provider.DeepSeek}"
+                                              Checked="ProviderCard_Toggled" Unchecked="ProviderCard_Toggled">
+                                        <DockPanel>
+                                            <Button DockPanel.Dock="Right"
+                                                    x:Name="DeepSeekConfigureBtn"
+                                                    Content="{DynamicResource S.Common.Configure}"
+                                                    Style="{StaticResource FlatButton}"
+                                                    Height="30"
+                                                    MinWidth="96"
+                                                    Margin="14,0,0,0"
+                                                    VerticalAlignment="Center"
+                                                    Cursor="Hand"
+                                                    Click="ConfigureService_Click"/>
+                                            <!-- A plain mark in DeepSeek's blue rather than its logo. -->
+                                            <Grid DockPanel.Dock="Left" Style="{StaticResource ProviderCardMark}">
+                                                <Border Width="22" Height="22"
+                                                        CornerRadius="5"
+                                                        Background="#4D6BFE">
+                                                    <TextBlock Text="D"
+                                                               FontFamily="Segoe UI"
+                                                               FontWeight="Bold"
+                                                               FontSize="13"
+                                                               Foreground="White"
+                                                               HorizontalAlignment="Center"
+                                                               VerticalAlignment="Center"/>
+                                                </Border>
+                                            </Grid>
+                                            <WrapPanel VerticalAlignment="Center">
+                                                <TextBlock Text="{DynamicResource S.Provider.DeepSeek}"
+                                                           Style="{StaticResource ProviderCardName}"
+                                                           Margin="0,0,10,0"/>
+                                                <Border x:Name="DeepSeekBadge"
+                                                        Style="{StaticResource ServiceBadgeBorder}">
+                                                    <TextBlock x:Name="DeepSeekBadgeText" Style="{StaticResource ServiceBadgeText}"/>
+                                                </Border>
+                                            </WrapPanel>
+                                        </DockPanel>
+                                    </CheckBox>
                                 </StackPanel>
                             </StackPanel>
                         </Grid>

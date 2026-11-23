@@ -73,7 +73,7 @@
     <sys:String x:Key="S.Translation.SwapTip">互换语言与内容</sys:String>
     <sys:String x:Key="S.Translation.ClearSource">清除原文</sys:String>
     <sys:String x:Key="S.Translation.SpeakSource">朗读原文</sys:String>
-    <sys:String x:Key="S.Translation.SpeakSourceOpenAi">使用 OpenAI 翻译服务时，请先指定源语言，才能朗读原文。</sys:String>
+    <sys:String x:Key="S.Translation.SpeakSourceOpenAi">使用 OpenAI / DeepSeek 翻译服务时，请先指定源语言，才能朗读原文。</sys:String>
     <sys:String x:Key="S.Translation.SpeakSourceUnknown">还不知道原文是什么语言，翻译完成后就可以朗读。</sys:String>
     <!-- The note at the foot of the page and the greyed speaker's tooltip are the same sentence:
          the note is what is read, the tooltip is for whoever hovers the button instead. -->
@@ -126,7 +126,7 @@
     <!-- Automatic is not switched off here the way it is on the text translation page: once the
          translation is back the engine has said which language the original was in, so the only
          gap is before the first result. -->
-    <sys:String x:Key="S.QuickLookup.SpeakSourceOpenAi">使用 OpenAI 翻译服务时，请先指定源语言，才能朗读原文。</sys:String>
+    <sys:String x:Key="S.QuickLookup.SpeakSourceOpenAi">使用 OpenAI / DeepSeek 翻译服务时，请先指定源语言，才能朗读原文。</sys:String>
     <sys:String x:Key="S.QuickLookup.SpeakSourceUnknown">还不知道原文是什么语言，翻译完成后就可以朗读。</sys:String>
     <sys:String x:Key="S.QuickLookup.Provider">翻译服务</sys:String>
     <sys:String x:Key="S.QuickLookup.ProviderHint">与屏幕翻译及文字翻译共用此服务</sys:String>
@@ -242,8 +242,8 @@
     <sys:String x:Key="S.Overlay.Recognising">识别中</sys:String>
 
     <!-- ── Secret box ── -->
-    <sys:String x:Key="S.Secret.Show">显示内容</sys:String>
-    <sys:String x:Key="S.Secret.Hide">隐藏内容</sys:String>
+    <sys:String x:Key="S.Secret.Clear">清除，重新输入</sys:String>
+    <sys:String x:Key="S.Secret.SavedHint">Key 已保存。为了安全，无法查看或复制。</sys:String>
 
     <!-- ── Tray notifications and capture balloons ── -->
     <sys:String x:Key="S.App.Name">TextTack 贴译</sys:String>
@@ -427,6 +427,27 @@
     <sys:String x:Key="S.Provider.DeepLHint">需到 DeepL 官方注册并获取 API Key</sys:String>
     <sys:String x:Key="S.Provider.OpenAI">OpenAI</sys:String>
     <sys:String x:Key="S.Provider.OpenAIHint">支持 OpenAI 兼容 API（如 Ollama、LM Studio、OpenRouter），建议使用本地 LLM。</sys:String>
+    <sys:String x:Key="S.Provider.DeepSeek">DeepSeek</sys:String>
+    <sys:String x:Key="S.Provider.DeepSeekHint">DeepSeek 官方 API，需填入自己的 API Key，按用量计费。</sys:String>
+    <sys:String x:Key="S.Settings.DeepSeekKeyHint">在 platform.deepseek.com 创建 API Key 并粘贴。地址、提示词和参数已预先设置好。</sys:String>
+    <sys:String x:Key="S.Settings.DeepSeekModel">模型</sys:String>
+    <sys:String x:Key="S.Settings.DeepSeekModelFlash">Flash（默认，便宜快速）</sys:String>
+    <sys:String x:Key="S.Settings.DeepSeekModelPro">Pro（更强，价格约 4 倍）</sys:String>
+    <sys:String x:Key="S.Settings.DeepSeekBalance">账户余额</sys:String>
+    <sys:String x:Key="S.Settings.DeepSeekBalanceQuery">查询余额</sys:String>
+    <sys:String x:Key="S.Settings.DeepSeekBalanceQuerying">查询中…</sys:String>
+    <sys:String x:Key="S.Settings.DeepSeekBalanceResult">当前余额：{0}</sys:String>
+    <sys:String x:Key="S.Settings.DeepSeekBalanceEmpty">余额不足（{0}），请先充值</sys:String>
+    <sys:String x:Key="S.Settings.DeepSeekBalanceFailed">查询失败：{0}</sys:String>
+    <sys:String x:Key="S.Settings.DeepSeekPriceHint">北京时间周一至周五 9–12 点、14–18 点为高峰时段，价格是其他时段的两倍。实际价格以 DeepSeek 官网为准。</sys:String>
+    <sys:String x:Key="S.Error.DeepSeekNoKey">还没有填写 DeepSeek API Key。请到「设置 › 翻译服务 › DeepSeek」填写。</sys:String>
+    <sys:String x:Key="S.Error.DeepSeekUnauthorized">DeepSeek API Key 无效，请检查后重新填写。</sys:String>
+    <sys:String x:Key="S.Error.DeepSeekNoBalance">DeepSeek 账户余额不足，请充值后再试。</sys:String>
+    <sys:String x:Key="S.Error.DeepSeekRateLimited">DeepSeek 请求太频繁，请稍后再试。</sys:String>
+    <sys:String x:Key="S.Error.DeepSeekBusy">DeepSeek 服务器繁忙，请稍后再试。</sys:String>
+    <sys:String x:Key="S.Error.DeepSeekHttp">DeepSeek 返回 {0}：{1}</sys:String>
+    <sys:String x:Key="S.Error.DeepSeekTimeout">DeepSeek 在 {0} 秒内没有响应，请检查网络后再试。</sys:String>
+    <sys:String x:Key="S.Error.DeepSeekBalanceUnreadable">无法读取 DeepSeek 返回的余额。</sys:String>
 
     <!-- ── Settings page ── -->
     <sys:String x:Key="S.Settings.Title">设置</sys:String>
@@ -566,6 +587,10 @@
     <sys:String x:Key="S.Settings.ThinkingOffDetail">发送 reasoning_effort: none</sys:String>
     <sys:String x:Key="S.Settings.ThinkingOffTip" xml:space="preserve">要求模型直接回答、不先思考。部分通用模型默认会先思考再回答，翻译会明显变慢，甚至超时；翻译专用模型通常不需要。
 有些服务不认识这个参数会返回错误，这时请取消勾选。</sys:String>
+    <sys:String x:Key="S.Settings.FastMode">快速模式</sys:String>
+    <sys:String x:Key="S.Settings.FastModeDetail">发送 service_tier: fast</sys:String>
+    <sys:String x:Key="S.Settings.FastModeTip" xml:space="preserve">OpenAI 的 Fast mode：回答更快、更稳定，价格是普通的 2 倍。
+只有支持的服务（例如 OpenAI 官方 API）有效；其他服务可能会返回错误，这时请取消勾选。</sys:String>
     <sys:String x:Key="S.Settings.AdvancedHint">未勾选的参数不会发送。各模型支持的参数与范围不同，请以模型文档为准。</sys:String>
     <sys:String x:Key="S.Settings.Temperature">Temperature</sys:String>
     <sys:String x:Key="S.Settings.TemperatureRange">范围：0.0 ~ 2.0</sys:String>

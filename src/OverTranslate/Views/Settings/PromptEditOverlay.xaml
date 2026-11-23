@@ -594,7 +594,7 @@
                                         </Border>
 
                                         <!-- How many candidates there are to favour between. -->
-                                        <Border Style="{StaticResource ParamCard}" Margin="0,0,5,0">
+                                        <Border Style="{StaticResource ParamCard}" Margin="0,0,5,10">
                                             <Grid>
                                                 <Grid.ColumnDefinitions>
                                                     <ColumnDefinition Width="Auto"/>
@@ -632,7 +632,7 @@
                                         </Border>
 
                                         <!-- What makes the result repeatable at a temperature above zero. -->
-                                        <Border Style="{StaticResource ParamCard}" Margin="5,0,0,0">
+                                        <Border Style="{StaticResource ParamCard}" Margin="5,0,0,10">
                                             <Grid>
                                                 <Grid.ColumnDefinitions>
                                                     <ColumnDefinition Width="Auto"/>
@@ -666,6 +666,36 @@
                                                          AutomationProperties.Name="{DynamicResource S.Settings.Seed}"
                                                          TextChanged="AdvancedParam_TextChanged"
                                                          LostFocus="SeedBox_LostFocus"/>
+                                            </Grid>
+                                        </Border>
+                                        <!-- OpenAI's Fast mode: last, because it is the one card that costs money. -->
+                                        <Border Style="{StaticResource ParamCard}" Margin="0,0,5,0">
+                                            <Grid>
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="Auto"/>
+                                                    <ColumnDefinition Width="*"/>
+                                                </Grid.ColumnDefinitions>
+                                                <CheckBox x:Name="FastModeCheckBox"
+                                                          Grid.Column="0"
+                                                          Style="{StaticResource ModernCheckBox}"
+                                                          VerticalAlignment="Center"
+                                                          Margin="0,0,10,0"
+                                                          AutomationProperties.Name="{DynamicResource S.Settings.FastMode}"
+                                                          Checked="AdvancedParam_Toggled"
+                                                          Unchecked="AdvancedParam_Toggled"/>
+                                                <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                                                    <StackPanel Orientation="Horizontal">
+                                                        <TextBlock x:Name="FastModeName"
+                                                                   Text="{DynamicResource S.Settings.FastMode}"
+                                                                   Style="{StaticResource ParamName}"/>
+                                                        <Button Style="{StaticResource ParamInfoButton}"
+                                                                ToolTip="{DynamicResource S.Settings.FastModeTip}"
+                                                                AutomationProperties.Name="{DynamicResource S.Settings.FastMode}"
+                                                                AutomationProperties.HelpText="{DynamicResource S.Settings.FastModeTip}"/>
+                                                    </StackPanel>
+                                                    <TextBlock Text="{DynamicResource S.Settings.FastModeDetail}"
+                                                               Style="{StaticResource ParamRange}"/>
+                                                </StackPanel>
                                             </Grid>
                                         </Border>
                                     </UniformGrid>

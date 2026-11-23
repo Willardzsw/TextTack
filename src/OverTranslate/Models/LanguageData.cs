@@ -177,7 +177,19 @@ public static class LanguageData
         new(TranslationProvider.Yandex,    "S.Provider.Yandex",    false),
         new(TranslationProvider.DeepL,     "S.Provider.DeepL",     true,  "S.Provider.DeepLHint"),
         new(TranslationProvider.OpenAI,    "S.Provider.OpenAI",    false, "S.Provider.OpenAIHint"),
+        new(TranslationProvider.DeepSeek,  "S.Provider.DeepSeek",  false, "S.Provider.DeepSeekHint"),
     ];
+
+    /// <summary>
+    /// Whether <paramref name="provider"/> is a language model asked through a chat request —
+    /// 「OpenAI 相容」 or DeepSeek — rather than a translation engine.
+    /// </summary>
+    /// <remarks>
+    /// The two are sent the screen and the lines before as context, and neither says what language
+    /// the original was in, so 自動 is a state a result cannot get a page out of.
+    /// </remarks>
+    public static bool IsLanguageModel(TranslationProvider provider) =>
+        provider is TranslationProvider.OpenAI or TranslationProvider.DeepSeek;
 
     /// <summary>The option a saved choice stands for today.</summary>
     /// <remarks>

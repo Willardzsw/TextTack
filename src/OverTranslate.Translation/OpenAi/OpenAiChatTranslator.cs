@@ -32,6 +32,9 @@ namespace OverTranslate.Translation.OpenAi;
 /// Whether a call's texts go as few requests as fit rather than one each — see
 /// <see cref="OpenAiChatTranslator.TranslateAsync"/>.
 /// </param>
+/// <param name="ServiceTier">
+/// The <c>service_tier</c> to send — <c>"fast"</c> for OpenAI's Fast mode — or null to send none.
+/// </param>
 public sealed record OpenAiChatRequest(
     Uri Endpoint,
     string Model,
@@ -43,7 +46,8 @@ public sealed record OpenAiChatRequest(
     string? ReasoningEffort = null,
     TimeSpan? Timeout = null,
     int ContextTokens = OpenAiChatTranslator.DefaultContextTokens,
-    bool Batch = false);
+    bool Batch = false,
+    string? ServiceTier = null);
 
 /// <summary>What one call knows beyond its texts.</summary>
 /// <param name="History">Earlier lines of the same session, oldest first — see <see cref="OpenAiPrompt.Build"/>.</param>
@@ -94,6 +98,31 @@ public sealed record OpenAiChatOutcome(string? Translation, Exception? Error)
 /// </remarks>
 public sealed class OpenAiChatTranslator(HttpClient http)
 {
+    /// <summary>
+    /// The client a hosted chat API is best spoken to through: connections kept open between
+    /// translations instead of being set up again for each.
+    /// </summary>
+    /// <remarks>
+    /// A new connection to a hosted API costs a TLS handshake before the request can even leave —
+    /// a few hundred milliseconds measured to api.openai.com, on a translation that takes under two
+    /// seconds. The framework closes a connection after a minute idle; a screen captured now and
+    /// then is often further apart than that. Ten minutes, with HTTP/2 pings every half minute so
+    /// nothing between here and the server drops it as dead first. No timeout of the client's own:
+    /// each request carries its own.
+    /// </remarks>
+    public static HttpClient CreateHttpClient() => new(new SocketsHttpHandler
+    {
+        PooledConnectionIdleTimeout = TimeSpan.FromMinutes(10),
+        PooledConnectionLifetime = TimeSpan.FromMinutes(30),
+        KeepAlivePingDelay = TimeSpan.FromSeconds(30),
+        KeepAlivePingTimeout = TimeSpan.FromSeconds(15),
+        KeepAlivePingPolicy = HttpKeepAlivePingPolicy.Always,
+        EnableMultipleHttp2Connections = true,
+    })
+    {
+        Timeout = System.Threading.Timeout.InfiniteTimeSpan,
+    };
+
     private static readonly Logger Log = LogManager.GetCurrentClassLogger();
 
     /// <summary>How many requests are in flight at once under a template with no context.</summary>
@@ -716,11 +745,16 @@ public sealed class OpenAiChatTranslator(HttpClient http)
         bool cutIsRunaway = false)
     {
         var server = $"{request.Endpoint.AbsoluteUri} {request.Model}";
+
+        // A translation — the only request with a limit — to a server across the network is sent a
+        // second time when the first is slow to come back; see SendHedgedAsync. Decided before the
+        // limit is dropped for a server that refuses it: it is still a translation.
+        var hedgeAfter = maxTokens is { } limit && IsRemote(request.Endpoint) ? HedgeDelay(limit) : (TimeSpan?)null;
         if (maxTokens is not null && RefusesLimit.ContainsKey(server)) maxTokens = null;
 
         try
         {
-            return await SendOnceAsync(messages, request, cancellationToken, maxTokens, cutIsRunaway);
+            return await SendHedgedAsync(messages, request, cancellationToken, maxTokens, cutIsRunaway, hedgeAfter);
         }
         catch (OpenAiChatException ex) when (
             maxTokens is not null
@@ -728,8 +762,109 @@ public sealed class OpenAiChatTranslator(HttpClient http)
         {
             if (RefusesLimit.TryAdd(server, 0))
                 Log.Info("OpenAI 相容翻譯：伺服器拒絕回答長度上限（400），之後不再送");
-            return await SendOnceAsync(messages, request, cancellationToken, null, cutIsRunaway);
+            return await SendHedgedAsync(messages, request, cancellationToken, null, cutIsRunaway, hedgeAfter);
         }
+    }
+
+    /// <summary>
+    /// How long a translation request may go unanswered before the same request is sent again:
+    /// a few seconds, and longer for a longer answer.
+    /// </summary>
+    /// <remarks>
+    /// Measured on gpt-6-luna through this application: one line comes back in 1.75 s typically and
+    /// 2.85 s at the slow tenth, while about one request in forty takes 5 to 45 s — a request stuck
+    /// somewhere on the server, which the same request sent again does not share. So the wait is
+    /// past the slow tenth for one line, and grows with the answer limit, which grows with the text:
+    /// a screen of thirty lines is rightly slower than one.
+    /// </remarks>
+    internal static TimeSpan HedgeDelay(int maxTokens) =>
+        TimeSpan.FromMilliseconds(3500 + 1.5 * maxTokens);
+
+    /// <summary>
+    /// Whether <paramref name="endpoint"/> is a server across the network rather than on this
+    /// computer or the local network.
+    /// </summary>
+    /// <remarks>
+    /// Only those are sent a request twice. A local model works one request at a time, so a second
+    /// copy would queue behind the first and make it slower still; a hosted service has room for
+    /// both, and the slow one is a request stuck on one of its machines.
+    /// </remarks>
+    internal static bool IsRemote(Uri endpoint)
+    {
+        if (endpoint.IsLoopback) return false;
+
+        var host = endpoint.IdnHost;
+        if (host.EndsWith(".local", StringComparison.OrdinalIgnoreCase) ||
+            host.EndsWith(".lan", StringComparison.OrdinalIgnoreCase) ||
+            host.EndsWith(".localhost", StringComparison.OrdinalIgnoreCase) ||
+            !host.Contains('.'))
+            return false;
+
+        if (!IPAddress.TryParse(host.Trim('[', ']'), out var address)) return true;
+        if (IPAddress.IsLoopback(address)) return false;
+        if (address.IsIPv6LinkLocal || address.IsIPv6SiteLocal || address.IsIPv6UniqueLocal) return false;
+
+        var bytes = address.MapToIPv4().GetAddressBytes();
+        if (address.AddressFamily == System.Net.Sockets.AddressFamily.InterNetworkV6 && !address.IsIPv4MappedToIPv6)
+            return true;
+        return !(bytes[0] == 10
+            || (bytes[0] == 172 && bytes[1] is >= 16 and <= 31)
+            || (bytes[0] == 192 && bytes[1] == 168)
+            || (bytes[0] == 169 && bytes[1] == 254)
+            || (bytes[0] == 100 && bytes[1] is >= 64 and <= 127));
+    }
+
+    /// <summary>
+    /// Sends one request, and when <paramref name="hedgeAfter"/> passes with no answer, the same
+    /// request again; whichever answers first is the answer, and the other is cancelled.
+    /// </summary>
+    /// <remarks>
+    /// A failure of one copy waits for the other rather than failing the call: the second copy is
+    /// there exactly because the first may be the one that is stuck. Both failing fails as the copy
+    /// that failed last, which is the one that ran longest. A copy cancelled because the other won
+    /// costs what it had generated so far, which for a translation that never answered is little.
+    /// </remarks>
+    private async Task<string> SendHedgedAsync(
+        object[] messages, OpenAiChatRequest request, CancellationToken cancellationToken, int? maxTokens,
+        bool cutIsRunaway, TimeSpan? hedgeAfter)
+    {
+        if (hedgeAfter is not { } delay)
+            return await SendOnceAsync(messages, request, cancellationToken, maxTokens, cutIsRunaway);
+
+        using var race = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+        var first = SendOnceAsync(messages, request, race.Token, maxTokens, cutIsRunaway);
+
+        using (var wait = CancellationTokenSource.CreateLinkedTokenSource(race.Token))
+        {
+            var timer = Task.Delay(delay, wait.Token);
+            if (await Task.WhenAny(first, timer) == first)
+            {
+                wait.Cancel();
+                return await first;
+            }
+        }
+
+        cancellationToken.ThrowIfCancellationRequested();
+        Log.Info("OpenAI 相容翻譯：{Delay} ms 沒有回覆，補發同一請求", (int)delay.TotalMilliseconds);
+        var second = SendOnceAsync(messages, request, race.Token, maxTokens, cutIsRunaway);
+
+        var winner = await Task.WhenAny(first, second);
+        var other = winner == first ? second : first;
+        if (winner.IsCompletedSuccessfully)
+        {
+            race.Cancel();
+            Observe(other);
+            if (winner == second) Log.Info("OpenAI 相容翻譯：補發的請求先回覆");
+            return winner.Result;
+        }
+
+        // The first to finish failed: the other one may still answer.
+        Observe(winner);
+        return await other;
+
+        // The loser's failure — its cancellation above all — is nobody's to report.
+        static void Observe(Task task) =>
+            _ = task.ContinueWith(t => _ = t.Exception, TaskContinuationOptions.OnlyOnFaulted);
     }
 
     private async Task<string> SendOnceAsync(
@@ -747,9 +882,18 @@ public sealed class OpenAiChatTranslator(HttpClient http)
         if (request.Seed is { } seed) payload["seed"] = seed;
         if (request.ReasoningEffort is { } effort) payload["reasoning_effort"] = effort;
         if (maxTokens is { } most) payload["max_completion_tokens"] = most;
+        if (request.ServiceTier is { } tier) payload["service_tier"] = tier;
         payload["stream"] = false;
 
-        using var httpRequest = new HttpRequestMessage(HttpMethod.Post, request.Endpoint);
+        // HTTP/2 where the server offers it — the hosted APIs all do — so one connection carries
+        // every request of a screen and stays open between screens; see
+        // OpenAiChatTranslator.CreateHttpClient. A plain http:// server, which every local one is,
+        // is spoken to in HTTP/1.1 as before: OrLower never tries HTTP/2 without TLS.
+        using var httpRequest = new HttpRequestMessage(HttpMethod.Post, request.Endpoint)
+        {
+            Version = HttpVersion.Version20,
+            VersionPolicy = HttpVersionPolicy.RequestVersionOrLower,
+        };
         httpRequest.Content = new StringContent(JsonSerializer.Serialize(payload), Encoding.UTF8, "application/json");
 
         var key = request.ApiKey.Trim();

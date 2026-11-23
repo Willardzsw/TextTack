@@ -114,6 +114,7 @@ public partial class PromptEditOverlay : UserControl
 
             var sampling = profile ?? built;
             ThinkingOffCheckBox.IsChecked = sampling.ThinkingOff;
+            FastModeCheckBox.IsChecked = sampling.FastMode;
             TemperatureEnabledCheckBox.IsChecked = sampling.TemperatureEnabled;
             TemperatureBox.Text = FormatNumber(sampling.Temperature);
             TopPEnabledCheckBox.IsChecked = sampling.TopPEnabled;
@@ -639,6 +640,7 @@ public partial class PromptEditOverlay : UserControl
     private void UpdateAdvancedChrome()
     {
         Card(ThinkingOffCheckBox, ThinkingOffName, null);
+        Card(FastModeCheckBox, FastModeName, null);
         Card(TemperatureEnabledCheckBox, TemperatureName, TemperatureBox);
         Card(TopPEnabledCheckBox, TopPName, TopPBox);
         Card(SeedEnabledCheckBox, SeedName, SeedBox);
@@ -685,6 +687,7 @@ public partial class PromptEditOverlay : UserControl
         profile.Name = name;
         profile.Model = model;
         profile.ThinkingOff = ThinkingOffCheckBox.IsChecked == true;
+        profile.FastMode = FastModeCheckBox.IsChecked == true;
         profile.TemperatureEnabled = TemperatureEnabledCheckBox.IsChecked == true;
         profile.Temperature = ReadNumber(TemperatureBox, MaxTemperature);
         profile.TopPEnabled = TopPEnabledCheckBox.IsChecked == true;

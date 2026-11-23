@@ -52,7 +52,8 @@ public sealed record OpenAiCompatibleOptions(
     int Seed = 0,
     string? ReasoningEffort = null,
     int TimeoutSeconds = OpenAiCompatibleProvider.DefaultTimeoutSeconds,
-    bool Batch = false);
+    bool Batch = false,
+    string? ServiceTier = null);
 
 /// <summary>
 /// 「OpenAI 相容」 as the application asks for it: the user's setting, the instruction written from
@@ -70,7 +71,7 @@ public sealed class OpenAiCompatibleProvider : ITranslationProvider
     // Its own client rather than EngineHttp's: a local model can take tens of seconds to load on the
     // first request, far past what the free engines are given. No timeout of the client's own — each
     // request carries the user's, see TimeoutSeconds.
-    private static readonly HttpClient DefaultHttp = new() { Timeout = Timeout.InfiniteTimeSpan };
+    private static readonly HttpClient DefaultHttp = OpenAiChatTranslator.CreateHttpClient();
 
     /// <summary>How long one request may take when the timeout box is left empty.</summary>
     internal const int DefaultTimeoutSeconds = 60;
@@ -87,13 +88,20 @@ public sealed class OpenAiCompatibleProvider : ITranslationProvider
 
     private readonly OpenAiChatTranslator _chat;
     private readonly Func<OpenAiCompatibleOptions> _options;
+    private readonly string _label;
 
+    /// <param name="label">
+    /// What the log calls this service — 「OpenAI 相容」 unless another service sends through it, as
+    /// <see cref="DeepSeekProvider"/> does, so a report says which of the two answered.
+    /// </param>
     public OpenAiCompatibleProvider(
         HttpClient? http = null,
-        Func<OpenAiCompatibleOptions>? options = null)
+        Func<OpenAiCompatibleOptions>? options = null,
+        string label = "OpenAI 相容")
     {
         _chat = new OpenAiChatTranslator(http ?? DefaultHttp);
         _options = options ?? (() => FromSettings(SettingsService.Instance.Current));
+        _label = label;
     }
 
     /// <summary>
@@ -136,7 +144,8 @@ public sealed class OpenAiCompatibleProvider : ITranslationProvider
             profile.Seed,
             profile.ThinkingOff ? OpenAiModelProfile.ThinkingOffEffort : null,
             TimeoutSecondsFor(settings.OpenAiTimeoutSeconds),
-            profile.Batch);
+            profile.Batch,
+            profile.FastMode ? OpenAiModelProfile.FastServiceTier : null);
     }
 
     /// <summary>
@@ -204,15 +213,15 @@ public sealed class OpenAiCompatibleProvider : ITranslationProvider
         // of "nothing was translated" apart from a request that never left, and names the model the
         // answer came from — with a local server the model is the variable that explains the output.
         var prompt = BuildPrompt(sourceLang, targetLang, options.Template, options.Batch);
-        Log.Info("OpenAI 相容翻譯：{Count} 個區塊，模型 \"{Model:l}\"，端點 {Endpoint}，{Mode:l}，{Way:l}",
-            blocks.Count, model, DiagnosticBundleService.RedactUrlCredentials(endpoint.AbsoluteUri),
+        Log.Info("{Label:l}翻譯：{Count} 個區塊，模型 \"{Model:l}\"，端點 {Endpoint}，{Mode:l}，{Way:l}",
+            _label, blocks.Count, model, DiagnosticBundleService.RedactUrlCredentials(endpoint.AbsoluteUri),
             prompt.IsDefault ? "預設模板" : prompt.HasContext ? "自訂模板" : "自訂模板（無上下文）",
             options.Batch ? "批次" : "逐段");
 
         // The user's own words only at Debug, beside the text: what they wrote can quote what was on
         // screen, the same reason OnnxOcrEngine keeps the recognised text out of the shipped log.
         if (!prompt.IsDefault)
-            Log.Debug("OpenAI 相容翻譯 template=\"{Template:l}\"", prompt.Template);
+            Log.Debug("{Label:l}翻譯 template=\"{Template:l}\"", _label, prompt.Template);
 
         IReadOnlyList<OpenAiChatOutcome> outcomes;
         try
@@ -235,8 +244,8 @@ public sealed class OpenAiCompatibleProvider : ITranslationProvider
         // screen where a few blocks were left in the original.
         var failures = outcomes.Where(outcome => !outcome.Translated).ToList();
         if (failures.Count > 0)
-            Log.Warn("OpenAI 相容翻譯：{Failed}/{Count} 個區塊失敗，以原文代替（{Kinds}）",
-                failures.Count, blocks.Count, string.Join("、", failures
+            Log.Warn("{Label:l}翻譯：{Failed}/{Count} 個區塊失敗，以原文代替（{Kinds}）",
+                _label, failures.Count, blocks.Count, string.Join("、", failures
                     .GroupBy(FailureKind)
                     .Select(group => $"{group.Key}×{group.Count()}")));
 
@@ -245,8 +254,8 @@ public sealed class OpenAiCompatibleProvider : ITranslationProvider
         // the reply.
         if (Log.IsDebugEnabled)
             for (var i = 0; i < blocks.Count; i++)
-                Log.Debug("OpenAI 相容翻譯 index={Index} in=\"{In}\" out=\"{Out}\"",
-                    i, blocks[i].Text, outcomes[i].Translation ?? $"<{FailureKind(outcomes[i])}>");
+                Log.Debug("{Label:l}翻譯 index={Index} in=\"{In}\" out=\"{Out}\"",
+                    _label, i, blocks[i].Text, outcomes[i].Translation ?? $"<{FailureKind(outcomes[i])}>");
 
         var results = new List<TranslatedBlock>(blocks.Count);
         for (int i = 0; i < blocks.Count; i++)
@@ -305,7 +314,8 @@ public sealed class OpenAiCompatibleProvider : ITranslationProvider
             options.SendSeed ? options.Seed : null,
             options.ReasoningEffort,
             TimeSpan.FromSeconds(options.TimeoutSeconds),
-            Batch: options.Batch);
+            Batch: options.Batch,
+            ServiceTier: options.ServiceTier);
 
     /// <summary>How one block failed, for the log: never the server's words, which can quote the text.</summary>
     private static string FailureKind(OpenAiChatOutcome outcome) => outcome.Error switch

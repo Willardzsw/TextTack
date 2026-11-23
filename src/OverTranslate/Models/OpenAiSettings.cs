@@ -124,6 +124,19 @@ public class OpenAiModelProfile
     public const string ThinkingOffEffort = "none";
 
     /// <summary>
+    /// Whether the request carries <c>service_tier: "fast"</c> — OpenAI's Fast mode, faster answers
+    /// at twice the price; off, the field is not sent.
+    /// </summary>
+    /// <remarks>
+    /// Off by default, like <see cref="ThinkingOff"/>, and for the same reason: a server that does
+    /// not know the field may refuse the request, and this one costs money on the servers that do.
+    /// </remarks>
+    public bool FastMode { get; set; }
+
+    /// <summary>What <see cref="FastMode"/> sends.</summary>
+    public const string FastServiceTier = "fast";
+
+    /// <summary>
     /// Whether a screen goes as few requests as fit rather than a text at a time — see
     /// <see cref="OverTranslate.Translation.OpenAi.OpenAiChatRequest.Batch"/>.
     /// </summary>

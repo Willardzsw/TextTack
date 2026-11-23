@@ -7,7 +7,8 @@ namespace OverTranslate.Models;
 // Google is 「Google 翻譯 (標準)」 — the Web endpoint backed by the RPC one, which write alike.
 // Google2 was 「Google 翻譯 (RPC)」 as a choice of its own; it stays so files that saved it still
 // read, and is read as Google (LanguageData.CurrentProvider). GoogleChrome is 「(Beta)」.
-public enum TranslationProvider { Google, Google2, GoogleChrome, Bing, Microsoft, DeepL, OpenAI, Youdao, TranSmart, Yandex }
+// DeepSeek is the hosted DeepSeek API: the OpenAI-compatible request with its own key and model.
+public enum TranslationProvider { Google, Google2, GoogleChrome, Bing, Microsoft, DeepL, OpenAI, Youdao, TranSmart, Yandex, DeepSeek }
 
 public class AppSettings
 {
@@ -269,6 +270,24 @@ public class AppSettings
     /// <see cref="Services.Providers.OpenAiCompatibleProvider.TimeoutSecondsFor"/>.
     /// </remarks>
     public int? OpenAiTimeoutSeconds { get; set; }
+
+    /// <summary>
+    /// The key for the DeepSeek service. Its own, not <see cref="OpenAiApiKey"/>: the two services
+    /// are switched between, and a key for one is refused by the other.
+    /// </summary>
+    /// <remarks>Ends in ApiKey so the diagnostic bundle hides it like the other keys.</remarks>
+    public string DeepSeekApiKey { get; set; } = "";
+
+    /// <summary>
+    /// Which DeepSeek model translates, by its API name, or empty for
+    /// <see cref="Services.Providers.DeepSeekProvider.FlashModel"/>.
+    /// </summary>
+    /// <remarks>
+    /// Empty rather than a copy of the default, so a later default reaches files that never chose.
+    /// A name this build does not offer is read as the default — see
+    /// <see cref="Services.Providers.DeepSeekProvider.ModelFor"/>.
+    /// </remarks>
+    public string DeepSeekModel { get; set; } = "";
 
     /// <summary>
     /// The key 「Google 翻譯 (Beta)」 sends, read from Google's translate element the first time it

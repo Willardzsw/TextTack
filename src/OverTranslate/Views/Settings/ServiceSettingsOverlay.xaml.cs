@@ -40,6 +40,10 @@ public partial class ServiceSettingsOverlay : UserControl
     private static readonly TimeSpan EditDebounce = TimeSpan.FromMilliseconds(600);
 
     private readonly DispatcherTimer _apiKeyDebounce;
+    private readonly DispatcherTimer _deepSeekKeyDebounce;
+
+    /// <summary>The balance query on its way, cancelled when the panel closes or asks again.</summary>
+    private CancellationTokenSource? _balanceQuery;
     private readonly DispatcherTimer _openAiSettingsDebounce;
     private readonly OverlayLanguageSubscription _languageSubscription;
 
@@ -62,6 +66,13 @@ public partial class ServiceSettingsOverlay : UserControl
         {
             _apiKeyDebounce.Stop();
             Persist(s => s.ApiKey = ApiKeyBox.Secret.Trim());
+        };
+
+        _deepSeekKeyDebounce = new DispatcherTimer { Interval = EditDebounce };
+        _deepSeekKeyDebounce.Tick += (_, _) =>
+        {
+            _deepSeekKeyDebounce.Stop();
+            Persist(s => s.DeepSeekApiKey = DeepSeekApiKeyBox.Secret.Trim());
         };
 
         _openAiSettingsDebounce = new DispatcherTimer { Interval = EditDebounce };
@@ -126,6 +137,7 @@ public partial class ServiceSettingsOverlay : UserControl
         // settings the moment it is told the panel closed, and a pending edit would be invisible
         // to it until the timer happened to fire.
         FlushPendingEdits();
+        CancelBalanceQuery();
 
         _languageSubscription.Dispose();
 
@@ -185,15 +197,21 @@ public partial class ServiceSettingsOverlay : UserControl
                 "S.Settings.ServiceDialogTitle", LanguageData.GetProviderDisplay(_provider));
 
             var deepL = _provider == TranslationProvider.DeepL;
+            var deepSeek = _provider == TranslationProvider.DeepSeek;
             DeepLPanel.Visibility = deepL ? Visibility.Visible : Visibility.Collapsed;
-            OpenAiPanel.Visibility = deepL ? Visibility.Collapsed : Visibility.Visible;
+            DeepSeekPanel.Visibility = deepSeek ? Visibility.Visible : Visibility.Collapsed;
+            OpenAiPanel.Visibility = deepL || deepSeek ? Visibility.Collapsed : Visibility.Visible;
 
-            // The card is sized for the wider of the two panels, and DeepL is one field. OpenAI's
+            // The card is sized for the panel on it, and DeepL is one field. OpenAI's
             // width is set by the list rather than by the fields above it: a row is a name with its
             // tags, and a model name in a fixed pitch under it.
-            Card.Width = deepL ? 460 : 640;
+            Card.Width = deepL ? 460 : deepSeek ? 560 : 640;
 
             ApiKeyBox.Secret = s.ApiKey;
+
+            DeepSeekApiKeyBox.Secret = s.DeepSeekApiKey;
+            DeepSeekModelBox.ItemsSource = DeepSeekModelItems();
+            DeepSeekModelBox.SelectedValue = DeepSeekProvider.ModelFor(s.DeepSeekModel);
 
             OpenAiBaseUrlBox.Text = s.OpenAiBaseUrl;
             OpenAiApiKeyBox.Secret = s.OpenAiApiKey;
@@ -238,6 +256,12 @@ public partial class ServiceSettingsOverlay : UserControl
         // the panel closes is raised to the minimum rather than dropped.
         RaiseTimeoutToMinimum();
 
+        if (_deepSeekKeyDebounce.IsEnabled)
+        {
+            _deepSeekKeyDebounce.Stop();
+            Persist(s => s.DeepSeekApiKey = DeepSeekApiKeyBox.Secret.Trim());
+        }
+
         if (_apiKeyDebounce.IsEnabled)
         {
             _apiKeyDebounce.Stop();
@@ -263,6 +287,94 @@ public partial class ServiceSettingsOverlay : UserControl
         if (_loading) return;
         _apiKeyDebounce.Stop();
         _apiKeyDebounce.Start();
+    }
+
+    // ── DeepSeek ─────────────────────────────────────────────────────────────
+
+    /// <summary>One model in the picker: what it is called on screen, and what is sent.</summary>
+    private sealed record DeepSeekModelItem(string Display, string Model);
+
+    private static List<DeepSeekModelItem> DeepSeekModelItems() =>
+    [
+        new(LocalizationService.Get("S.Settings.DeepSeekModelFlash"), DeepSeekProvider.FlashModel),
+        new(LocalizationService.Get("S.Settings.DeepSeekModelPro"), DeepSeekProvider.ProModel),
+    ];
+
+    private void DeepSeekApiKeyBox_SecretChanged(object? sender, EventArgs e)
+    {
+        if (_loading) return;
+
+        // A balance read with the old key says nothing about the new one.
+        CancelBalanceQuery();
+        DeepSeekBalanceText.Text = "";
+
+        _deepSeekKeyDebounce.Stop();
+        _deepSeekKeyDebounce.Start();
+    }
+
+    private void DeepSeekModelBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
+    {
+        if (_loading || DeepSeekModelBox.SelectedValue is not string model) return;
+
+        // Flash is stored as empty, so the default can move without rewriting anyone's file.
+        Persist(s => s.DeepSeekModel = model == DeepSeekProvider.FlashModel ? "" : model);
+    }
+
+    private async void DeepSeekBalanceBtn_Click(object sender, RoutedEventArgs e)
+    {
+        // The key as typed, not as the debounce will have stored it in a moment.
+        if (_deepSeekKeyDebounce.IsEnabled)
+        {
+            _deepSeekKeyDebounce.Stop();
+            Persist(s => s.DeepSeekApiKey = DeepSeekApiKeyBox.Secret.Trim());
+        }
+
+        CancelBalanceQuery();
+        var query = _balanceQuery = new CancellationTokenSource();
+
+        DeepSeekBalanceBtn.IsEnabled = false;
+        DeepSeekBalanceText.SetResourceReference(TextBlock.ForegroundProperty, "AppTextSecondary");
+        DeepSeekBalanceText.Text = LocalizationService.Get("S.Settings.DeepSeekBalanceQuerying");
+        try
+        {
+            var info = await AppServices.Translation.DeepSeek.QueryBalanceAsync(query.Token);
+            if (query.IsCancellationRequested) return;
+
+            var amounts = info.Balances.Count > 0
+                ? string.Join("  ", info.Balances.Select(DeepSeekProvider.Display))
+                : "\u00a50.00";
+            DeepSeekBalanceText.Text = info.Available
+                ? LocalizationService.Format("S.Settings.DeepSeekBalanceResult", amounts)
+                : LocalizationService.Format("S.Settings.DeepSeekBalanceEmpty", amounts);
+            DeepSeekBalanceText.SetResourceReference(
+                TextBlock.ForegroundProperty, info.Available ? "AppTextPrimary" : "AppWarning");
+        }
+        catch (OperationCanceledException) when (query.IsCancellationRequested)
+        {
+            // Closed, or asked again: the newer answer, if any, is the one to show.
+        }
+        catch (Exception ex)
+        {
+            if (query.IsCancellationRequested) return;
+            DeepSeekBalanceText.Text = LocalizationService.Format("S.Settings.DeepSeekBalanceFailed", ex.Message);
+            DeepSeekBalanceText.SetResourceReference(TextBlock.ForegroundProperty, "AppError");
+        }
+        finally
+        {
+            if (ReferenceEquals(_balanceQuery, query))
+            {
+                DeepSeekBalanceBtn.IsEnabled = true;
+                _balanceQuery = null;
+            }
+            query.Dispose();
+        }
+    }
+
+    private void CancelBalanceQuery()
+    {
+        _balanceQuery?.Cancel();
+        _balanceQuery = null;
+        DeepSeekBalanceBtn.IsEnabled = true;
     }
 
     // ── OpenAI fields ────────────────────────────────────────────────────────
@@ -446,6 +558,7 @@ public partial class ServiceSettingsOverlay : UserControl
     {
         var parts = new List<string>();
         if (profile.ThinkingOff) parts.Add(label("S.Settings.ThinkingOff"));
+        if (profile.FastMode) parts.Add(label("S.Settings.FastMode"));
         if (profile.TemperatureEnabled) parts.Add($"{label("S.Settings.Temperature")} {Number(profile.Temperature)}");
         if (profile.TopPEnabled) parts.Add($"{label("S.Settings.TopP")} {Number(profile.TopP)}");
         if (profile.SeedEnabled) parts.Add($"{label("S.Settings.Seed")} {profile.Seed.ToString(CultureInfo.InvariantCulture)}");

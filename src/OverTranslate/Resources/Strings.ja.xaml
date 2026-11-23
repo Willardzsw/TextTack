@@ -74,7 +74,7 @@
     <sys:String x:Key="S.Translation.SwapTip">言語と内容を入れ替える</sys:String>
     <sys:String x:Key="S.Translation.ClearSource">原文を消去</sys:String>
     <sys:String x:Key="S.Translation.SpeakSource">原文を読み上げる</sys:String>
-    <sys:String x:Key="S.Translation.SpeakSourceOpenAi">OpenAI の翻訳サービスでは、翻訳元の言語を指定すると原文を読み上げられます。</sys:String>
+    <sys:String x:Key="S.Translation.SpeakSourceOpenAi">OpenAI / DeepSeek の翻訳サービスでは、翻訳元の言語を指定すると原文を読み上げられます。</sys:String>
     <sys:String x:Key="S.Translation.SpeakSourceUnknown">原文の言語がまだ分かりません。翻訳が終わると読み上げられます。</sys:String>
     <!-- The note at the foot of the page and the greyed speaker's tooltip are the same sentence:
          the note is what is read, the tooltip is for whoever hovers the button instead. -->
@@ -127,7 +127,7 @@
     <!-- Automatic is not switched off here the way it is on the text translation page: once the
          translation is back the engine has said which language the original was in, so the only
          gap is before the first result. -->
-    <sys:String x:Key="S.QuickLookup.SpeakSourceOpenAi">OpenAI の翻訳サービスでは、翻訳元の言語を指定すると原文を読み上げられます。</sys:String>
+    <sys:String x:Key="S.QuickLookup.SpeakSourceOpenAi">OpenAI / DeepSeek の翻訳サービスでは、翻訳元の言語を指定すると原文を読み上げられます。</sys:String>
     <sys:String x:Key="S.QuickLookup.SpeakSourceUnknown">原文の言語がまだ分かりません。翻訳が終わると読み上げられます。</sys:String>
     <sys:String x:Key="S.QuickLookup.Provider">翻訳サービス</sys:String>
     <sys:String x:Key="S.QuickLookup.ProviderHint">キャプチャ翻訳・テキスト翻訳と共通のサービスです</sys:String>
@@ -246,8 +246,8 @@
     <sys:String x:Key="S.Overlay.Recognising">認識中</sys:String>
 
     <!-- ── Secret box ── -->
-    <sys:String x:Key="S.Secret.Show">表示</sys:String>
-    <sys:String x:Key="S.Secret.Hide">非表示</sys:String>
+    <sys:String x:Key="S.Secret.Clear">消去して入力し直す</sys:String>
+    <sys:String x:Key="S.Secret.SavedHint">キーは保存済みです。安全のため、表示やコピーはできません。</sys:String>
 
     <!-- ── Tray notifications and capture balloons ── -->
     <sys:String x:Key="S.App.Name">TextTack</sys:String>
@@ -431,6 +431,27 @@
     <sys:String x:Key="S.Provider.DeepLHint">DeepL の公式サイトで登録して API キーを取得する必要があります</sys:String>
     <sys:String x:Key="S.Provider.OpenAI">OpenAI</sys:String>
     <sys:String x:Key="S.Provider.OpenAIHint">OpenAI 互換 API に対応（Ollama・LM Studio・OpenRouter など）。ローカル LLM の利用がおすすめです。</sys:String>
+    <sys:String x:Key="S.Provider.DeepSeek">DeepSeek</sys:String>
+    <sys:String x:Key="S.Provider.DeepSeekHint">DeepSeek 公式 API。ご自身の API キーが必要で、使用量に応じて課金されます。</sys:String>
+    <sys:String x:Key="S.Settings.DeepSeekKeyHint">platform.deepseek.com で API キーを作成して貼り付けてください。アドレス・プロンプト・パラメーターは設定済みです。</sys:String>
+    <sys:String x:Key="S.Settings.DeepSeekModel">モデル</sys:String>
+    <sys:String x:Key="S.Settings.DeepSeekModelFlash">Flash（既定、安くて速い）</sys:String>
+    <sys:String x:Key="S.Settings.DeepSeekModelPro">Pro（高性能、価格は約 4 倍）</sys:String>
+    <sys:String x:Key="S.Settings.DeepSeekBalance">残高</sys:String>
+    <sys:String x:Key="S.Settings.DeepSeekBalanceQuery">残高を確認</sys:String>
+    <sys:String x:Key="S.Settings.DeepSeekBalanceQuerying">確認中…</sys:String>
+    <sys:String x:Key="S.Settings.DeepSeekBalanceResult">残高：{0}</sys:String>
+    <sys:String x:Key="S.Settings.DeepSeekBalanceEmpty">残高不足（{0}）。チャージしてください</sys:String>
+    <sys:String x:Key="S.Settings.DeepSeekBalanceFailed">確認できませんでした：{0}</sys:String>
+    <sys:String x:Key="S.Settings.DeepSeekPriceHint">北京時間の月〜金 9〜12 時・14〜18 時はピーク時間帯で、料金はそれ以外の 2 倍です。最新の料金は DeepSeek 公式サイトでご確認ください。</sys:String>
+    <sys:String x:Key="S.Error.DeepSeekNoKey">DeepSeek の API キーが未入力です。「設定 › 翻訳サービス › DeepSeek」で入力してください。</sys:String>
+    <sys:String x:Key="S.Error.DeepSeekUnauthorized">DeepSeek の API キーが無効です。確認して入力し直してください。</sys:String>
+    <sys:String x:Key="S.Error.DeepSeekNoBalance">DeepSeek の残高が不足しています。チャージしてから再試行してください。</sys:String>
+    <sys:String x:Key="S.Error.DeepSeekRateLimited">DeepSeek へのリクエストが多すぎます。しばらくしてから再試行してください。</sys:String>
+    <sys:String x:Key="S.Error.DeepSeekBusy">DeepSeek のサーバーが混雑しています。しばらくしてから再試行してください。</sys:String>
+    <sys:String x:Key="S.Error.DeepSeekHttp">DeepSeek が {0} を返しました：{1}</sys:String>
+    <sys:String x:Key="S.Error.DeepSeekTimeout">DeepSeek が {0} 秒以内に応答しませんでした。ネットワークを確認して再試行してください。</sys:String>
+    <sys:String x:Key="S.Error.DeepSeekBalanceUnreadable">DeepSeek から返された残高を読み取れませんでした。</sys:String>
 
     <!-- ── Settings page ── -->
     <sys:String x:Key="S.Settings.Title">設定</sys:String>
@@ -570,6 +591,10 @@
     <sys:String x:Key="S.Settings.ThinkingOffDetail">reasoning_effort: none を送信</sys:String>
     <sys:String x:Key="S.Settings.ThinkingOffTip" xml:space="preserve">考えずにすぐ回答するようモデルに求めます。汎用モデルの中には既定で考えてから回答するものがあり、翻訳が大幅に遅くなったり、タイムアウトしたりします。翻訳専用モデルでは通常不要です。
 このパラメーターを認識できずエラーを返すサービスもあります。その場合はチェックを外してください。</sys:String>
+    <sys:String x:Key="S.Settings.FastMode">高速モード</sys:String>
+    <sys:String x:Key="S.Settings.FastModeDetail">service_tier: fast を送信</sys:String>
+    <sys:String x:Key="S.Settings.FastModeTip" xml:space="preserve">OpenAI の Fast mode：より速く安定した応答が得られますが、料金は通常の 2 倍です。
+対応するサービス（OpenAI 公式 API など）でのみ有効です。他のサービスではエラーになることがあり、その場合はチェックを外してください。</sys:String>
     <sys:String x:Key="S.Settings.AdvancedHint">チェックしていないパラメーターは送信されません。対応するパラメーターや範囲はモデルによって異なります。モデルのドキュメントに従ってください。</sys:String>
     <sys:String x:Key="S.Settings.Temperature">Temperature</sys:String>
     <sys:String x:Key="S.Settings.TemperatureRange">範囲：0.0 ~ 2.0</sys:String>

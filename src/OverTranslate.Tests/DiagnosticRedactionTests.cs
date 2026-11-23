@@ -207,6 +207,31 @@ public class DiagnosticRedactionTests
     }
 
     [Fact]
+    public void ExportsUnderTheTextTackName_AgeOutAlongsideTheOldOnes()
+    {
+        var directory = NewTempFolder();
+        try
+        {
+            var oldNew = WriteBundle(directory, "TextTack-diagnostics-20250101-120000.zip",
+                DateTime.UtcNow - TimeSpan.FromDays(31));
+            var oldOld = WriteBundle(directory, "OverTranslate-diagnostics-20250102-120000.zip",
+                DateTime.UtcNow - TimeSpan.FromDays(31));
+            var fresh = WriteBundle(directory, "TextTack-diagnostics-20260101-120000.zip",
+                DateTime.UtcNow - TimeSpan.FromDays(1));
+
+            Assert.Equal(2, DiagnosticBundleService.PruneOldExports(directory, DateTime.UtcNow));
+
+            Assert.False(File.Exists(oldNew));
+            Assert.False(File.Exists(oldOld));
+            Assert.True(File.Exists(fresh));
+        }
+        finally
+        {
+            Directory.Delete(directory, recursive: true);
+        }
+    }
+
+    [Fact]
     public void FilesTheExportDidNotWrite_AreLeftAloneHoweverOld()
     {
         var directory = NewTempFolder();

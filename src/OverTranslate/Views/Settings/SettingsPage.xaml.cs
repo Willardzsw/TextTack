@@ -877,6 +877,7 @@ public partial class SettingsPage : UserControl
     {
         _ when ReferenceEquals(sender, DeepLConfigureBtn)  => TranslationProvider.DeepL,
         _ when ReferenceEquals(sender, OpenAiConfigureBtn) => TranslationProvider.OpenAI,
+        _ when ReferenceEquals(sender, DeepSeekConfigureBtn) => TranslationProvider.DeepSeek,
         _ => null,
     };
 
@@ -891,7 +892,7 @@ public partial class SettingsPage : UserControl
     }
 
     /// <summary>
-    /// Brings the two tiles in line with what is stored: what each service still needs before it
+    /// Brings the three tiles in line with what is stored: what each service still needs before it
     /// can translate.
     /// </summary>
     /// <remarks>
@@ -912,6 +913,9 @@ public partial class SettingsPage : UserControl
             s.OpenAiApiKey.Trim().Length > 0 ||
             s.OpenAi.Profiles.Count > 0;
         WriteServiceBadge(OpenAiBadge, OpenAiBadgeText, configured: openAiTouched, required: false);
+
+        // DeepSeek is a paid service: nothing is translated until its key is in.
+        WriteServiceBadge(DeepSeekBadge, DeepSeekBadgeText, configured: s.DeepSeekApiKey.Trim().Length > 0, required: true);
     }
 
     /// <param name="required">

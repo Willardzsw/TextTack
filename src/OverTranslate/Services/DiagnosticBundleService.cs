@@ -115,7 +115,7 @@ public static class DiagnosticBundleService
 
         var path = Path.Combine(
             directory,
-            $"OverTranslate-diagnostics-{DateTime.Now:yyyyMMdd-HHmmss}.zip");
+            $"TextTack-diagnostics-{DateTime.Now:yyyyMMdd-HHmmss}.zip");
 
         using (var archive = ZipFile.Open(path, ZipArchiveMode.Create))
         {
@@ -189,8 +189,11 @@ public static class DiagnosticBundleService
     /// </summary>
     public static readonly TimeSpan ExportRetention = TimeSpan.FromDays(30);
 
-    /// <summary>The names <see cref="Export"/> writes, and the only ones this will delete.</summary>
-    private const string ExportPattern = "OverTranslate-diagnostics-*.zip";
+    /// <summary>
+    /// The names <see cref="Export"/> writes, and the only ones this will delete: TextTack's, and
+    /// the OverTranslate name exports had before the rename, which still age out the same way.
+    /// </summary>
+    private static readonly string[] ExportPatterns = ["TextTack-diagnostics-*.zip", "OverTranslate-diagnostics-*.zip"];
 
     /// <summary>
     /// Deletes the exports older than <see cref="ExportRetention"/>, and returns how many went.
@@ -213,7 +216,7 @@ public static class DiagnosticBundleService
         var deleted = 0;
         if (!Directory.Exists(directory)) return deleted;
 
-        foreach (var file in Directory.GetFiles(directory, ExportPattern))
+        foreach (var file in ExportPatterns.SelectMany(pattern => Directory.GetFiles(directory, pattern)))
         {
             try
             {
@@ -455,7 +458,7 @@ public static class DiagnosticBundleService
         var sb = new StringBuilder();
         var process = Process.GetCurrentProcess();
 
-        sb.AppendLine("=== OverTranslate diagnostics ===");
+        sb.AppendLine("=== TextTack diagnostics (based on OverTranslate) ===");
         sb.AppendLine($"generated : {DateTimeOffset.Now:yyyy-MM-dd HH:mm:ss zzz}");
         sb.AppendLine($"app       : v{Assembly.GetExecutingAssembly().GetName().Version?.ToString(3) ?? "0.0.0"}");
         sb.AppendLine($"install   : {CollapseUserPaths(AppContext.BaseDirectory)}");

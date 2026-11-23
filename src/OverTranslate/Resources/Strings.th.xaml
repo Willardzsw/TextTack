@@ -68,7 +68,7 @@
     <sys:String x:Key="S.Translation.SwapTip">สลับภาษาและข้อความ</sys:String>
     <sys:String x:Key="S.Translation.ClearSource">ล้างข้อความต้นฉบับ</sys:String>
     <sys:String x:Key="S.Translation.SpeakSource">อ่านต้นฉบับออกเสียง</sys:String>
-    <sys:String x:Key="S.Translation.SpeakSourceOpenAi">เมื่อใช้บริการ OpenAI ให้เลือกภาษาต้นทางก่อนจึงจะอ่านต้นฉบับออกเสียงได้</sys:String>
+    <sys:String x:Key="S.Translation.SpeakSourceOpenAi">เมื่อใช้บริการ OpenAI / DeepSeek ให้เลือกภาษาต้นทางก่อนจึงจะอ่านต้นฉบับออกเสียงได้</sys:String>
     <sys:String x:Key="S.Translation.SpeakSourceUnknown">ยังไม่ทราบภาษาของต้นฉบับ จะอ่านออกเสียงได้เมื่อได้คำแปลกลับมาแล้ว</sys:String>
     <!-- The note at the foot of the page and the greyed speaker's tooltip are the same sentence:
          the note is what is read, the tooltip is for whoever hovers the button instead. -->
@@ -121,7 +121,7 @@
     <!-- Automatic is not switched off here the way it is on the text translation page: once the
          translation is back the engine has said which language the original was in, so the only
          gap is before the first result. -->
-    <sys:String x:Key="S.QuickLookup.SpeakSourceOpenAi">เมื่อใช้บริการ OpenAI ให้เลือกภาษาต้นทางก่อนจึงจะอ่านต้นฉบับออกเสียงได้</sys:String>
+    <sys:String x:Key="S.QuickLookup.SpeakSourceOpenAi">เมื่อใช้บริการ OpenAI / DeepSeek ให้เลือกภาษาต้นทางก่อนจึงจะอ่านต้นฉบับออกเสียงได้</sys:String>
     <sys:String x:Key="S.QuickLookup.SpeakSourceUnknown">ยังไม่ทราบภาษาของต้นฉบับ จะอ่านออกเสียงได้เมื่อได้คำแปลกลับมาแล้ว</sys:String>
     <sys:String x:Key="S.QuickLookup.Provider">บริการแปล</sys:String>
     <sys:String x:Key="S.QuickLookup.ProviderHint">ใช้ร่วมกับการแปลหน้าจอและการแปลข้อความ</sys:String>
@@ -237,8 +237,8 @@
     <sys:String x:Key="S.Overlay.Recognising">กำลังอ่าน</sys:String>
 
     <!-- ── Secret box ── -->
-    <sys:String x:Key="S.Secret.Show">แสดง</sys:String>
-    <sys:String x:Key="S.Secret.Hide">ซ่อน</sys:String>
+    <sys:String x:Key="S.Secret.Clear">ล้างแล้วใส่ใหม่</sys:String>
+    <sys:String x:Key="S.Secret.SavedHint">บันทึกคีย์แล้ว เพื่อความปลอดภัยจึงดูหรือคัดลอกไม่ได้</sys:String>
 
     <!-- ── Tray notifications and capture balloons ── -->
     <sys:String x:Key="S.App.Name">TextTack</sys:String>
@@ -422,6 +422,27 @@
     <sys:String x:Key="S.Provider.DeepLHint">ต้องใช้คีย์ API จาก DeepL</sys:String>
     <sys:String x:Key="S.Provider.OpenAI">OpenAI</sys:String>
     <sys:String x:Key="S.Provider.OpenAIHint">API ใดก็ได้ที่รองรับ OpenAI (Ollama, LM Studio, OpenRouter…) แนะนำให้ใช้ LLM ในเครื่อง</sys:String>
+    <sys:String x:Key="S.Provider.DeepSeek">DeepSeek</sys:String>
+    <sys:String x:Key="S.Provider.DeepSeekHint">API ทางการของ DeepSeek ต้องใช้ API Key ของคุณเอง คิดค่าบริการตามการใช้งาน</sys:String>
+    <sys:String x:Key="S.Settings.DeepSeekKeyHint">สร้าง API Key ที่ platform.deepseek.com แล้ววางที่นี่ ที่อยู่ พรอมต์ และพารามิเตอร์ตั้งค่าไว้ให้แล้ว</sys:String>
+    <sys:String x:Key="S.Settings.DeepSeekModel">โมเดล</sys:String>
+    <sys:String x:Key="S.Settings.DeepSeekModelFlash">Flash (ค่าเริ่มต้น ถูกและเร็ว)</sys:String>
+    <sys:String x:Key="S.Settings.DeepSeekModelPro">Pro (เก่งกว่า ราคาประมาณ 4 เท่า)</sys:String>
+    <sys:String x:Key="S.Settings.DeepSeekBalance">ยอดเงินคงเหลือ</sys:String>
+    <sys:String x:Key="S.Settings.DeepSeekBalanceQuery">ตรวจสอบยอดเงิน</sys:String>
+    <sys:String x:Key="S.Settings.DeepSeekBalanceQuerying">กำลังตรวจสอบ…</sys:String>
+    <sys:String x:Key="S.Settings.DeepSeekBalanceResult">ยอดคงเหลือ: {0}</sys:String>
+    <sys:String x:Key="S.Settings.DeepSeekBalanceEmpty">ยอดเงินไม่พอ ({0}) กรุณาเติมเงิน</sys:String>
+    <sys:String x:Key="S.Settings.DeepSeekBalanceFailed">ตรวจสอบไม่สำเร็จ: {0}</sys:String>
+    <sys:String x:Key="S.Settings.DeepSeekPriceHint">ช่วงเวลาเร่งด่วนคือ 9–12 น. และ 14–18 น. ตามเวลาปักกิ่ง วันจันทร์ถึงศุกร์ ราคาเป็นสองเท่าของช่วงอื่น ดูราคาล่าสุดที่เว็บไซต์ DeepSeek</sys:String>
+    <sys:String x:Key="S.Error.DeepSeekNoKey">ยังไม่ได้ใส่ API Key ของ DeepSeek โปรดใส่ที่ «การตั้งค่า › บริการแปล › DeepSeek»</sys:String>
+    <sys:String x:Key="S.Error.DeepSeekUnauthorized">API Key ของ DeepSeek ไม่ถูกต้อง โปรดตรวจสอบแล้วใส่ใหม่</sys:String>
+    <sys:String x:Key="S.Error.DeepSeekNoBalance">ยอดเงินในบัญชี DeepSeek ไม่พอ โปรดเติมเงินแล้วลองอีกครั้ง</sys:String>
+    <sys:String x:Key="S.Error.DeepSeekRateLimited">ส่งคำขอไปยัง DeepSeek ถี่เกินไป โปรดลองอีกครั้งในอีกสักครู่</sys:String>
+    <sys:String x:Key="S.Error.DeepSeekBusy">เซิร์ฟเวอร์ DeepSeek ไม่ว่าง โปรดลองอีกครั้งในอีกสักครู่</sys:String>
+    <sys:String x:Key="S.Error.DeepSeekHttp">DeepSeek ตอบกลับ {0}: {1}</sys:String>
+    <sys:String x:Key="S.Error.DeepSeekTimeout">DeepSeek ไม่ตอบกลับภายใน {0} วินาที โปรดตรวจสอบเครือข่ายแล้วลองอีกครั้ง</sys:String>
+    <sys:String x:Key="S.Error.DeepSeekBalanceUnreadable">อ่านยอดเงินที่ DeepSeek ส่งกลับมาไม่ได้</sys:String>
 
     <!-- ── Settings page ── -->
     <sys:String x:Key="S.Settings.Title">การตั้งค่า</sys:String>
@@ -561,6 +582,10 @@
     <sys:String x:Key="S.Settings.ThinkingOffDetail">ส่ง reasoning_effort: none</sys:String>
     <sys:String x:Key="S.Settings.ThinkingOffTip" xml:space="preserve">ขอให้โมเดลตอบทันทีโดยไม่ต้องคิดก่อน โมเดลทั่วไปบางตัวจะคิดก่อนตอบโดยค่าเริ่มต้น ทำให้การแปลช้ามากหรือถึงขั้นหมดเวลา โมเดลที่ทำมาเพื่อการแปลมักไม่ต้องใช้ตัวเลือกนี้
 บางบริการไม่รู้จักพารามิเตอร์นี้และส่งข้อผิดพลาดกลับมา หากเป็นเช่นนั้นให้ยกเลิกเครื่องหมาย</sys:String>
+    <sys:String x:Key="S.Settings.FastMode">โหมดเร็ว</sys:String>
+    <sys:String x:Key="S.Settings.FastModeDetail">ส่ง service_tier: fast</sys:String>
+    <sys:String x:Key="S.Settings.FastModeTip" xml:space="preserve">Fast mode ของ OpenAI: ตอบเร็วและสม่ำเสมอกว่า แต่ราคาเป็นสองเท่าของปกติ
+ใช้ได้เฉพาะบริการที่รองรับ (เช่น API ทางการของ OpenAI) บริการอื่นอาจตอบกลับเป็นข้อผิดพลาด ในกรณีนั้นให้เอาเครื่องหมายออก</sys:String>
     <sys:String x:Key="S.Settings.AdvancedHint">พารามิเตอร์ที่ไม่ได้ทำเครื่องหมายจะไม่ถูกส่ง โมเดลแต่ละตัวรับพารามิเตอร์และช่วงค่าไม่เหมือนกัน — ให้ยึดตามเอกสารของโมเดลที่คุณใช้</sys:String>
     <sys:String x:Key="S.Settings.Temperature">Temperature</sys:String>
     <sys:String x:Key="S.Settings.TemperatureRange">ช่วง: 0.0 ~ 2.0</sys:String>

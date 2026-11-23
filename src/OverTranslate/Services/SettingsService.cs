@@ -52,6 +52,9 @@ public class SettingsService
         Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping,
     };
 
+    /// <summary>How the settings file and the copies kept beside it are written.</summary>
+    internal static JsonSerializerOptions FileWriteOptions => WriteOptions;
+
     private static SettingsService? _instance;
     public static SettingsService Instance => _instance ??= new SettingsService();
 
@@ -83,6 +86,10 @@ public class SettingsService
                 Save();
             });
             _savingEnabled = true;
+
+            // The copies kept from before each update were written with the keys readable.
+            if (Path.GetDirectoryName(_settingsPath) is { Length: > 0 } directory)
+                SecretStore.ProtectBackups(directory);
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or InvalidDataException)
         {
@@ -110,9 +117,11 @@ public class SettingsService
         }
 
         AppSettings settings;
+        bool plainKey;
         try
         {
             settings = ParseDocument(json);
+            plainKey = JsonNode.Parse(json) is JsonObject stored && SecretStore.HasPlainKey(stored);
         }
         catch (Exception ex) when (ex is JsonException or ArgumentException or InvalidOperationException)
         {
@@ -129,6 +138,12 @@ public class SettingsService
                 SettingsBackup.Copy(path, SettingsBackup.PathFor(path, version));
 
             settings.LastRunVersion = version;
+            save(settings);
+        }
+        else if (plainKey)
+        {
+            // A key still readable in the file — from before keys were encrypted, or pasted in by
+            // hand: written back encrypted now rather than at whatever save comes next.
             save(settings);
         }
         return settings;
@@ -164,6 +179,9 @@ public class SettingsService
             ?? throw new JsonException("The settings root must be an object.");
 
         Apply(settings, root, "");
+
+        // The file holds the keys encrypted; everything past this point works with the keys.
+        SecretStore.UnprotectAll(settings);
 
         // Retired options, read as the ones that replaced them — the pickers no longer list them.
         settings.Provider = LanguageData.CurrentProvider(settings.Provider);
@@ -293,8 +311,13 @@ public class SettingsService
         && type.Namespace == typeof(AppSettings).Namespace;
 
     /// <summary>The exact bytes <see cref="Save"/> writes, for a test that has no file to read.</summary>
-    internal static string Serialize(AppSettings settings) =>
-        JsonSerializer.Serialize(settings, WriteOptions);
+    /// <remarks>The user's API keys are written encrypted — see <see cref="SecretStore"/>.</remarks>
+    internal static string Serialize(AppSettings settings)
+    {
+        var root = JsonSerializer.SerializeToNode(settings, WriteOptions)!.AsObject();
+        SecretStore.ProtectAll(root);
+        return root.ToJsonString(WriteOptions);
+    }
 
     public event EventHandler? OcrDebugChanged;
 
