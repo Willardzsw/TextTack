@@ -45,8 +45,7 @@ internal static class KeyboardInput
     {
         var press = new List<INPUT>();
 
-        foreach (var modifier in new ushort[] { VK_MENU, VK_SHIFT, VK_LWIN, VK_RWIN, VK_CONTROL })
-            press.Add(Key(modifier, up: true));
+        press.AddRange(ReleaseModifiers(IsKeyDown));
 
         press.Add(Key(VK_CONTROL, up: false));
         press.Add(Key(virtualKey, up: false));
@@ -66,8 +65,7 @@ internal static class KeyboardInput
     {
         var press = new List<INPUT>();
 
-        foreach (var modifier in new ushort[] { VK_MENU, VK_SHIFT, VK_LWIN, VK_RWIN, VK_CONTROL })
-            press.Add(Key(modifier, up: true));
+        press.AddRange(ReleaseModifiers(IsKeyDown));
 
         var extended = virtualKey is >= 0x21 and <= 0x28;
         press.Add(Key(virtualKey, up: false, extended));
@@ -77,6 +75,36 @@ internal static class KeyboardInput
             () => Task.Delay(ChordHold),
             () => Inject([Key(virtualKey, up: true, extended)]));
     }
+
+    /// <summary>
+    /// An unassigned virtual key, pressed while Alt or Win is still down so that releasing them is
+    /// not read as a lone tap.
+    /// </summary>
+    internal const ushort VK_MASK = 0xE8;
+
+    /// <summary>The key events that release every modifier the user may still be holding.</summary>
+    /// <remarks>
+    /// The shortcut's own letter was taken by RegisterHotKey, so all the foreground application saw
+    /// was Alt going down. Releasing it now would complete a lone Alt tap, which a window with a menu
+    /// bar (Claude's desktop app, classic Win32 programs) answers by entering its menu — and the
+    /// Ctrl+C or Ctrl+V sent next then lands on the menu instead of the text. A lone Win tap opens
+    /// the Start menu the same way. Tapping a key nobody uses while they are still down makes the
+    /// release an ordinary one; the user's own later release then follows that key, not a lone Alt,
+    /// so it does not open the menu either.
+    /// </remarks>
+    internal static IEnumerable<INPUT> ReleaseModifiers(Func<ushort, bool> isDown)
+    {
+        if (isDown(VK_MENU) || isDown(VK_LWIN) || isDown(VK_RWIN))
+        {
+            yield return Key(VK_MASK, up: false);
+            yield return Key(VK_MASK, up: true);
+        }
+
+        foreach (var modifier in new ushort[] { VK_MENU, VK_SHIFT, VK_LWIN, VK_RWIN, VK_CONTROL })
+            yield return Key(modifier, up: true);
+    }
+
+    private static bool IsKeyDown(ushort virtualKey) => (GetAsyncKeyState(virtualKey) & 0x8000) != 0;
 
     /// <summary>Keeps an injected chord down long enough to cross a frame boundary.</summary>
     /// <remarks>
@@ -166,6 +194,9 @@ internal static class KeyboardInput
         public uint time;
         public IntPtr dwExtraInfo;
     }
+
+    [DllImport("user32.dll")]
+    private static extern short GetAsyncKeyState(int virtualKey);
 
     [DllImport("user32.dll", SetLastError = true)]
     private static extern uint SendInput(uint count, INPUT[] inputs, int size);

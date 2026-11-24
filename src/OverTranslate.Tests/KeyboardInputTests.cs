@@ -40,4 +40,32 @@ public class KeyboardInputTests
 
         Assert.True(released);
     }
+
+    [Theory]
+    [InlineData(KeyboardInput.VK_MENU)]
+    [InlineData(KeyboardInput.VK_LWIN)]
+    [InlineData(KeyboardInput.VK_RWIN)]
+    public void A_held_Alt_or_Win_is_masked_before_it_is_released(ushort held)
+    {
+        // Released bare, it is a lone tap: a menu bar (Claude's desktop app) or the Start menu
+        // opens and swallows the Ctrl+C that follows.
+        var events = KeyboardInput.ReleaseModifiers(vk => vk == held).ToList();
+
+        Assert.Equal(KeyboardInput.VK_MASK, events[0].u.ki.wVk);
+        Assert.Equal(0u, events[0].u.ki.dwFlags);
+        Assert.Equal(KeyboardInput.VK_MASK, events[1].u.ki.wVk);
+        Assert.Equal(2u, events[1].u.ki.dwFlags);
+        var heldUp = events.FindIndex(e => e.u.ki.wVk == held);
+        Assert.True(heldUp > 1);
+    }
+
+    [Fact]
+    public void Only_Ctrl_or_Shift_held_sends_no_mask()
+    {
+        var events = KeyboardInput.ReleaseModifiers(
+            vk => vk is KeyboardInput.VK_CONTROL or KeyboardInput.VK_SHIFT).ToList();
+
+        Assert.DoesNotContain(events, e => e.u.ki.wVk == KeyboardInput.VK_MASK);
+        Assert.Equal(5, events.Count);
+    }
 }
