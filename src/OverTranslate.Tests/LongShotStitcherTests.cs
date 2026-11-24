@@ -163,21 +163,6 @@ public class LongShotStitcherTests
             for (int x = 120; x < 122; x++) blink[(r * W + x) * 4] = 0;
         Assert.Equal(StitchResult.Unchanged, stitcher.Add(blink));
     }
-    [Fact]
-    public void BlankIsBridgedScrollingUpToo()
-    {
-        var stitcher = new LongShotStitcher(W, H);
-        foreach (int scroll in new[] { 500, 460, 420, 380, 300, 220, 160, 100, 60, 20, 0 })
-            Assert.NotEqual(StitchResult.Lost, stitcher.Add(GapFrame(scroll)));
-
-        var (pixels, _, height) = stitcher.Finish();
-        const int kept = 24;
-        Assert.Equal(GapFrom + kept + (600 - GapTo), height);
-        for (int row = 0; row < GapFrom; row += 5) AssertRowIsPage(pixels, row, row);
-        for (int row = GapFrom + kept; row < height; row += 5)
-            AssertRowIsPage(pixels, row, row - GapFrom - kept + GapTo);
-    }
-
     // ---- four directions, on a page wider and taller than the region ----
 
     private const int PageW = 900, PageH2 = 700;
@@ -214,29 +199,17 @@ public class LongShotStitcherTests
     }
 
     [Fact]
-    public void ScrollingUpFromTheMiddleGrowsUpwards()
-    {
-        var stitcher = new LongShotStitcher(W, H);
-        foreach (int top in new[] { 300, 260, 200, 130, 60, 100, 170 })
-            Assert.Equal(StitchResult.Placed, stitcher.Add(View(0, top)));
-
-        var (pixels, width, height) = stitcher.Finish();
-        Assert.Equal(W, width);
-        Assert.Equal(400 - 60, height);
-        AssertMatchesPage(pixels, width, 0, 60, 0, 0, width, height);
-    }
-
-    [Fact]
     public void ScrollingSidewaysGrowsSideways()
     {
         var stitcher = new LongShotStitcher(W, H) { Axis = StitchAxis.Horizontal };
         foreach (int left in new[] { 300, 360, 430, 500, 600, 520, 400, 250, 180 })
             Assert.Equal(StitchResult.Placed, stitcher.Add(View(left, 0)));
 
+        // Back to the left the position is followed, but the picture only ever grows to the right.
         var (pixels, width, height) = stitcher.Finish();
         Assert.Equal(H, height);
-        Assert.Equal(600 + W - 180, width);
-        AssertMatchesPage(pixels, width, 180, 0, 0, 0, width, height);
+        Assert.Equal(600 + W - 300, width);
+        AssertMatchesPage(pixels, width, 300, 0, 0, 0, width, height);
     }
 
     [Fact]
@@ -311,5 +284,143 @@ public class LongShotStitcherTests
         for (int left = 0; left <= step * 8; left += step)
             Assert.Equal(StitchResult.Placed, stitcher.Add(ViewOf(left)));
         Assert.Equal(step * 8 + width, stitcher.Width);
+    }
+
+    // ---- what is stitched stays, redrawn text, scrolling done by the app ----
+
+    [Fact]
+    public void ScrollingBackNeverPaintsOverWhatIsStitched()
+    {
+        var stitcher = new LongShotStitcher(W, H);
+        foreach (int top in new[] { 0, 60, 120, 180, 100, 40, 110, 170, 230 })
+            Assert.Equal(StitchResult.Placed, stitcher.Add(View(0, top)));
+
+        var (pixels, width, height) = stitcher.Finish();
+        Assert.Equal(230 + H, height);
+        AssertMatchesPage(pixels, width, 0, 0, 0, 0, width, height);
+    }
+
+    /// <summary>The view at top, every channel off by up to 3 at random, as text redrawn while scrolling.</summary>
+    private static byte[] Redrawn(int top, Random noise)
+    {
+        var frame = View(0, top);
+        for (int i = 0; i < frame.Length; i++)
+            if (i % 4 != 3) frame[i] = (byte)Math.Clamp(frame[i] + noise.Next(-3, 4), 0, 255);
+        return frame;
+    }
+
+    [Fact]
+    public void FramesRedrawnSlightlyDifferentlyStillFit()
+    {
+        var noise = new Random(5);
+        var stitcher = new LongShotStitcher(W, H);
+        foreach (int top in new[] { 0, 0, 40, 85, 130, 170 })
+            Assert.NotEqual(StitchResult.Lost, stitcher.Add(Redrawn(top, noise)));
+
+        var (pixels, width, height) = stitcher.Finish();
+        Assert.Equal(170 + H, height);
+        var expected = new byte[4];
+        for (int y = 0; y < height; y += 3)
+            for (int x = 0; x < width; x += 5)
+            {
+                PagePixel(expected, 0, x, y);
+                for (int c = 0; c < 3; c++)
+                    Assert.InRange(pixels[(y * width + x) * 4 + c], expected[c] - 3, expected[c] + 3);
+            }
+    }
+
+    [Fact]
+    public void ScrolledByTheAppABlankStretchKeepsItsHeight()
+    {
+        // The app scrolls 40 px at a time and says how far it went since the last placed frame.
+        var stitcher = new LongShotStitcher(W, H);
+        int lastPlaced = 0;
+        for (int scroll = 0; scroll <= 500; scroll += 20)
+        {
+            int? expected = scroll == 0 ? null : scroll - lastPlaced;
+            var result = stitcher.Add(GapFrame(scroll), expected);
+            Assert.NotEqual(StitchResult.Lost, result);
+            if (result == StitchResult.Placed) lastPlaced = scroll;
+        }
+
+        var (pixels, _, height) = stitcher.Finish();
+        Assert.Equal(PageH, height);
+        for (int row = 0; row < height; row += 3)
+        {
+            if (row >= GapFrom && row < GapTo)
+                Assert.All(pixels.AsSpan(row * W * 4, W * 4).ToArray(), b => Assert.Equal(255, b));
+            else
+                AssertRowIsPage(pixels, row, row);
+        }
+    }
+
+    /// <summary>
+    /// A frame with a side bar down its left that does not scroll, and the page beside it redrawn a
+    /// little differently each time (so no exact hash matches).
+    /// </summary>
+    private static byte[] SideBarFrame(int scroll, int seed)
+    {
+        var frame = Frame(scroll, false);
+        var noise = new Random(seed);
+        for (int r = 0; r < H; r++)
+        {
+            // Each line of the bar one grey, as lines of text and spacing differ.
+            byte v = (byte)new Random(r * 31 + 5).Next(256);
+            for (int x = 0; x < W; x++)
+            {
+                int i = (r * W + x) * 4;
+                if (x < 80) frame[i] = frame[i + 1] = frame[i + 2] = v;
+                else frame[i] = (byte)Math.Clamp(frame[i] + noise.Next(-1, 2), 0, 255);
+            }
+        }
+        return frame;
+    }
+
+    [Fact]
+    public void ASideBarThatStaysDoesNotStopThePageBeingFollowed()
+    {
+        var s = new LongShotStitcher(W, H);
+        s.Add(SideBarFrame(0, 1));
+        int top = 0, seed = 2;
+        foreach (int step in new[] { 9, 14, 20, 11, 17, 25 })
+        {
+            top += step;
+            Assert.Equal(StitchResult.Placed, s.Add(SideBarFrame(top, seed++), forwards: true));
+            Assert.Equal(step, s.LastShift);
+        }
+        Assert.Equal(H + top, s.Finish().Height);
+    }
+
+    [Fact]
+    public void ScrollingItselfInSmallStepsStitchesEveryStep()
+    {
+        var s = new LongShotStitcher(W, H);
+        s.Add(Frame(0, false));
+        int top = 0;
+        foreach (int step in new[] { 7, 12, 3, 18, 9, 25, 11 })
+        {
+            top += step;
+            Assert.Equal(StitchResult.Placed, s.Add(Frame(top, false), forwards: true));
+        }
+        var (pixels, _, height) = s.Finish();
+        Assert.Equal(H + top, height);
+        for (int row = 0; row < height; row += 3) AssertRowIsPage(pixels, row, row);
+    }
+
+    [Fact]
+    public void AnExpectedShiftKeepsTheSearchForwards()
+    {
+        // Rows that repeat every 30 px: alone they fit 30 px back as well as 30 px on.
+        var stitcher = new LongShotStitcher(W, H);
+        byte[] Striped(int top)
+        {
+            var f = new byte[W * H * 4];
+            for (int r = 0; r < H; r++) PageRow(f, r * W * 4, (top + r) % 30);
+            return f;
+        }
+        Assert.Equal(StitchResult.Placed, stitcher.Add(Striped(0)));
+        stitcher.Add(Striped(30), expected: 30);
+        Assert.True(stitcher.LastShift >= 0);
+        Assert.True(stitcher.Height >= H);
     }
 }

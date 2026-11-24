@@ -1231,6 +1231,7 @@ public partial class MainWindow : Window
         toolbar.CopyTextRequested       += OnCopyTextRequested;
         toolbar.CopyScreenshotRequested += OnCopyScreenshotRequested;
         toolbar.PinRequested            += (_, _) => PinSelection();
+        toolbar.SaveAsRequested         += (_, _) => SaveSelectionAs();
         toolbar.ScanCodeRequested       += (_, _) => ScanCodesInSelection();
         toolbar.LongShotRequested       += (_, _) => StartLongShot();
         // 長截圖 reads the live screen under the selection, which over a pin being edited is the pin.
@@ -1857,6 +1858,33 @@ public partial class MainWindow : Window
         catch (Exception ex)
         {
             Log.Error(ex, "Pinning the selection failed");
+        }
+    }
+
+    /// <summary>
+    /// 另存為: the selection as the user sees it, written to a file and format of their choosing.
+    /// The capture ends first: it is full screen and topmost, and the dialog would open under it.
+    /// </summary>
+    private void SaveSelectionAs()
+    {
+        try
+        {
+            var image = ComposeSelectionImage();
+            if (image is null)
+            {
+                ShowNotice(
+                    LocalizationService.Get("S.Main.CopyFailedTitle"),
+                    LocalizationService.Get("S.Main.NoImageBody"));
+                return;
+            }
+
+            CloseAll("save as");
+            Dispatcher.BeginInvoke(() => ScreenshotSaveService.SaveAs(null, image, "S.Toolbar.SaveAs"),
+                System.Windows.Threading.DispatcherPriority.Background);
+        }
+        catch (Exception ex)
+        {
+            Log.Error(ex, "Saving the selection failed");
         }
     }
 

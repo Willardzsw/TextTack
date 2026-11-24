@@ -337,6 +337,13 @@ public class AppSettings
 
     /// <summary>Empty means "use ScreenshotSaveService.DefaultDirectory" (圖片\OverTranslate).</summary>
     public string ScreenshotSavePath { get; set; } = "";
+
+    /// <summary>
+    /// 另存為 remembers the last format ("png", "jpg", "bmp", "tif") and folder; empty folder means
+    /// <see cref="ScreenshotSavePath"/>. 自動保存 always writes PNG.
+    /// </summary>
+    public string SaveAsFormat { get; set; } = "png";
+    public string SaveAsFolder { get; set; } = "";
     /// <summary>Off by default: Debug records the recognised text, i.e. the user's screen contents.</summary>
     public bool VerboseLogging { get; set; } = false;
 

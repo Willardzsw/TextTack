@@ -6,7 +6,7 @@ public enum StitchResult
     /// <summary>Nothing moved: the frame tells nothing new and was left out.</summary>
     Unchanged,
 
-    /// <summary>The frame was placed, and whatever it showed that the picture lacked was added.</summary>
+    /// <summary>The frame was placed, and whatever it showed past the end of the picture was added.</summary>
     Placed,
 
     /// <summary>The page moved but where to could not be told — scrolled too far between two looks.</summary>
@@ -20,36 +20,44 @@ public enum StitchResult
 public enum StitchAxis { Vertical, Horizontal }
 
 /// <summary>
-/// 長截圖: the frames of a region, read while the user scrolls the page under it — up, down, left or
-/// right — put together into one picture.
+/// 長截圖: the frames of a region, read while the page under it scrolls, put together into one
+/// picture that grows downwards (or to the right).
 /// </summary>
 /// <remarks>
 /// <para>One direction at a time, <see cref="Axis"/>: reading both at once let a move be taken for the
 /// other kind now and then, and the picture came out an odd shape.</para>
 ///
-/// <para>Each frame is placed against the one before. For an up-or-down move every row of a frame
-/// gets one hash per vertical strip; each changed strip whose hash is rare in the last frame votes for
-/// the shift that would put it on the row with that hash. A left-or-right move is the same with
-/// columns and horizontal bands. Plain background votes for nothing, and neither does anything that
-/// looks as it did in the frame before: what stays in place while the page moves (a header, a side
-/// bar, frozen panes) knows nothing about where the page went. The shift with the most votes wins if
-/// it is clear of the runner-up; otherwise the frame is left out until one fits again.</para>
+/// <para>Each frame is placed against the one before. First by exact hashes: every row of a frame
+/// gets one hash per vertical strip, and each changed strip whose hash is rare in the last frame
+/// votes for the shift that would put it on the row with that hash (columns and horizontal bands
+/// for a left-or-right move). A vote is then checked against a coarser look — the mean brightness
+/// of a couple of dozen cells along each row — and where hashes find nothing (smooth scrolling and
+/// anti-aliasing redraw text a little differently each time) that coarser look alone is searched
+/// for the shift where the two frames agree best, taken only when it is clearly better than any
+/// other. What stays in place while the page moves (a header, a footer, frozen panes) is left out
+/// of both.</para>
 ///
-/// <para>The picture is a canvas in page coordinates, the first frame at (0, 0), that grows in any
-/// direction. What moved is painted at its place; what stood still at the edges of the frame (a
-/// header, a footer, a frozen column) is not, so it is not repeated through the picture, and is
-/// added once at the picture's edge by <see cref="Finish"/>.</para>
+/// <para>Only what lies past the end of the picture is ever painted: the page may be scrolled back
+/// and forth and the position is followed, but what was stitched once stays as it was. A wrong
+/// placement then costs at most a little of what follows, never what is already there.</para>
 ///
-/// <para>A stretch of blank page taller than what two looks share cannot be measured — nothing in it
-/// says how far the page went — so it is shortened: the content after it is put a short blank away
-/// from the content before it. This is an office tool, and a long empty gap carries nothing.</para>
+/// <para>When the caller scrolls the page itself it knows roughly how far it went and passes that
+/// as the expected shift: the search keeps near it, forwards only, and a page that moved yet
+/// cannot be matched (a blank stretch, a picture that changed) is placed where it was sent.
+/// Without one, a stretch of blank page taller than what two looks share is shortened instead:
+/// nothing in it says how far the page went.</para>
 ///
-/// <para>The method follows sniplite's scroll.c (MIT), extended to four directions; the code is
-/// written for this project.</para>
+/// <para>The hash vote follows sniplite's scroll.c (MIT); the code is written for this project.</para>
 /// </remarks>
 public sealed class LongShotStitcher
 {
     public const int Strips = 4;
+
+    // Cells per line in the coarse look, and the mean difference per cell (0-255 brightness) under
+    // which two stretches count as the same: a found shift must be below MatchCost, a voted one
+    // below VerifyCost.
+    private const int Cells = 24;
+    private const double MatchCost = 6.0, VerifyCost = 12.0;
 
     /// <summary>The most pixels the picture may cover (about 256 MB): past it, <see cref="StitchResult.Full"/>.</summary>
     public const long MaxArea = 64L * 1024 * 1024;
@@ -74,6 +82,12 @@ public sealed class LongShotStitcher
     /// <summary>Whether anything past the first frame has been stitched — from then on <see cref="Axis"/> is fixed.</summary>
     public bool HasMoved { get; private set; }
 
+    /// <summary>Whether the first frame has been taken.</summary>
+    public bool HasStarted => _last is not null;
+
+    /// <summary>How far the page moved at the last placed frame, in pixels along <see cref="Axis"/>; down or right is positive.</summary>
+    public int LastShift { get; private set; }
+
     private StitchAxis _axis = StitchAxis.Vertical;
 
     public int FrameWidth { get; }
@@ -89,14 +103,21 @@ public sealed class LongShotStitcher
     private readonly TileCanvas _canvas = new();
 
     private byte[]? _last;
-    private ulong[]? _lastRowHashes, _lastColHashes;
-    private bool[]? _lastRowPlain;
+    private Lines? _lastLines;
+    private StitchAxis _lastAxis;
     private int _posX, _posY;
     private bool _full;
 
-    // The edges that stood still the last time the page moved that way: added once at the end.
-    private int _header, _footer, _leftEdge, _rightEdge;
+    // Along the axis, the canvas line up to which the picture is final: only what is past it is
+    // painted. Until the page first moves the first frame's last third may be a footer.
+    private int _solid;
+
+    // The edge that stood still the last time the page moved: added once at the end.
+    private int _footer, _rightEdge;
     private byte[]? _edgeFrame;
+
+    /// <summary>One frame's lines along the axis: exact hashes, plain or not, and the coarse look.</summary>
+    private sealed record Lines(ulong[] Hashes, bool[] Plain, int[] Profile, int CellsPerLine, int Count);
 
     public LongShotStitcher(int frameWidth, int frameHeight, int maxSize = 20000)
     {
@@ -120,160 +141,183 @@ public sealed class LongShotStitcher
     }
 
     /// <summary>One frame of the region, BGRA, rows packed.</summary>
-    public StitchResult Add(byte[] frame)
+    /// <param name="frame">The frame.</param>
+    /// <param name="expected">
+    /// How far the page was scrolled forwards since the last placed frame, when the caller scrolled
+    /// it itself and can tell; null when the user scrolls.
+    /// </param>
+    /// <param name="forwards">
+    /// The page is being scrolled forwards (by the caller, in small steps): no shift backwards is
+    /// looked for, so a page repeating itself is not matched the wrong way.
+    /// </param>
+    public StitchResult Add(byte[] frame, int? expected = null, bool forwards = false)
     {
         if (frame.Length < FrameWidth * FrameHeight * 4) throw new ArgumentException("Frame too small", nameof(frame));
         if (_full) return StitchResult.Full;
 
-        var (rows, rowPlain) = HashRows(frame);
+        bool vertical = Axis == StitchAxis.Vertical;
+        var lines = vertical ? RowLines(frame) : ColumnLines(frame);
 
         if (_last is null)
         {
             _canvas.Paint(frame, FrameWidth, 0, 0, FrameWidth, FrameHeight, 0, 0);
-            Remember(frame, rows, rowPlain, null);
+            Remember(frame, lines);
             return StitchResult.Placed;
         }
 
+        if (_lastLines is null || _lastAxis != Axis) _lastLines = vertical ? RowLines(_last) : ColumnLines(_last);
+        var last = _lastLines;
+        int n = lines.Count;
+
         int changed = 0, informative = 0;
-        for (int r = 0; r < FrameHeight; r++)
+        for (int l = 0; l < n; l++)
         {
-            bool plainRow = LinePlain(rowPlain, r);
-            if (!plainRow) informative++;
-            if (!plainRow && !LineSame(rows, _lastRowHashes!, r)) changed++;
+            bool plain = LinePlain(lines.Plain, l);
+            if (!plain) informative++;
+            if (!plain && !LineSame(lines.Hashes, last.Hashes, l)) changed++;
         }
         if (changed == 0) return StitchResult.Unchanged;
 
-        if (Axis == StitchAxis.Vertical)
+        int head = StillLines(lines.Hashes, last.Hashes, n, fromStart: true);
+        int tail = StillLines(lines.Hashes, last.Hashes, n, fromStart: false);
+
+        // Shifts that leave enough of the moving part shared to be told apart; with an expected
+        // shift, only forwards and near it.
+        int reach = Math.Max(0, n - head - tail - Math.Max(16, n / 8));
+        int lo = -reach, hi = reach;
+        if (expected is > 0)
         {
-            if (Vote(rows, rowPlain, _lastRowHashes!, FrameHeight) is { } dy)
-                return dy == 0 ? InPlace(frame, rows, rowPlain) : MoveVertically(frame, rows, rowPlain, dy);
-            if (TryBridgeBlank(frame, rows, rowPlain)) return _full ? StitchResult.Full : StitchResult.Placed;
+            int e = expected.Value;
+            lo = Math.Max(1, e / 2 - 8);
+            hi = Math.Min(reach, e * 2 + 16);
         }
-        else
-        {
-            var (cols, colPlain) = HashColumns(frame);
-            _lastColHashes ??= HashColumns(_last).Hashes;
-            if (Vote(cols, colPlain, _lastColHashes, FrameWidth) is { } dx)
-                return dx == 0 ? InPlace(frame, rows, rowPlain) : MoveHorizontally(frame, rows, rowPlain, cols, dx);
-        }
+        else if (forwards) lo = 0;
+
+        // Columns that stood still while the page moved (a side bar, a table of contents, a margin)
+        // say nothing of how far it went, and compared at any shift but none they only add.
+        var still = StillCells(lines, last, head, tail);
+        int? shift = Vote(lines, last, lo, hi);
+        if (shift is { } voted && Cost(lines, last, head, tail, voted, still, out _) > VerifyCost) shift = null;
+        shift ??= BestFit(lines, last, head, tail, lo, hi, still);
+        if (shift is { } s) return s == 0 ? InPlace(frame, lines) : Move(frame, lines, s, head, tail);
 
         // Much of what there is to see changed and none of it can be found: the page went further
         // than one frame. A little that changed in place (a caret, a hover, a spinner) is not that,
         // however little else there is to see.
-        int enough = Math.Max(8, FrameHeight / 10);
-        return changed >= enough && changed * 2 > informative ? StitchResult.Lost : StitchResult.Unchanged;
+        bool moved = changed >= Math.Max(8, n / 10) && changed * 2 > informative;
+        if (moved && expected is > 0) return Move(frame, lines, expected.Value, head, tail);
+        if (vertical && TryBridgeBlank(frame, lines, last, head, tail)) return _full ? StitchResult.Full : StitchResult.Placed;
+        return moved ? StitchResult.Lost : StitchResult.Unchanged;
     }
 
-    private StitchResult InPlace(byte[] frame, ulong[] rows, bool[] rowPlain)
+    private StitchResult InPlace(byte[] frame, Lines lines)
     {
         // Something on the page changed, the page did not move. Nothing to add.
-        Remember(frame, rows, rowPlain, null);
+        Remember(frame, lines);
         return StitchResult.Unchanged;
     }
 
-    private StitchResult MoveVertically(byte[] frame, ulong[] rows, bool[] rowPlain, int dy)
+    private StitchResult Move(byte[] frame, Lines lines, int shift, int head, int tail)
     {
-        _header = StillLines(rows, _lastRowHashes!, FrameHeight, fromStart: true);
-        _footer = StillLines(rows, _lastRowHashes!, FrameHeight, fromStart: false);
+        BeginMoving();
+        LastShift = shift;
+        if (Axis == StitchAxis.Vertical) { _posY += shift; _footer = tail; }
+        else { _posX += shift; _rightEdge = tail; }
         _edgeFrame = frame;
-
-        _posY += dy;
-        HasMoved = true;
-        Paint(frame, 0, _header, FrameWidth, FrameHeight - _footer - _header);
-        Remember(frame, rows, rowPlain, null);
+        Append(frame, head, tail);
+        Remember(frame, lines);
         return _full ? StitchResult.Full : StitchResult.Placed;
     }
 
-    private StitchResult MoveHorizontally(byte[] frame, ulong[] rows, bool[] rowPlain, ulong[] cols, int dx)
+    private void BeginMoving()
     {
-        _leftEdge = StillLines(cols, _lastColHashes!, FrameWidth, fromStart: true);
-        _rightEdge = StillLines(cols, _lastColHashes!, FrameWidth, fromStart: false);
-        _edgeFrame = frame;
-
-        _posX += dx;
+        if (HasMoved) return;
         HasMoved = true;
-        Paint(frame, _leftEdge, 0, FrameWidth - _leftEdge - _rightEdge, FrameHeight);
-        Remember(frame, rows, rowPlain, cols);
-        return _full ? StitchResult.Full : StitchResult.Placed;
+        _solid = (Axis == StitchAxis.Vertical ? FrameHeight : FrameWidth) * 2 / 3;
+    }
+
+    /// <summary>
+    /// What the frame, at its position, shows past the final end of the picture: painted there, and
+    /// the end moved to the frame's own end less its <paramref name="tail"/> that stood still.
+    /// Anything painted past the old end before (the first frame's last third, or the footer added
+    /// by <see cref="Finish"/>) is given up to it. Nothing at all when the page went back.
+    /// </summary>
+    private void Append(byte[] frame, int head, int tail)
+    {
+        bool vertical = Axis == StitchAxis.Vertical;
+        int length = vertical ? FrameHeight : FrameWidth;
+        int pos = vertical ? _posY : _posX;
+        int end = pos + length - tail;
+        if (end <= _solid) return;
+
+        int from = Math.Max(head, _solid - pos);
+        if (vertical)
+        {
+            _canvas.TrimBottom(_solid);
+            Paint(frame, 0, from, FrameWidth, length - tail - from);
+        }
+        else
+        {
+            _canvas.TrimRight(_solid);
+            Paint(frame, from, 0, length - tail - from, FrameHeight);
+        }
+        _solid = end;
     }
 
     /// <summary>
     /// A stretch of blank page taller than what two looks share: the last frame ends in blank, the
-    /// new one starts in blank (or the other way round, scrolling up), and nothing between them can
-    /// be matched. The new content is put a short blank away from the old — the blank shortened,
-    /// since how tall it really was cannot be seen. Not done when either side has content at that
-    /// edge: that is a page scrolled too far, which is <see cref="StitchResult.Lost"/>, not a gap.
+    /// new one starts in blank, and nothing between them can be matched. The new content is put a
+    /// short blank under the old — the blank shortened, since how tall it really was cannot be
+    /// seen. Not done when either side has content at that edge: that is a page scrolled too far,
+    /// which is <see cref="StitchResult.Lost"/>, not a gap.
     /// </summary>
-    private bool TryBridgeBlank(byte[] frame, ulong[] rows, bool[] rowPlain)
+    private bool TryBridgeBlank(byte[] frame, Lines lines, Lines last, int head, int tail)
     {
-        int header = StillLines(rows, _lastRowHashes!, FrameHeight, fromStart: true);
-        int footer = StillLines(rows, _lastRowHashes!, FrameHeight, fromStart: false);
-        int top = header, bottom = FrameHeight - footer; // the moving part, [top, bottom)
+        int top = head, bottom = FrameHeight - tail; // the moving part, [top, bottom)
         if (bottom - top < 3) return false;
 
         int lastBlankBelow = 0;
-        while (bottom - 1 - lastBlankBelow >= top && LinePlain(_lastRowPlain!, bottom - 1 - lastBlankBelow)) lastBlankBelow++;
+        while (bottom - 1 - lastBlankBelow >= top && LinePlain(last.Plain, bottom - 1 - lastBlankBelow)) lastBlankBelow++;
         int lastBlankAbove = 0;
-        while (top + lastBlankAbove < bottom && LinePlain(_lastRowPlain!, top + lastBlankAbove)) lastBlankAbove++;
+        while (top + lastBlankAbove < bottom && LinePlain(last.Plain, top + lastBlankAbove)) lastBlankAbove++;
         int newBlankAbove = 0;
-        while (top + newBlankAbove < bottom && LinePlain(rowPlain, top + newBlankAbove)) newBlankAbove++;
-        int newBlankBelow = 0;
-        while (bottom - 1 - newBlankBelow >= top && LinePlain(rowPlain, bottom - 1 - newBlankBelow)) newBlankBelow++;
+        while (top + newBlankAbove < bottom && LinePlain(lines.Plain, top + newBlankAbove)) newBlankAbove++;
 
         // Nothing but blank in the moving part of either: wait for content to come into view.
         if (lastBlankAbove >= bottom - top || newBlankAbove >= bottom - top) return false;
 
         int need = Math.Max(16, FrameHeight / 5);
         int gap = Math.Clamp(FrameHeight / 10, 24, 80);
+        if (lastBlankBelow < need || newBlankAbove < need) return false;
 
-        if (lastBlankBelow >= need && newBlankAbove >= need)
-        {
-            // Down across a gap: the new content a short blank under the last.
-            int lastContentEnd = _posY + bottom - lastBlankBelow;
-            int content = top + newBlankAbove;
-            _posY = lastContentEnd + gap - content;
-            int from = Math.Max(top, content - gap);
-            Paint(frame, 0, from, FrameWidth, bottom - from);
-        }
-        else if (lastBlankAbove >= need && newBlankBelow >= need)
-        {
-            // Up across a gap: the new content a short blank over the last.
-            int lastContentStart = _posY + top + lastBlankAbove;
-            int contentEnd = bottom - newBlankBelow;
-            _posY = lastContentStart - gap - contentEnd;
-            int to = Math.Min(bottom, contentEnd + gap);
-            Paint(frame, 0, top, FrameWidth, to - top);
-        }
-        else
-        {
-            return false;
-        }
+        BeginMoving();
+        int lastContentEnd = _posY + bottom - lastBlankBelow;
+        int content = top + newBlankAbove;
 
-        _header = header;
-        _footer = footer;
+        // The picture is final only up to the last content; the new content goes a gap under it.
+        _solid = Math.Min(_solid, lastContentEnd);
+        int pos = lastContentEnd + gap - content;
+        LastShift = pos - _posY;
+        _posY = pos;
+        _footer = tail;
         _edgeFrame = frame;
-        HasMoved = true;
-        Remember(frame, rows, rowPlain, null);
+        Append(frame, Math.Max(top, content - gap), tail);
+        Remember(frame, lines);
         return true;
     }
 
     /// <summary>
-    /// The whole picture, BGRA, rows packed — with the edges that stood still put back once at the
-    /// picture's own edges: the footer under it, a frozen column beside it, a header over it when
-    /// the page was scrolled above where it started.
+    /// The whole picture, BGRA, rows packed — with the edge that stood still put back once at the
+    /// picture's end: the footer under it, or a frozen column to its right.
     /// </summary>
     public (byte[] Pixels, int Width, int Height) Finish()
     {
         if (_edgeFrame is { } edges && !_full)
         {
-            if (_footer > 0)
+            if (Axis == StitchAxis.Vertical && _footer > 0)
                 _canvas.Paint(edges, FrameWidth, 0, FrameHeight - _footer, FrameWidth, _footer, _posX, _canvas.MaxY);
-            if (_header > 0 && _canvas.MinY < 0)
-                _canvas.Paint(edges, FrameWidth, 0, 0, FrameWidth, _header, _posX, _canvas.MinY - _header);
-            if (_rightEdge > 0)
+            if (Axis == StitchAxis.Horizontal && _rightEdge > 0)
                 _canvas.Paint(edges, FrameWidth, FrameWidth - _rightEdge, 0, _rightEdge, FrameHeight, _canvas.MaxX, _posY);
-            if (_leftEdge > 0 && _canvas.MinX < 0)
-                _canvas.Paint(edges, FrameWidth, 0, 0, _leftEdge, FrameHeight, _canvas.MinX - _leftEdge, _posY);
         }
         return _canvas.Export();
     }
@@ -320,17 +364,20 @@ public sealed class LongShotStitcher
     // ---- placing ----
 
     /// <summary>
-    /// The shift, in lines (rows or columns), that puts the most changed lines of the new frame on
-    /// lines of the last one with the same hash; null when no shift is clear of the rest.
+    /// The shift in [lo, hi], in lines, that puts the most changed lines of the new frame on lines
+    /// of the last one with the same hash; null when no shift is clear of the rest.
     /// </summary>
-    private static int? Vote(ulong[] hashes, bool[] plain, ulong[] last, int lines)
+    private static int? Vote(Lines now, Lines last, int lo, int hi)
     {
+        if (lo > hi) return null;
+        int lines = now.Count;
+
         // Where each lane's hash is in the last frame; past five places a hash counts as common.
         var index = new Dictionary<ulong, List<int>>();
         for (int line = 0; line < lines; line++)
             for (int s = 0; s < Strips; s++)
             {
-                ulong key = Key(last[line * Strips + s], s);
+                ulong key = Key(last.Hashes[line * Strips + s], s);
                 if (!index.TryGetValue(key, out var at)) index[key] = at = [];
                 if (at.Count <= 4) at.Add(line);
             }
@@ -340,14 +387,15 @@ public sealed class LongShotStitcher
             for (int s = 0; s < Strips; s++)
             {
                 int i = line * Strips + s;
-                if (plain[i] || hashes[i] == last[i]) continue;
-                if (!index.TryGetValue(Key(hashes[i], s), out var at)) continue;
+                if (now.Plain[i] || now.Hashes[i] == last.Hashes[i]) continue;
+                if (!index.TryGetValue(Key(now.Hashes[i], s), out var at)) continue;
 
                 // Common lines (a repeated border, a list of identical items) would vote everywhere.
                 if (at.Count > 4) continue;
                 foreach (int match in at)
                 {
                     int shift = match - line;
+                    if (shift < lo || shift > hi) continue;
                     votes[shift] = votes.GetValueOrDefault(shift) + 1;
                 }
             }
@@ -360,6 +408,82 @@ public sealed class LongShotStitcher
             else if (v > second) second = v;
         }
         return bestVotes >= 3 && bestVotes >= second * 2 ? best : null;
+    }
+
+    /// <summary>
+    /// The shift in [lo, hi] at which the coarse looks of the two frames agree best, if they agree
+    /// well there and clearly worse at every shift not next to it.
+    /// </summary>
+    private static int? BestFit(Lines now, Lines last, int head, int tail, int lo, int hi, bool[] still)
+    {
+        if (lo > hi) return null;
+        int minUsed = Math.Max(8, now.Count / 10);
+        double best = double.MaxValue;
+        int bestShift = 0;
+        var costs = new double[hi - lo + 1];
+        for (int s = lo; s <= hi; s++)
+        {
+            double c = Cost(now, last, head, tail, s, still, out int used);
+            if (used < minUsed) c = double.MaxValue;
+            costs[s - lo] = c;
+            if (c < best) { best = c; bestShift = s; }
+        }
+        if (best > MatchCost) return null;
+
+        // A list of identical rows fits at every period of it: then nothing says which.
+        double second = double.MaxValue;
+        for (int s = lo; s <= hi; s++)
+            if (Math.Abs(s - bestShift) > 4) second = Math.Min(second, costs[s - lo]);
+        return second >= best * 1.5 + 2 ? bestShift : null;
+    }
+
+    /// <summary>
+    /// The mean difference per cell between the new frame's moving lines and the last frame's
+    /// lines <paramref name="shift"/> further on, lines blank in both and cells that stood still
+    /// not counted.
+    /// </summary>
+    private static double Cost(Lines now, Lines last, int head, int tail, int shift, bool[] still, out int used)
+    {
+        int n = now.Count, k = now.CellsPerLine;
+        int from = Math.Max(head, head - shift), to = Math.Min(n - tail, n - tail - shift);
+        int cells = 0;
+        for (int c = 0; c < k; c++) if (!still[c]) cells++;
+        long sum = 0;
+        used = 0;
+        if (cells == 0) return double.MaxValue;
+        for (int r = from; r < to; r++)
+        {
+            if (LinePlain(now.Plain, r) && LinePlain(last.Plain, r + shift)) continue;
+            int a = r * k, b = (r + shift) * k;
+            for (int c = 0; c < k; c++)
+                if (!still[c]) sum += Math.Abs(now.Profile[a + c] - last.Profile[b + c]);
+            used++;
+        }
+        return used == 0 ? double.MaxValue : (double)sum / (used * cells);
+    }
+
+    /// <summary>
+    /// The cells across a line that look the same in both frames on nearly every line between the
+    /// still ends — a part of the window that does not scroll with the page. All of them false
+    /// when that would leave fewer than a quarter of the cells to go by.
+    /// </summary>
+    private static bool[] StillCells(Lines now, Lines last, int head, int tail)
+    {
+        int n = now.Count, k = now.CellsPerLine;
+        var still = new bool[k];
+        int lines = n - head - tail;
+        if (lines < 8) return still;
+        int kept = 0;
+        for (int c = 0; c < k; c++)
+        {
+            int same = 0;
+            for (int r = head; r < n - tail; r++)
+                if (Math.Abs(now.Profile[r * k + c] - last.Profile[r * k + c]) <= 1) same++;
+            still[c] = same * 20 >= lines * 19;
+            if (!still[c]) kept++;
+        }
+        if (kept * 4 < k) Array.Clear(still);
+        return still;
     }
 
     /// <summary>Lines at one end that look exactly as they did while the page moved, up to a third.</summary>
@@ -384,47 +508,67 @@ public sealed class LongShotStitcher
         return true;
     }
 
-    private void Remember(byte[] frame, ulong[] rows, bool[] rowPlain, ulong[]? cols)
+    private void Remember(byte[] frame, Lines lines)
     {
         _last = (byte[])frame.Clone();
-        _lastRowHashes = rows;
-        _lastRowPlain = rowPlain;
-        // Columns are hashed only when a frame needs them; otherwise the next look hashes the last.
-        _lastColHashes = cols;
+        _lastLines = lines;
+        _lastAxis = Axis;
     }
 
     private static ulong Key(ulong hash, int lane) => hash ^ ((ulong)(lane + 1) * 0x9E3779B97F4A7C15UL);
 
-    // ---- hashing ----
+    // ---- looking at a frame ----
 
-    /// <summary>Per row and strip: an FNV-1a hash of the colours, and whether the strip is one colour.</summary>
-    private (ulong[] Hashes, bool[] Plain) HashRows(byte[] frame)
+    private static int Brightness(byte[] f, int i) => (f[i] * 29 + f[i + 1] * 150 + f[i + 2] * 77) >> 8;
+
+    /// <summary>Per row: a hash and plainness per strip, and the mean brightness of each cell across the strips.</summary>
+    private Lines RowLines(byte[] frame)
     {
         var hashes = new ulong[FrameHeight * Strips];
         var plain = new bool[FrameHeight * Strips];
+        int span = Strips * _stripWidth, k = Math.Min(Cells, span);
+        var profile = new int[FrameHeight * k];
         int stride = FrameWidth * 4;
         for (int r = 0; r < FrameHeight; r++)
+        {
             for (int s = 0; s < Strips; s++)
             {
                 int start = r * stride + (_stripLeft + s * _stripWidth) * 4;
                 (hashes[r * Strips + s], plain[r * Strips + s]) = HashRun(frame, start, 4, _stripWidth);
             }
-        return (hashes, plain);
+            for (int c = 0; c < k; c++)
+            {
+                int x0 = _stripLeft + c * span / k, x1 = _stripLeft + (c + 1) * span / k, sum = 0;
+                for (int x = x0; x < x1; x++) sum += Brightness(frame, r * stride + x * 4);
+                profile[r * k + c] = sum / Math.Max(1, x1 - x0);
+            }
+        }
+        return new Lines(hashes, plain, profile, k, FrameHeight);
     }
 
     /// <summary>Per column and band, the same.</summary>
-    private (ulong[] Hashes, bool[] Plain) HashColumns(byte[] frame)
+    private Lines ColumnLines(byte[] frame)
     {
         var hashes = new ulong[FrameWidth * Strips];
         var plain = new bool[FrameWidth * Strips];
+        int span = Strips * _bandHeight, k = Math.Min(Cells, span);
+        var profile = new int[FrameWidth * k];
         int stride = FrameWidth * 4;
-        for (int c = 0; c < FrameWidth; c++)
+        for (int col = 0; col < FrameWidth; col++)
+        {
             for (int s = 0; s < Strips; s++)
             {
-                int start = (_bandTop + s * _bandHeight) * stride + c * 4;
-                (hashes[c * Strips + s], plain[c * Strips + s]) = HashRun(frame, start, stride, _bandHeight);
+                int start = (_bandTop + s * _bandHeight) * stride + col * 4;
+                (hashes[col * Strips + s], plain[col * Strips + s]) = HashRun(frame, start, stride, _bandHeight);
             }
-        return (hashes, plain);
+            for (int c = 0; c < k; c++)
+            {
+                int y0 = _bandTop + c * span / k, y1 = _bandTop + (c + 1) * span / k, sum = 0;
+                for (int y = y0; y < y1; y++) sum += Brightness(frame, y * stride + col * 4);
+                profile[col * k + c] = sum / Math.Max(1, y1 - y0);
+            }
+        }
+        return new Lines(hashes, plain, profile, k, FrameWidth);
     }
 
     private static (ulong Hash, bool Plain) HashRun(byte[] frame, int start, int step, int count)
@@ -460,6 +604,21 @@ internal sealed class TileCanvas
     public int MaxY { get; private set; }
     public int Width => MaxX - MinX;
     public int Height => MaxY - MinY;
+
+    /// <summary>
+    /// Gives up every row from <paramref name="y"/> on: they are left out of the picture until
+    /// painted again. The pixels stay in the tiles, so a later paint must start at y.
+    /// </summary>
+    public void TrimBottom(int y)
+    {
+        if (Any && MaxY > y) MaxY = Math.Max(MinY, y);
+    }
+
+    /// <summary>The same for every column from <paramref name="x"/> on.</summary>
+    public void TrimRight(int x)
+    {
+        if (Any && MaxX > x) MaxX = Math.Max(MinX, x);
+    }
 
     /// <summary>The w by h block at (sx, sy) of a BGRA picture srcWidth wide, to (dx, dy).</summary>
     public void Paint(byte[] src, int srcWidth, int sx, int sy, int w, int h, int dx, int dy)

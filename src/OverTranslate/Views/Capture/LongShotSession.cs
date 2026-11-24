@@ -1,4 +1,5 @@
 using System.Drawing;
+using System.Diagnostics;
 using System.Drawing.Imaging;
 using System.Runtime.InteropServices;
 using System.Windows;
@@ -20,6 +21,7 @@ using Image = System.Windows.Controls.Image;
 using Orientation = System.Windows.Controls.Orientation;
 using PixelFormat = System.Drawing.Imaging.PixelFormat;
 using Rectangle = System.Drawing.Rectangle;
+using ToolTip = System.Windows.Controls.ToolTip;
 
 namespace OverTranslate.Views.Capture;
 
@@ -33,9 +35,18 @@ namespace OverTranslate.Views.Capture;
 /// program. Several times a second the region is read from the screen and handed to
 /// <see cref="LongShotStitcher"/>.</para>
 ///
+/// <para>Or this scrolls the page itself, the way a phone takes a long screenshot: while Space is
+/// held, or all the way to the end after 自動滾動. A little wheel is sent to the window under the
+/// region every few hundredths of a second, so the page moves evenly, and every look in between
+/// is placed as it comes. How far one unit of wheel moves this page is learnt from what was placed,
+/// to keep the speed even; no more is sent than the stitching has caught up with. A look that
+/// went too far is turned back to, and the scrolling slows. The page standing still with plenty
+/// of wheel sent is its end.</para>
+///
 /// <para>Neither window takes the keyboard — it belongs to the page being scrolled — so Enter (copy)
-/// and Esc (cancel) are hotkeys for as long as this runs. Both windows ask to be left out of screen
-/// captures, so even where the panel has to sit over the region it is not stitched in.</para>
+/// and Esc (cancel) are hotkeys for as long as this runs, and Space is taken by a keyboard hook.
+/// Both windows ask to be left out of screen captures, so even where the panel has to sit over the
+/// region it is not stitched in.</para>
 /// </remarks>
 public sealed class LongShotSession
 {
@@ -44,7 +55,28 @@ public sealed class LongShotSession
     /// <summary>The one running, if any: a capture started meanwhile would be read into the picture.</summary>
     public static LongShotSession? Current { get; private set; }
 
-    private const int FastTickMs = 120, SlowTickMs = 300, IdleTicksBeforeSlow = 8;
+    static LongShotSession()
+    {
+        // A button's tip is a window of its own, over the region as often as not: like the panel,
+        // it is left out of what is read.
+        EventManager.RegisterClassHandler(typeof(ToolTip), ToolTip.OpenedEvent, new RoutedEventHandler((sender, _) =>
+        {
+            if (Current is not { } session || sender is not ToolTip tip) return;
+            if (tip.PlacementTarget is not DependencyObject target || Window.GetWindow(target) != session._panel) return;
+            if (PresentationSource.FromVisual(tip) is HwndSource source)
+                SetWindowDisplayAffinity(source.Handle, WDA_EXCLUDEFROMCAPTURE);
+        }));
+    }
+
+    private const int FastTickMs = 50, SlowTickMs = 300, IdleTicksBeforeSlow = 8;
+
+    // Scrolling the page itself: how often the region is read and a little wheel sent; after
+    // turning back, how long the page is given to stop (at least SettleStillMs when nothing moved
+    // yet, at most SettleMaxMs for a page that never stops changing); how much wheel (120 a notch)
+    // may be sent before it shows; and how long the page standing still with that much sent is
+    // taken for its end.
+    private const int DriveTickMs = 25, SettleStillMs = 150, SettleMaxMs = 700;
+    private const int MinAheadUnits = 240, EndMs = 900;
     private const int MaxHeight = 20000;
     private const int HotkeyEnter = 0x7A01, HotkeyEscape = 0x7A02;
 
@@ -68,7 +100,24 @@ public sealed class LongShotSession
     private (System.Drawing.Point Cursor, Rectangle Region, int Edges)? _drag;
     private HwndSource? _panelSource;
     private readonly Button _axisButton;
+    private readonly Button _autoButton;
     private LongShotWheelHook? _wheel;
+    private LongShotKeyHook? _keys;
+
+    // How long the looks took, for the log line at the end: what explains a stitch that lagged.
+    private int _tickCount, _slowTicks;
+    private double _tickTotalMs, _tickMaxMs;
+
+    // Scrolling the page itself.
+    private enum Drive { Off, Hold, Auto }
+    private Drive _drive;
+    private bool _settling, _turnBackIfLost, _movedPointer, _spaceOnlyStops;
+    private long _stepAt, _sentAt, _placedAt;
+    private byte[]? _beforeStep, _settlePrev;
+    private int _pendingUnits, _lostSteps;
+    private double _unitCarry, _drivenPx, _drivenUnits, _speed = 1;
+    private double? _pxPerUnit;
+    private System.Drawing.Point _pointerHome;
 
     // Looks in a row that could not be placed: past a few, the region is likely too small for one
     // turn of the wheel, and the panel says so.
@@ -98,10 +147,27 @@ public sealed class LongShotSession
         _axisButton.Click += (_, _) => ToggleAxis();
         RenderAxis();
 
+        _autoButton = new Button
+        {
+            Margin = new Thickness(0, 8, 0, 0),
+            HorizontalAlignment = HorizontalAlignment.Stretch,
+            Height = 30,
+        };
+        _autoButton.SetResourceReference(FrameworkElement.StyleProperty, "FlatButton");
+        _autoButton.SetResourceReference(FrameworkElement.ToolTipProperty, "S.LongShot.AutoTip");
+        _autoButton.Click += (_, _) =>
+        {
+            if (_drive == Drive.Auto) StopDrive();
+            else StartDrive(Drive.Auto);
+        };
+        RenderAuto();
+
         _frame = BuildFrame();
         _panel = BuildPanel(scale);
 
-        _timer = new DispatcherTimer(DispatcherPriority.Background) { Interval = TimeSpan.FromMilliseconds(FastTickMs) };
+        // Input, not Normal: a look can take longer than a driving tick, and above Input the ticks
+        // would come back to back and keep clicks (暫停) and rendering (the preview) waiting.
+        _timer = new DispatcherTimer(DispatcherPriority.Input) { Interval = TimeSpan.FromMilliseconds(FastTickMs) };
         _timer.Tick += (_, _) => Tick();
     }
 
@@ -116,6 +182,7 @@ public sealed class LongShotSession
         session._frame.Show();
         session._panel.Show();
         session.ShowProgress();
+        session._keys = LongShotKeyHook.Install(session.OnSpace);
         session._timer.Start();
     }
 
@@ -124,35 +191,59 @@ public sealed class LongShotSession
     private void Tick()
     {
         if (_ended || _full) return;
-        byte[] pixels;
+        long started = Stopwatch.GetTimestamp();
+        try
+        {
+            if (Grab() is not { } pixels) return;
+            if (_drive != Drive.Off) DriveTick(pixels);
+            else Feed(pixels, null);
+        }
+        finally
+        {
+            double ms = Stopwatch.GetElapsedTime(started).TotalMilliseconds;
+            _tickCount++;
+            _tickTotalMs += ms;
+            _tickMaxMs = Math.Max(_tickMaxMs, ms);
+            if (ms > DriveTickMs) _slowTicks++;
+        }
+    }
+
+    private byte[]? Grab()
+    {
         try
         {
             using (var g = Graphics.FromImage(_grab))
                 g.CopyFromScreen(_region.Left, _region.Top, 0, 0, _region.Size, CopyPixelOperation.SourceCopy);
-            pixels = ReadPixels(_grab);
+            return ReadPixels(_grab);
         }
         catch (Exception ex)
         {
             // The secure desktop (a UAC prompt, the lock screen) cannot be read; the next tick may.
             Log.Debug(ex, "Long screenshot could not read the screen this tick");
-            return;
+            return null;
         }
+    }
 
-        var result = _stitcher.Add(pixels);
+    private StitchResult Feed(byte[] pixels, int? expected, bool forwards = false)
+    {
+        var result = _stitcher.Add(pixels, expected, forwards);
         switch (result)
         {
             case StitchResult.Unchanged:
                 // The page has settled: a "scroll back" that no longer applies should not stay up.
                 if (_lostShown && _idleTicks >= 2) ShowProgress();
-                if (++_idleTicks == IdleTicksBeforeSlow) _timer.Interval = TimeSpan.FromMilliseconds(SlowTickMs);
-                return;
+                if (_drive == Drive.Off && ++_idleTicks == IdleTicksBeforeSlow) _timer.Interval = TimeSpan.FromMilliseconds(SlowTickMs);
+                return result;
             case StitchResult.Lost:
+                // Scrolling by itself, the turn is taken back instead (DriveTick).
+                if (_drive != Drive.Off) break;
                 _lostRun++;
                 SetStatus(LocalizationService.Get(_lostRun >= 3 || TooSmall ? "S.LongShot.TooSmall" : "S.LongShot.Lost"));
                 _lostShown = true;
                 break;
             case StitchResult.Placed:
                 _lostRun = 0;
+                if (_drive == Drive.Off) _pendingUnits = 0;
                 if (_axisButton.IsEnabled && _stitcher.HasMoved) RenderAxis();
                 if (_stitcher.HasMoved) LockFrame();
                 ShowProgress();
@@ -160,8 +251,10 @@ public sealed class LongShotSession
                 break;
             case StitchResult.Full:
                 _full = true;
+                StopDrive();
                 _timer.Stop();
                 RenderAxis();
+                RenderAuto();
                 LockFrame();
                 UpdatePreview();
                 SetStatus(LocalizationService.Get("S.LongShot.Full"));
@@ -170,7 +263,253 @@ public sealed class LongShotSession
         }
 
         _idleTicks = 0;
+        if (_drive == Drive.Off) _timer.Interval = TimeSpan.FromMilliseconds(FastTickMs);
+        return result;
+    }
+
+    // ---- scrolling the page itself ----
+
+    /// <summary>Space down starts scrolling, up stops it; down while 自動滾動 runs only stops that.</summary>
+    private void OnSpace(bool down)
+    {
+        if (down)
+        {
+            if (_drive == Drive.Auto)
+            {
+                StopDrive();
+                _spaceOnlyStops = true;
+                return;
+            }
+            StartDrive(Drive.Hold);
+        }
+        else if (_spaceOnlyStops) _spaceOnlyStops = false;
+        else if (_drive == Drive.Hold) StopDrive();
+    }
+
+    private void StartDrive(Drive mode)
+    {
+        if (_ended || _full || _drag is not null || mode == Drive.Off) return;
+        if (_drive == Drive.Off)
+        {
+            _pointerHome = LongShotInput.Cursor;
+            _movedPointer = false;
+            _settling = _turnBackIfLost = false;
+            _sentAt = Environment.TickCount64;
+            _placedAt = _sentAt;
+            _unitCarry = 0;
+            _pendingUnits = _lostSteps = 0;
+            Log.Info("Long screenshot scrolling by itself ({Mode}), {PxPerSecond} px a second, {PxPerUnit} px a unit",
+                mode, (int)PxPerSecond, _pxPerUnit);
+        }
+        _drive = mode;
+        _timer.Interval = TimeSpan.FromMilliseconds(DriveTickMs);
+        _timer.Start();
+        if (_lostShown) ShowProgress();
+        RenderAuto();
+    }
+
+    private void StopDrive()
+    {
+        if (_drive == Drive.Off) return;
+        _drive = Drive.Off;
+        _settling = _turnBackIfLost = false;
+        _beforeStep = _settlePrev = null;
+        _pendingUnits = 0;
+        if (_movedPointer) LongShotInput.Cursor = _pointerHome;
+        _movedPointer = false;
+        _idleTicks = 0;
         _timer.Interval = TimeSpan.FromMilliseconds(FastTickMs);
+        RenderAuto();
+    }
+
+    /// <summary>
+    /// How fast the page is scrolled: about three fifths of the region a second, kept between a
+    /// readable crawl and what the stitching keeps up with, slower again after a look was lost.
+    /// </summary>
+    private double PxPerSecond
+    {
+        get
+        {
+            int span = _stitcher.Axis == StitchAxis.Vertical ? _region.Height : _region.Width;
+            return Math.Clamp(span * 0.6, 180 * _scale, 720 * _scale) * _speed;
+        }
+    }
+
+    /// <summary>
+    /// One look while scrolling by itself: place what the page shows now, then send the little bit
+    /// of wheel that keeps it moving at an even speed — never so far ahead of what is placed that
+    /// two looks no longer overlap.
+    /// </summary>
+    private void DriveTick(byte[] pixels)
+    {
+        long now = Environment.TickCount64;
+        if (!_stitcher.HasStarted)
+        {
+            Feed(pixels, null);
+            _sentAt = _placedAt = now;
+            return;
+        }
+
+        if (_settling)
+        {
+            Resettle(pixels, now);
+            return;
+        }
+
+        switch (Feed(pixels, null, forwards: true))
+        {
+            case StitchResult.Placed:
+                if (_stitcher.LastShift > 0 && _pendingUnits > 0)
+                {
+                    // Over all the turns together, as the page lags a little behind what was sent.
+                    _drivenPx += _stitcher.LastShift;
+                    _drivenUnits += _pendingUnits;
+                    if (_drivenUnits >= 240) _pxPerUnit = _drivenPx / _drivenUnits;
+                }
+                _pendingUnits = 0;
+                _lostSteps = 0;
+                _placedAt = now;
+                break;
+            case StitchResult.Lost:
+                // A look caught mid-redraw, or the page gone further than one look covers. First the
+                // page is let stop and looked at again; only if that too cannot be placed is it
+                // turned back to the last placed look (Resettle).
+                Log.Info("Long screenshot lost the page while scrolling, {Units} units not yet placed, {Times} in a row",
+                    _pendingUnits, _lostSteps + 1);
+                if (++_lostSteps > 3)
+                {
+                    StopLost();
+                    return;
+                }
+                _turnBackIfLost = true;
+                BeginSettle(pixels, now);
+                return;
+            case StitchResult.Full:
+                return;
+        }
+        if (_drive == Drive.Off) return;
+
+        // How much may be sent and not yet placed: two fifths of the region, and at least two
+        // notches, as some programs move only once a whole notch has been turned.
+        double ppu = _pxPerUnit ?? _scale;
+        int span = _stitcher.Axis == StitchAxis.Vertical ? _region.Height : _region.Width;
+        double ahead = Math.Max(span * 0.4 / ppu, MinAheadUnits);
+        long dt = Math.Min(now - _sentAt, 100);
+        _sentAt = now;
+        if (_pendingUnits >= ahead)
+        {
+            // All of it sent and the page has not moved for a while: its end.
+            if (now - _placedAt >= EndMs)
+            {
+                Log.Info("Long screenshot reached the end of the page, {Width}x{Height}px", _stitcher.Width, _stitcher.Height);
+                StopDrive();
+                SetStatus(LocalizationService.Get("S.LongShot.End"));
+            }
+            return;
+        }
+
+        _unitCarry += PxPerSecond * dt / 1000.0 / ppu;
+        int units = (int)_unitCarry;
+        if (units <= 0) return;
+        _unitCarry -= units;
+        KeepPointerInRegion();
+        _pendingUnits += units;
+        LongShotInput.Scroll(_stitcher.Axis, units);
+    }
+
+    /// <summary>After turning back: wait for the page to stop, then pick up from the look it shows.</summary>
+    private void Resettle(byte[] pixels, long now)
+    {
+        bool still = pixels.AsSpan().SequenceEqual(_beforeStep);
+        bool stable = _settlePrev is not null && pixels.AsSpan().SequenceEqual(_settlePrev);
+        _settlePrev = pixels;
+        long waited = now - _stepAt;
+        if (waited < SettleMaxMs && (!stable || (still && waited < SettleStillMs))) return;
+        _settling = false;
+        _beforeStep = _settlePrev = null;
+        _sentAt = _placedAt = now;
+
+        bool turnBack = _turnBackIfLost;
+        _turnBackIfLost = false;
+        var result = Feed(pixels, null, forwards: turnBack);
+        if (result == StitchResult.Placed)
+        {
+            _pendingUnits = 0;
+            _lostSteps = 0;
+            return;
+        }
+        if (result != StitchResult.Lost) return;
+        if (!turnBack)
+        {
+            StopLost();
+            return;
+        }
+
+        // Still not to be found: back by all that was sent since the last placed look, and slower.
+        Log.Info("Long screenshot turning back {Units} units to where it was last placed", _pendingUnits);
+        // The wheel goes to the window under the pointer, which may have been moved off the region since.
+        KeepPointerInRegion();
+        LongShotInput.Scroll(_stitcher.Axis, -_pendingUnits);
+        _pendingUnits = 0;
+        _unitCarry = 0;
+        _speed = Math.Max(0.25, _speed / 2);
+        BeginSettle(pixels, now);
+    }
+
+    /// <summary>Lost and not found again: stopped, with what is stitched kept.</summary>
+    private void StopLost()
+    {
+        Log.Info("Long screenshot stopped scrolling by itself: the page could not be followed");
+        StopDrive();
+        SetStatus(LocalizationService.Get(TooSmall ? "S.LongShot.TooSmall" : "S.LongShot.AutoLost"));
+        _lostShown = true;
+    }
+
+    private void BeginSettle(byte[] pixels, long now)
+    {
+        _beforeStep = pixels;
+        _settlePrev = null;
+        _stepAt = now;
+        _settling = true;
+    }
+
+    /// <summary>A turn goes to the window under the pointer: it is brought over the region when it is not.</summary>
+    private void KeepPointerInRegion()
+    {
+        if (_region.Contains(LongShotInput.Cursor)) return;
+        LongShotInput.Cursor = new System.Drawing.Point(_region.Left + _region.Width / 2, _region.Top + _region.Height / 2);
+        _movedPointer = true;
+    }
+
+    /// <summary>What was learnt of the wheel holds for one region and direction only.</summary>
+    private void ForgetWheel()
+    {
+        _pxPerUnit = null;
+        _drivenPx = _drivenUnits = 0;
+        _speed = 1;
+        _pendingUnits = 0;
+    }
+
+    private void RenderAuto()
+    {
+        bool running = _drive == Drive.Auto;
+        var row = new StackPanel { Orientation = Orientation.Horizontal, HorizontalAlignment = HorizontalAlignment.Center };
+        row.Children.Add(new TextBlock
+        {
+            // Segoe's play and pause.
+            Text = running ? "" : "",
+            FontFamily = new FontFamily("Segoe Fluent Icons, Segoe MDL2 Assets"),
+            FontSize = 13,
+            VerticalAlignment = VerticalAlignment.Center,
+            Margin = new Thickness(0, 0, 6, 0),
+        });
+        row.Children.Add(new TextBlock
+        {
+            Text = LocalizationService.Get(running ? "S.LongShot.AutoStop" : "S.LongShot.Auto"),
+            VerticalAlignment = VerticalAlignment.Center,
+        });
+        _autoButton.Content = row;
+        _autoButton.IsEnabled = !_full && !_ended;
     }
 
     private static byte[] ReadPixels(Bitmap bitmap)
@@ -211,6 +550,8 @@ public sealed class LongShotSession
     private void ToggleAxis()
     {
         if (_stitcher.HasMoved) return;
+        StopDrive();
+        ForgetWheel();
         _stitcher.Axis = _stitcher.Axis == StitchAxis.Vertical ? StitchAxis.Horizontal : StitchAxis.Vertical;
 
         // Sideways, the plain wheel over the region scrolls left and right; up and down, it is the wheel.
@@ -277,11 +618,12 @@ public sealed class LongShotSession
 
     // ---- the ends ----
 
-    private enum Ending { Copy, Save, Pin, Cancel }
+    private enum Ending { Copy, Save, Pin, Crop, Cancel }
 
     private void End(Ending ending)
     {
         if (_ended) return;
+        StopDrive();
 
         BitmapSource? picture = null;
         if (ending != Ending.Cancel)
@@ -299,14 +641,17 @@ public sealed class LongShotSession
         _ended = true;
         _timer.Stop();
         UnregisterHotkeys();
+        _keys?.Dispose();
+        _keys = null;
         _wheel?.Dispose();
         _wheel = null;
         _frame.Close();
         _panel.Close();
         _grab.Dispose();
         Current = null;
-        Log.Info("Long screenshot ended ({Ending}), {Width}x{Height}px",
-            ending, picture?.PixelWidth ?? 0, picture?.PixelHeight ?? 0);
+        Log.Info("Long screenshot ended ({Ending}), {Width}x{Height}px; {Ticks} looks, {Average:F1} ms on average, {Max:F0} ms at most, {Slow} over {Budget} ms",
+            ending, picture?.PixelWidth ?? 0, picture?.PixelHeight ?? 0,
+            _tickCount, _tickCount > 0 ? _tickTotalMs / _tickCount : 0, _tickMaxMs, _slowTicks, DriveTickMs);
 
         if (picture is null) return;
         try
@@ -321,6 +666,9 @@ public sealed class LongShotSession
                 case Ending.Pin:
                     Pin.PinWindow.Pin(picture, _region.Left, _region.Top);
                     break;
+                case Ending.Crop:
+                    LongShotEditorWindow.Open(picture, _region);
+                    break;
             }
         }
         catch (Exception ex)
@@ -331,32 +679,17 @@ public sealed class LongShotSession
 
     private bool SaveWithDialog(BitmapSource picture)
     {
-        var dialog = new Microsoft.Win32.SaveFileDialog
-        {
-            Filter = "PNG|*.png",
-            FileName = $"TextTack_{DateTime.Now:yyyyMMdd_HHmmss}.png",
-            InitialDirectory = ScreenshotSaveService.ResolveDirectory(SettingsService.Instance.Current.ScreenshotSavePath),
-        };
-
+        StopDrive();
         _timer.Stop();
         _panel.Topmost = false;
+        if (_keys is not null) _keys.Enabled = false;
         try
         {
-            if (dialog.ShowDialog(_panel) != true) return false;
-            var encoder = new PngBitmapEncoder();
-            encoder.Frames.Add(BitmapFrame.Create(picture));
-            using var stream = System.IO.File.Create(dialog.FileName);
-            encoder.Save(stream);
-            return true;
-        }
-        catch (Exception ex)
-        {
-            Log.Warn(ex, "Saving the long screenshot failed");
-            System.Windows.MessageBox.Show(_panel, ex.Message, LocalizationService.Get("S.Toolbar.LongShot"));
-            return false;
+            return ScreenshotSaveService.SaveAs(_panel, picture, "S.Toolbar.LongShot");
         }
         finally
         {
+            if (_keys is not null) _keys.Enabled = true;
             if (!_ended)
             {
                 _panel.Topmost = true;
@@ -414,8 +747,10 @@ public sealed class LongShotSession
             SetWindowDisplayAffinity(_frameHwnd, WDA_EXCLUDEFROMCAPTURE);
             PlaceFrame(_region);
         };
-        // Again once shown: WPF applies its own size when it first lays the window out.
+        // Again once shown: WPF applies its own size when it first lays the window out. And after a
+        // move onto a screen of another scale, where Windows resizes the window by the scales' ratio.
         window.Loaded += (_, _) => PlaceFrame(_region);
+        window.DpiChanged += (_, _) => window.Dispatcher.BeginInvoke(() => PlaceFrame(_region), DispatcherPriority.Send);
         return window;
     }
 
@@ -449,7 +784,7 @@ public sealed class LongShotSession
 
         cell.MouseLeftButtonDown += (_, e) =>
         {
-            if (_frameLocked || _stitcher.HasMoved) return;
+            if (_frameLocked || _stitcher.HasMoved || _drive != Drive.Off) return;
             GetCursorPos(out var p);
             _drag = (new System.Drawing.Point(p.X, p.Y), _region, edges);
             _timer.Stop();
@@ -498,8 +833,11 @@ public sealed class LongShotSession
     {
         if (_frameHwnd == IntPtr.Zero) return;
         int g = Grip;
-        SetWindowPos(_frameHwnd, HWND_TOPMOST, region.Left - g, region.Top - g,
-            region.Width + 2 * g, region.Height + 2 * g, SWP_NOACTIVATE);
+        // Twice: the window is made on the main screen, and moved onto one of another scale the
+        // first call is answered with a size scaled by Windows; the second has no such change.
+        for (int i = 0; i < 2; i++)
+            SetWindowPos(_frameHwnd, HWND_TOPMOST, region.Left - g, region.Top - g,
+                region.Width + 2 * g, region.Height + 2 * g, SWP_NOACTIVATE);
     }
 
     /// <summary>
@@ -525,6 +863,7 @@ public sealed class LongShotSession
                 _wheel = LongShotWheelHook.Install(region);
             }
             _lostRun = 0;
+            ForgetWheel();
             Log.Info("Long screenshot region resized to {Region}", region);
         }
 
@@ -572,11 +911,13 @@ public sealed class LongShotSession
         buttons.Children.Add(IconButton("", "S.LongShot.Copy", () => End(Ending.Copy), accent: true));
         buttons.Children.Add(IconButton("", "S.LongShot.Save", () => End(Ending.Save)));
         buttons.Children.Add(IconButton("", "S.LongShot.Pin", () => End(Ending.Pin)));
+        buttons.Children.Add(IconButton("", "S.LongShot.Crop", () => End(Ending.Crop)));
         buttons.Children.Add(IconButton("", "S.LongShot.Cancel", () => End(Ending.Cancel)));
 
         var stack = new StackPanel { Margin = new Thickness(10) };
         stack.Children.Add(previewBox);
         stack.Children.Add(_status);
+        stack.Children.Add(_autoButton);
         stack.Children.Add(_axisButton);
         stack.Children.Add(buttons);
 
@@ -606,6 +947,7 @@ public sealed class LongShotSession
             PlacePanel(window, scale);
         };
         window.Loaded += (_, _) => PlacePanel(window, scale);
+        window.DpiChanged += (_, _) => window.Dispatcher.BeginInvoke(() => PlacePanel(window, scale), DispatcherPriority.Loaded);
         return window;
     }
 

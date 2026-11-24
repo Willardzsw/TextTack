@@ -769,28 +769,11 @@ public sealed class PinWindow : Window
 
     private void SaveAs()
     {
-        var dialog = new Microsoft.Win32.SaveFileDialog
-        {
-            Filter = "PNG|*.png",
-            FileName = $"TextTack_{DateTime.Now:yyyyMMdd_HHmmss}.png",
-            InitialDirectory = ScreenshotSaveService.ResolveDirectory(SettingsService.Instance.Current.ScreenshotSavePath),
-        };
-
         // Not topmost while the dialog is up, or the dialog opens underneath the pin it belongs to.
         Topmost = false;
         try
         {
-            if (dialog.ShowDialog(this) != true) return;
-
-            var encoder = new PngBitmapEncoder();
-            encoder.Frames.Add(BitmapFrame.Create(_image));
-            using var stream = System.IO.File.Create(dialog.FileName);
-            encoder.Save(stream);
-        }
-        catch (Exception ex)
-        {
-            Log.Warn(ex, "Saving a pinned picture failed");
-            System.Windows.MessageBox.Show(this, ex.Message, LocalizationService.Get("S.Pin.Title"));
+            ScreenshotSaveService.SaveAs(this, _image, "S.Pin.Title");
         }
         finally
         {

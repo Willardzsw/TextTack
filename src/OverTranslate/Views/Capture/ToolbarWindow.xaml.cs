@@ -392,6 +392,12 @@ public partial class ToolbarWindow : Window
     private void PinBtn_Click(object sender, RoutedEventArgs e)
         => PinRequested?.Invoke(this, EventArgs.Empty);
 
+    /// <summary>Raised by 另存為: end the capture and save the selection to a file of the user's choosing.</summary>
+    public event EventHandler? SaveAsRequested;
+
+    private void SaveAsBtn_Click(object sender, RoutedEventArgs e)
+        => SaveAsRequested?.Invoke(this, EventArgs.Empty);
+
     /// <summary>Raised by 長截圖: end the capture and grow the selection while the page scrolls.</summary>
     public event EventHandler? LongShotRequested;
 

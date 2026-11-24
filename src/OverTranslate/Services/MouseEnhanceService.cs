@@ -48,6 +48,11 @@ internal sealed class MouseEnhanceService : IDisposable
     private IntPtr _keyboardHook;
     private DispatcherTimer? _watchdog;
     private readonly HashSet<int> _keysDown = [];
+
+    // Modifiers held by a program sending keys (our own Ctrl+C for 取詞 and 替換翻譯, a macro tool):
+    // not a combination of the user's, but the keyboard's state shows them held, and the watchdog
+    // must not take that for a hook that has stopped hearing.
+    private readonly HashSet<int> _injectedDown = [];
     private MouseModifierKeys _held;
     private int _wheelRemainder;
     private int _horizontalRemainder;
@@ -164,6 +169,7 @@ internal sealed class MouseEnhanceService : IDisposable
         _watchdog?.Stop();
         _drag = null;
         _keysDown.Clear();
+        _injectedDown.Clear();
         _held = MouseModifierKeys.None;
         if (_mouseHook != IntPtr.Zero)
         {
@@ -182,7 +188,9 @@ internal sealed class MouseEnhanceService : IDisposable
         if (_settings is null) return;
         var actual = AsyncModifiers();
 
-        if (actual != MouseModifierKeys.None && _held == MouseModifierKeys.None && _keysDown.Count == 0)
+        if (actual == MouseModifierKeys.None) _injectedDown.Clear();
+
+        if (actual != MouseModifierKeys.None && _held == MouseModifierKeys.None && _keysDown.Count == 0 && _injectedDown.Count == 0)
         {
             // A modifier is down and the hook heard no press: it has been dropped by Windows (or the
             // press went to a program run as administrator, which no hook here can hear).
@@ -215,7 +223,13 @@ internal sealed class MouseEnhanceService : IDisposable
             {
                 int vk = Marshal.ReadInt32(lParam);
                 uint flags = (uint)Marshal.ReadInt32(lParam, 8);
-                if ((flags & LLKHF_INJECTED) == 0 && ModifierFor(vk) != MouseModifierKeys.None)
+                if ((flags & LLKHF_INJECTED) != 0 && ModifierFor(vk) != MouseModifierKeys.None)
+                {
+                    int sent = (int)wParam;
+                    if (sent is WM_KEYDOWN or WM_SYSKEYDOWN) _injectedDown.Add(vk);
+                    else _injectedDown.Remove(vk);
+                }
+                else if ((flags & LLKHF_INJECTED) == 0 && ModifierFor(vk) != MouseModifierKeys.None)
                 {
                     int message = (int)wParam;
                     bool down = message is WM_KEYDOWN or WM_SYSKEYDOWN;

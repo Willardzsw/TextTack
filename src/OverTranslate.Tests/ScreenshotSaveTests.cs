@@ -35,4 +35,36 @@ public class ScreenshotSaveTests
         }
         finally { Directory.Delete(directory, recursive: true); }
     }
+
+    [Theory]
+    [InlineData("a.png", 2, "png")]
+    [InlineData("a.JPEG", 1, "jpg")]
+    [InlineData("a.jpg", 1, "jpg")]
+    [InlineData("a.tiff", 1, "tif")]
+    [InlineData("a", 3, "bmp")]
+    [InlineData("a.txt", 4, "tif")]
+    [InlineData("a", 0, "png")]
+    public void SaveAsFormatFollowsTheExtensionElseTheChosenType(string name, int filterIndex, string format)
+        => Assert.Equal(format, ScreenshotSaveService.FormatFor(name, filterIndex));
+
+    [Theory]
+    [InlineData("png", typeof(PngBitmapDecoder))]
+    [InlineData("jpg", typeof(JpegBitmapDecoder))]
+    [InlineData("bmp", typeof(BmpBitmapDecoder))]
+    [InlineData("tif", typeof(TiffBitmapDecoder))]
+    public void EveryFormatWritesAPictureThatReadsBack(string format, Type decoderType)
+    {
+        var pixels = new byte[8 * 4 * 4];
+        for (int i = 0; i < pixels.Length; i += 4) { pixels[i] = 200; pixels[i + 1] = 100; pixels[i + 2] = 50; pixels[i + 3] = 255; }
+        var image = BitmapSource.Create(8, 4, 96, 96, PixelFormats.Bgra32, null, pixels, 8 * 4);
+        image.Freeze();
+
+        using var stream = new MemoryStream();
+        ScreenshotSaveService.EncoderFor(format, image).Save(stream);
+        stream.Position = 0;
+        var decoder = BitmapDecoder.Create(stream, BitmapCreateOptions.None, BitmapCacheOption.OnLoad);
+        Assert.IsType(decoderType, decoder);
+        Assert.Equal(8, decoder.Frames[0].PixelWidth);
+        Assert.Equal(4, decoder.Frames[0].PixelHeight);
+    }
 }
