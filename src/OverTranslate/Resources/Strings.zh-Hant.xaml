@@ -470,6 +470,29 @@
     <sys:String x:Key="S.Error.DeepSeekHttp">DeepSeek 回傳 {0}：{1}</sys:String>
     <sys:String x:Key="S.Error.DeepSeekTimeout">DeepSeek 在 {0} 秒內沒有回應，請檢查網路後再試。</sys:String>
     <sys:String x:Key="S.Error.DeepSeekBalanceUnreadable">無法讀取 DeepSeek 回傳的餘額。</sys:String>
+    <sys:String x:Key="S.Provider.Cloud">雲翻譯</sys:String>
+    <sys:String x:Key="S.Provider.CloudHint">填入 TT碼即可使用，不用自己申請 API Key。</sys:String>
+    <sys:String x:Key="S.Settings.CloudCode">TT碼</sys:String>
+    <sys:String x:Key="S.Settings.CloudCodeHint">填入提供者給你的 TT碼（tt- 開頭）。位址、提示詞和參數已預先設定好。</sys:String>
+    <sys:String x:Key="S.Settings.CloudModel">模型</sys:String>
+    <sys:String x:Key="S.Settings.CloudModelLuna">GPT-6 Luna（預設）</sys:String>
+    <sys:String x:Key="S.Settings.CloudModelDeepSeek">DeepSeek Flash（更快）</sys:String>
+    <sys:String x:Key="S.Settings.CloudQuota">今日額度</sys:String>
+    <sys:String x:Key="S.Settings.CloudQuotaQuery">查看額度</sys:String>
+    <sys:String x:Key="S.Settings.CloudQuotaQuerying">查詢中…</sys:String>
+    <sys:String x:Key="S.Settings.CloudQuotaResult">今天已用 {0} / {1}，還剩 {2}</sys:String>
+    <sys:String x:Key="S.Settings.CloudQuotaFailed">查詢失敗：{0}</sys:String>
+    <sys:String x:Key="S.Settings.CloudPrivacyHint">要翻譯的文字會經過提供者的伺服器，再轉給 OpenAI 或 DeepSeek，伺服器不保存翻譯內容。額度在曼谷時間每天零點恢復。</sys:String>
+    <sys:String x:Key="S.Error.CloudNoCode">尚未填入 TT碼。請到「設定 › 翻譯服務 › 雲翻譯」填入。</sys:String>
+    <sys:String x:Key="S.Error.CloudBadCode">TT碼不對，請檢查是否多複製了空格。</sys:String>
+    <sys:String x:Key="S.Error.CloudCodeDisabled">這個 TT碼已停用，請聯絡提供者。</sys:String>
+    <sys:String x:Key="S.Error.CloudQuotaUsed">今天的額度已經用完，曼谷時間零點後恢復。</sys:String>
+    <sys:String x:Key="S.Error.CloudRateLimited">請求太頻繁，請稍等一分鐘再試。</sys:String>
+    <sys:String x:Key="S.Error.CloudProviderProblem">雲翻譯伺服器的帳戶出了問題，請聯絡提供者。</sys:String>
+    <sys:String x:Key="S.Error.CloudModelUnavailable">這個模型暫時無法使用，請在雲翻譯設定裡換另一個模型。</sys:String>
+    <sys:String x:Key="S.Error.CloudHttp">雲翻譯回傳 {0}：{1}</sys:String>
+    <sys:String x:Key="S.Error.CloudTimeout">雲翻譯在 {0} 秒內沒有回應，請稍後再試。</sys:String>
+    <sys:String x:Key="S.Error.CloudQuotaUnreadable">無法讀取雲翻譯回傳的額度。</sys:String>
 
     <!-- ── Settings page ── -->
     <sys:String x:Key="S.Settings.Title">設定</sys:String>

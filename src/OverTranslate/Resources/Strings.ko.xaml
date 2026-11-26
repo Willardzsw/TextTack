@@ -452,6 +452,29 @@
     <sys:String x:Key="S.Error.DeepSeekHttp">DeepSeek이(가) {0}을(를) 반환했습니다: {1}</sys:String>
     <sys:String x:Key="S.Error.DeepSeekTimeout">DeepSeek이(가) {0}초 안에 응답하지 않았습니다. 네트워크를 확인하고 다시 시도하세요.</sys:String>
     <sys:String x:Key="S.Error.DeepSeekBalanceUnreadable">DeepSeek이(가) 반환한 잔액을 읽을 수 없습니다.</sys:String>
+    <sys:String x:Key="S.Provider.Cloud">클라우드 번역</sys:String>
+    <sys:String x:Key="S.Provider.CloudHint">TT 코드만 입력하면 사용할 수 있습니다. API 키가 필요 없습니다.</sys:String>
+    <sys:String x:Key="S.Settings.CloudCode">TT 코드</sys:String>
+    <sys:String x:Key="S.Settings.CloudCodeHint">제공자에게 받은 TT 코드(tt-로 시작)를 입력하세요. 주소, 프롬프트, 매개변수는 미리 설정되어 있습니다.</sys:String>
+    <sys:String x:Key="S.Settings.CloudModel">모델</sys:String>
+    <sys:String x:Key="S.Settings.CloudModelLuna">GPT-6 Luna(기본)</sys:String>
+    <sys:String x:Key="S.Settings.CloudModelDeepSeek">DeepSeek Flash(더 빠름)</sys:String>
+    <sys:String x:Key="S.Settings.CloudQuota">오늘 사용 한도</sys:String>
+    <sys:String x:Key="S.Settings.CloudQuotaQuery">한도 확인</sys:String>
+    <sys:String x:Key="S.Settings.CloudQuotaQuerying">확인 중…</sys:String>
+    <sys:String x:Key="S.Settings.CloudQuotaResult">오늘 {0} / {1} 사용, {2} 남음</sys:String>
+    <sys:String x:Key="S.Settings.CloudQuotaFailed">확인 실패: {0}</sys:String>
+    <sys:String x:Key="S.Settings.CloudPrivacyHint">번역할 텍스트는 제공자의 서버를 거쳐 OpenAI 또는 DeepSeek로 전달되며, 서버는 번역 내용을 저장하지 않습니다. 한도는 방콕 시간 매일 자정에 초기화됩니다.</sys:String>
+    <sys:String x:Key="S.Error.CloudNoCode">TT 코드가 아직 없습니다. 「설정 › 번역 서비스 › 클라우드 번역」에서 입력하세요.</sys:String>
+    <sys:String x:Key="S.Error.CloudBadCode">TT 코드가 올바르지 않습니다. 공백이 함께 복사되지 않았는지 확인하세요.</sys:String>
+    <sys:String x:Key="S.Error.CloudCodeDisabled">이 TT 코드는 사용 중지되었습니다. 제공자에게 문의하세요.</sys:String>
+    <sys:String x:Key="S.Error.CloudQuotaUsed">오늘 한도를 모두 사용했습니다. 방콕 시간 자정에 초기화됩니다.</sys:String>
+    <sys:String x:Key="S.Error.CloudRateLimited">요청이 너무 많습니다. 1분 정도 기다린 후 다시 시도하세요.</sys:String>
+    <sys:String x:Key="S.Error.CloudProviderProblem">클라우드 번역 서버의 계정에 문제가 있습니다. 제공자에게 문의하세요.</sys:String>
+    <sys:String x:Key="S.Error.CloudModelUnavailable">이 모델은 지금 사용할 수 없습니다. 클라우드 번역 설정에서 다른 모델을 선택하세요.</sys:String>
+    <sys:String x:Key="S.Error.CloudHttp">클라우드 번역이 {0}을(를) 반환했습니다: {1}</sys:String>
+    <sys:String x:Key="S.Error.CloudTimeout">클라우드 번역이 {0}초 안에 응답하지 않았습니다. 잠시 후 다시 시도하세요.</sys:String>
+    <sys:String x:Key="S.Error.CloudQuotaUnreadable">클라우드 번역이 반환한 한도를 읽을 수 없습니다.</sys:String>
 
     <!-- ── Settings page ── -->
     <sys:String x:Key="S.Settings.Title">설정</sys:String>

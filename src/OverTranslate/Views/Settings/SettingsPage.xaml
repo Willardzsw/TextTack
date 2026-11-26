@@ -2434,6 +2434,52 @@
                                             </WrapPanel>
                                         </DockPanel>
                                     </CheckBox>
+
+                                    <!-- 云翻译: after DeepSeek, as in LanguageData.Providers. -->
+                                    <CheckBox Style="{StaticResource ProviderCard}" IsChecked="True"
+                                              AutomationProperties.Name="{DynamicResource S.Provider.Cloud}"
+                                              Checked="ProviderCard_Toggled" Unchecked="ProviderCard_Toggled">
+                                        <DockPanel>
+                                            <Button DockPanel.Dock="Right"
+                                                    x:Name="CloudConfigureBtn"
+                                                    Content="{DynamicResource S.Common.Configure}"
+                                                    Style="{StaticResource FlatButton}"
+                                                    Height="30"
+                                                    MinWidth="96"
+                                                    Margin="14,0,0,0"
+                                                    VerticalAlignment="Center"
+                                                    Cursor="Hand"
+                                                    Click="ConfigureService_Click"/>
+                                            <!-- TextTack's own warm orange, the app icon's tile colours. -->
+                                            <Grid DockPanel.Dock="Left" Style="{StaticResource ProviderCardMark}">
+                                                <Border Width="22" Height="22"
+                                                        CornerRadius="5">
+                                                    <Border.Background>
+                                                        <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
+                                                            <GradientStop Color="#F48E2C" Offset="0"/>
+                                                            <GradientStop Color="#D63E2C" Offset="1"/>
+                                                        </LinearGradientBrush>
+                                                    </Border.Background>
+                                                    <TextBlock Text="TT"
+                                                               FontFamily="Segoe UI"
+                                                               FontWeight="Bold"
+                                                               FontSize="10"
+                                                               Foreground="White"
+                                                               HorizontalAlignment="Center"
+                                                               VerticalAlignment="Center"/>
+                                                </Border>
+                                            </Grid>
+                                            <WrapPanel VerticalAlignment="Center">
+                                                <TextBlock Text="{DynamicResource S.Provider.Cloud}"
+                                                           Style="{StaticResource ProviderCardName}"
+                                                           Margin="0,0,10,0"/>
+                                                <Border x:Name="CloudBadge"
+                                                        Style="{StaticResource ServiceBadgeBorder}">
+                                                    <TextBlock x:Name="CloudBadgeText" Style="{StaticResource ServiceBadgeText}"/>
+                                                </Border>
+                                            </WrapPanel>
+                                        </DockPanel>
+                                    </CheckBox>
                                 </StackPanel>
                             </StackPanel>
                         </Grid>

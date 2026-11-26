@@ -443,6 +443,29 @@
     <sys:String x:Key="S.Error.DeepSeekHttp">DeepSeek ตอบกลับ {0}: {1}</sys:String>
     <sys:String x:Key="S.Error.DeepSeekTimeout">DeepSeek ไม่ตอบกลับภายใน {0} วินาที โปรดตรวจสอบเครือข่ายแล้วลองอีกครั้ง</sys:String>
     <sys:String x:Key="S.Error.DeepSeekBalanceUnreadable">อ่านยอดเงินที่ DeepSeek ส่งกลับมาไม่ได้</sys:String>
+    <sys:String x:Key="S.Provider.Cloud">แปลผ่านคลาวด์</sys:String>
+    <sys:String x:Key="S.Provider.CloudHint">ใส่ TT Code อย่างเดียวก็ใช้ได้ ไม่ต้องสมัคร API Key เอง</sys:String>
+    <sys:String x:Key="S.Settings.CloudCode">TT Code</sys:String>
+    <sys:String x:Key="S.Settings.CloudCodeHint">ใส่ TT Code ที่ได้รับ (ขึ้นต้นด้วย tt-) ที่อยู่ พรอมต์ และพารามิเตอร์ตั้งค่าไว้ให้แล้ว</sys:String>
+    <sys:String x:Key="S.Settings.CloudModel">โมเดล</sys:String>
+    <sys:String x:Key="S.Settings.CloudModelLuna">GPT-6 Luna (ค่าเริ่มต้น)</sys:String>
+    <sys:String x:Key="S.Settings.CloudModelDeepSeek">DeepSeek Flash (เร็วกว่า)</sys:String>
+    <sys:String x:Key="S.Settings.CloudQuota">โควตาวันนี้</sys:String>
+    <sys:String x:Key="S.Settings.CloudQuotaQuery">ดูโควตา</sys:String>
+    <sys:String x:Key="S.Settings.CloudQuotaQuerying">กำลังตรวจสอบ…</sys:String>
+    <sys:String x:Key="S.Settings.CloudQuotaResult">วันนี้ใช้ไป {0} / {1} เหลือ {2}</sys:String>
+    <sys:String x:Key="S.Settings.CloudQuotaFailed">ตรวจสอบไม่สำเร็จ: {0}</sys:String>
+    <sys:String x:Key="S.Settings.CloudPrivacyHint">ข้อความที่จะแปลจะผ่านเซิร์ฟเวอร์ของผู้ให้บริการก่อนส่งต่อไปยัง OpenAI หรือ DeepSeek เซิร์ฟเวอร์ไม่เก็บเนื้อหาที่แปล โควตาจะรีเซ็ตทุกวันตอนเที่ยงคืนตามเวลากรุงเทพฯ</sys:String>
+    <sys:String x:Key="S.Error.CloudNoCode">ยังไม่ได้ใส่ TT Code โปรดใส่ที่ «การตั้งค่า › บริการแปล › แปลผ่านคลาวด์»</sys:String>
+    <sys:String x:Key="S.Error.CloudBadCode">TT Code ไม่ถูกต้อง โปรดตรวจสอบว่าไม่ได้คัดลอกช่องว่างเกินมา</sys:String>
+    <sys:String x:Key="S.Error.CloudCodeDisabled">TT Code นี้ถูกระงับแล้ว โปรดติดต่อผู้ให้บริการ</sys:String>
+    <sys:String x:Key="S.Error.CloudQuotaUsed">โควตาวันนี้หมดแล้ว จะรีเซ็ตตอนเที่ยงคืนตามเวลากรุงเทพฯ</sys:String>
+    <sys:String x:Key="S.Error.CloudRateLimited">ส่งคำขอบ่อยเกินไป โปรดรอสักหนึ่งนาทีแล้วลองใหม่</sys:String>
+    <sys:String x:Key="S.Error.CloudProviderProblem">บัญชีของเซิร์ฟเวอร์แปลผ่านคลาวด์มีปัญหา โปรดติดต่อผู้ให้บริการ</sys:String>
+    <sys:String x:Key="S.Error.CloudModelUnavailable">โมเดลนี้ใช้งานไม่ได้ในขณะนี้ โปรดเลือกโมเดลอื่นในการตั้งค่าแปลผ่านคลาวด์</sys:String>
+    <sys:String x:Key="S.Error.CloudHttp">แปลผ่านคลาวด์ตอบกลับ {0}: {1}</sys:String>
+    <sys:String x:Key="S.Error.CloudTimeout">แปลผ่านคลาวด์ไม่ตอบกลับภายใน {0} วินาที โปรดลองใหม่ภายหลัง</sys:String>
+    <sys:String x:Key="S.Error.CloudQuotaUnreadable">อ่านโควตาที่แปลผ่านคลาวด์ส่งกลับมาไม่ได้</sys:String>
 
     <!-- ── Settings page ── -->
     <sys:String x:Key="S.Settings.Title">การตั้งค่า</sys:String>

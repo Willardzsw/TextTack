@@ -8,7 +8,8 @@ namespace OverTranslate.Models;
 // Google2 was 「Google 翻譯 (RPC)」 as a choice of its own; it stays so files that saved it still
 // read, and is read as Google (LanguageData.CurrentProvider). GoogleChrome is 「(Beta)」.
 // DeepSeek is the hosted DeepSeek API: the OpenAI-compatible request with its own key and model.
-public enum TranslationProvider { Google, Google2, GoogleChrome, Bing, Microsoft, DeepL, OpenAI, Youdao, TranSmart, Yandex, DeepSeek }
+// Cloud is the TextTack relay (tools/relay): the same request, with a TT code in place of a key.
+public enum TranslationProvider { Google, Google2, GoogleChrome, Bing, Microsoft, DeepL, OpenAI, Youdao, TranSmart, Yandex, DeepSeek, Cloud }
 
 public class AppSettings
 {
@@ -288,6 +289,19 @@ public class AppSettings
     /// <see cref="Services.Providers.DeepSeekProvider.ModelFor"/>.
     /// </remarks>
     public string DeepSeekModel { get; set; } = "";
+
+    /// <summary>The TT code for 云翻译 — what the relay knows its user by.</summary>
+    /// <remarks>
+    /// Named ApiKey so it is kept like a key: encrypted in the file (SecretStore) and hidden in
+    /// the diagnostic bundle.
+    /// </remarks>
+    public string CloudApiKey { get; set; } = "";
+
+    /// <summary>
+    /// Which model 云翻译 asks the relay for, or empty for
+    /// <see cref="Services.Providers.CloudProvider.LunaModel"/>.
+    /// </summary>
+    public string CloudModel { get; set; } = "";
 
     /// <summary>
     /// The key 「Google 翻譯 (Beta)」 sends, read from Google's translate element the first time it

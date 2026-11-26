@@ -41,6 +41,10 @@ public partial class ServiceSettingsOverlay : UserControl
 
     private readonly DispatcherTimer _apiKeyDebounce;
     private readonly DispatcherTimer _deepSeekKeyDebounce;
+    private readonly DispatcherTimer _cloudCodeDebounce;
+
+    /// <summary>The 云翻译 allowance query on its way, cancelled when the panel closes or asks again.</summary>
+    private CancellationTokenSource? _quotaQuery;
 
     /// <summary>The balance query on its way, cancelled when the panel closes or asks again.</summary>
     private CancellationTokenSource? _balanceQuery;
@@ -73,6 +77,13 @@ public partial class ServiceSettingsOverlay : UserControl
         {
             _deepSeekKeyDebounce.Stop();
             Persist(s => s.DeepSeekApiKey = DeepSeekApiKeyBox.Secret.Trim());
+        };
+
+        _cloudCodeDebounce = new DispatcherTimer { Interval = EditDebounce };
+        _cloudCodeDebounce.Tick += (_, _) =>
+        {
+            _cloudCodeDebounce.Stop();
+            Persist(s => s.CloudApiKey = CloudCodeBox.Secret.Trim());
         };
 
         _openAiSettingsDebounce = new DispatcherTimer { Interval = EditDebounce };
@@ -138,6 +149,7 @@ public partial class ServiceSettingsOverlay : UserControl
         // to it until the timer happened to fire.
         FlushPendingEdits();
         CancelBalanceQuery();
+        CancelQuotaQuery();
 
         _languageSubscription.Dispose();
 
@@ -198,20 +210,26 @@ public partial class ServiceSettingsOverlay : UserControl
 
             var deepL = _provider == TranslationProvider.DeepL;
             var deepSeek = _provider == TranslationProvider.DeepSeek;
+            var cloud = _provider == TranslationProvider.Cloud;
             DeepLPanel.Visibility = deepL ? Visibility.Visible : Visibility.Collapsed;
             DeepSeekPanel.Visibility = deepSeek ? Visibility.Visible : Visibility.Collapsed;
-            OpenAiPanel.Visibility = deepL || deepSeek ? Visibility.Collapsed : Visibility.Visible;
+            CloudPanel.Visibility = cloud ? Visibility.Visible : Visibility.Collapsed;
+            OpenAiPanel.Visibility = deepL || deepSeek || cloud ? Visibility.Collapsed : Visibility.Visible;
 
             // The card is sized for the panel on it, and DeepL is one field. OpenAI's
             // width is set by the list rather than by the fields above it: a row is a name with its
             // tags, and a model name in a fixed pitch under it.
-            Card.Width = deepL ? 460 : deepSeek ? 560 : 640;
+            Card.Width = deepL ? 460 : deepSeek || cloud ? 560 : 640;
 
             ApiKeyBox.Secret = s.ApiKey;
 
             DeepSeekApiKeyBox.Secret = s.DeepSeekApiKey;
             DeepSeekModelBox.ItemsSource = DeepSeekModelItems();
             DeepSeekModelBox.SelectedValue = DeepSeekProvider.ModelFor(s.DeepSeekModel);
+
+            CloudCodeBox.Secret = s.CloudApiKey;
+            CloudModelBox.ItemsSource = CloudModelItems();
+            CloudModelBox.SelectedValue = CloudProvider.ModelFor(s.CloudModel);
 
             OpenAiBaseUrlBox.Text = s.OpenAiBaseUrl;
             OpenAiApiKeyBox.Secret = s.OpenAiApiKey;
@@ -266,6 +284,12 @@ public partial class ServiceSettingsOverlay : UserControl
         {
             _apiKeyDebounce.Stop();
             Persist(s => s.ApiKey = ApiKeyBox.Secret.Trim());
+        }
+
+        if (_cloudCodeDebounce.IsEnabled)
+        {
+            _cloudCodeDebounce.Stop();
+            Persist(s => s.CloudApiKey = CloudCodeBox.Secret.Trim());
         }
 
         if (_openAiSettingsDebounce.IsEnabled)
@@ -375,6 +399,90 @@ public partial class ServiceSettingsOverlay : UserControl
         _balanceQuery?.Cancel();
         _balanceQuery = null;
         DeepSeekBalanceBtn.IsEnabled = true;
+    }
+
+    // ── 云翻译 ──────────────────────────────────────────────────────────────
+
+    /// <summary>One model in the 云翻译 picker: what it is called on screen, and what is sent.</summary>
+    private sealed record CloudModelItem(string Display, string Model);
+
+    private static List<CloudModelItem> CloudModelItems() =>
+    [
+        new(LocalizationService.Get("S.Settings.CloudModelLuna"), CloudProvider.LunaModel),
+        new(LocalizationService.Get("S.Settings.CloudModelDeepSeek"), CloudProvider.DeepSeekModel),
+    ];
+
+    private void CloudCodeBox_SecretChanged(object? sender, EventArgs e)
+    {
+        if (_loading) return;
+
+        // An allowance read with the old code says nothing about the new one.
+        CancelQuotaQuery();
+        CloudQuotaText.Text = "";
+
+        _cloudCodeDebounce.Stop();
+        _cloudCodeDebounce.Start();
+    }
+
+    private void CloudModelBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
+    {
+        if (_loading || CloudModelBox.SelectedValue is not string model) return;
+
+        // Luna is stored as empty, so the default can move without rewriting anyone's file.
+        Persist(s => s.CloudModel = model == CloudProvider.LunaModel ? "" : model);
+    }
+
+    private async void CloudQuotaBtn_Click(object sender, RoutedEventArgs e)
+    {
+        // The code as typed, not as the debounce will have stored it in a moment.
+        if (_cloudCodeDebounce.IsEnabled)
+        {
+            _cloudCodeDebounce.Stop();
+            Persist(s => s.CloudApiKey = CloudCodeBox.Secret.Trim());
+        }
+
+        CancelQuotaQuery();
+        var query = _quotaQuery = new CancellationTokenSource();
+
+        CloudQuotaBtn.IsEnabled = false;
+        CloudQuotaText.SetResourceReference(TextBlock.ForegroundProperty, "AppTextSecondary");
+        CloudQuotaText.Text = LocalizationService.Get("S.Settings.CloudQuotaQuerying");
+        try
+        {
+            var quota = await AppServices.Translation.Cloud.QueryQuotaAsync(query.Token);
+            if (query.IsCancellationRequested) return;
+
+            CloudQuotaText.Text = LocalizationService.Format("S.Settings.CloudQuotaResult",
+                CloudProvider.Yuan(quota.Used), CloudProvider.Yuan(quota.Daily), CloudProvider.Yuan(quota.Remaining));
+            CloudQuotaText.SetResourceReference(
+                TextBlock.ForegroundProperty, quota.Remaining > 0 ? "AppTextPrimary" : "AppWarning");
+        }
+        catch (OperationCanceledException) when (query.IsCancellationRequested)
+        {
+            // Closed, or asked again: the newer answer, if any, is the one to show.
+        }
+        catch (Exception ex)
+        {
+            if (query.IsCancellationRequested) return;
+            CloudQuotaText.Text = LocalizationService.Format("S.Settings.CloudQuotaFailed", ex.Message);
+            CloudQuotaText.SetResourceReference(TextBlock.ForegroundProperty, "AppError");
+        }
+        finally
+        {
+            if (ReferenceEquals(_quotaQuery, query))
+            {
+                CloudQuotaBtn.IsEnabled = true;
+                _quotaQuery = null;
+            }
+            query.Dispose();
+        }
+    }
+
+    private void CancelQuotaQuery()
+    {
+        _quotaQuery?.Cancel();
+        _quotaQuery = null;
+        CloudQuotaBtn.IsEnabled = true;
     }
 
     // ── OpenAI fields ────────────────────────────────────────────────────────

@@ -87,11 +87,15 @@ public class TranslationService
     private readonly DeepLProvider      _deepL     = new(DeepLHttp);
     private readonly OpenAiCompatibleProvider _openAi = new();
     private readonly DeepSeekProvider _deepSeek = new();
+    private readonly CloudProvider _cloud = new();
 
     /// <summary>
     /// The DeepSeek service itself, for what only it has — the balance the settings panel shows.
     /// </summary>
     public DeepSeekProvider DeepSeek => _deepSeek;
+
+    /// <summary>云翻译 itself, for the day's allowance the settings panel shows.</summary>
+    public CloudProvider Cloud => _cloud;
 
     // Only when asked for, one word at a time; the names are what the dictionary card credits.
     private readonly DictionaryLookupProvider _googleDictionary    = new(new GoogleDictionary(Http), "Google Web");
@@ -194,6 +198,7 @@ public class TranslationService
         TranslationProvider.DeepL     => _deepL,
         TranslationProvider.OpenAI    => _openAi,
         TranslationProvider.DeepSeek  => _deepSeek,
+        TranslationProvider.Cloud     => _cloud,
         _                             => _googleR,
     };
 
@@ -210,6 +215,7 @@ public class TranslationService
         TranslationProvider.DeepL        => _deepL,
         TranslationProvider.OpenAI       => _openAi,
         TranslationProvider.DeepSeek     => _deepSeek,
+        TranslationProvider.Cloud        => _cloud,
         _                                => _googleS,
     };
 

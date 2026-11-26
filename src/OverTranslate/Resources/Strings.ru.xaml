@@ -445,6 +445,29 @@
     <sys:String x:Key="S.Error.DeepSeekHttp">DeepSeek вернул {0}: {1}</sys:String>
     <sys:String x:Key="S.Error.DeepSeekTimeout">DeepSeek не ответил за {0} с. Проверьте подключение и повторите попытку.</sys:String>
     <sys:String x:Key="S.Error.DeepSeekBalanceUnreadable">Не удалось прочитать баланс, который вернул DeepSeek.</sys:String>
+    <sys:String x:Key="S.Provider.Cloud">Облачный перевод</sys:String>
+    <sys:String x:Key="S.Provider.CloudHint">Достаточно ввести TT-код — свой API-ключ не нужен.</sys:String>
+    <sys:String x:Key="S.Settings.CloudCode">TT-код</sys:String>
+    <sys:String x:Key="S.Settings.CloudCodeHint">Введите полученный TT-код (начинается с tt-). Адрес, промпт и параметры уже настроены.</sys:String>
+    <sys:String x:Key="S.Settings.CloudModel">Модель</sys:String>
+    <sys:String x:Key="S.Settings.CloudModelLuna">GPT-6 Luna (по умолчанию)</sys:String>
+    <sys:String x:Key="S.Settings.CloudModelDeepSeek">DeepSeek Flash (быстрее)</sys:String>
+    <sys:String x:Key="S.Settings.CloudQuota">Лимит на сегодня</sys:String>
+    <sys:String x:Key="S.Settings.CloudQuotaQuery">Проверить</sys:String>
+    <sys:String x:Key="S.Settings.CloudQuotaQuerying">Проверка…</sys:String>
+    <sys:String x:Key="S.Settings.CloudQuotaResult">Сегодня использовано {0} из {1}, осталось {2}</sys:String>
+    <sys:String x:Key="S.Settings.CloudQuotaFailed">Не удалось проверить: {0}</sys:String>
+    <sys:String x:Key="S.Settings.CloudPrivacyHint">Текст для перевода проходит через сервер поставщика и передаётся в OpenAI или DeepSeek; сервер не хранит переводы. Лимит обновляется в полночь по времени Бангкока.</sys:String>
+    <sys:String x:Key="S.Error.CloudNoCode">TT-код не указан. Введите его в «Настройки › Службы перевода › Облачный перевод».</sys:String>
+    <sys:String x:Key="S.Error.CloudBadCode">Неверный TT-код. Проверьте, не скопировались ли лишние пробелы.</sys:String>
+    <sys:String x:Key="S.Error.CloudCodeDisabled">Этот TT-код отключён. Обратитесь к поставщику.</sys:String>
+    <sys:String x:Key="S.Error.CloudQuotaUsed">Лимит на сегодня исчерпан. Он обновится в полночь по времени Бангкока.</sys:String>
+    <sys:String x:Key="S.Error.CloudRateLimited">Слишком много запросов. Подождите минуту и повторите.</sys:String>
+    <sys:String x:Key="S.Error.CloudProviderProblem">Проблема с учётной записью сервера облачного перевода. Обратитесь к поставщику.</sys:String>
+    <sys:String x:Key="S.Error.CloudModelUnavailable">Эта модель сейчас недоступна. Выберите другую модель в настройках облачного перевода.</sys:String>
+    <sys:String x:Key="S.Error.CloudHttp">Облачный перевод вернул {0}: {1}</sys:String>
+    <sys:String x:Key="S.Error.CloudTimeout">Облачный перевод не ответил за {0} с. Повторите попытку позже.</sys:String>
+    <sys:String x:Key="S.Error.CloudQuotaUnreadable">Не удалось прочитать лимит, который вернул облачный перевод.</sys:String>
 
     <!-- ── Settings page ── -->
     <sys:String x:Key="S.Settings.Title">Настройки</sys:String>

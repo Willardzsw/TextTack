@@ -266,6 +266,70 @@
                                        Style="{StaticResource FieldHint}"/>
                         </Grid>
 
+                        <!-- ══════════ 云翻译 ══════════ -->
+                        <!-- The relay's address, prompt and parameters are fixed in CloudProvider, so all
+                             there is to set is the TT code and which of the two models. -->
+                        <Grid x:Name="CloudPanel">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto" SharedSizeGroup="ServiceLabel"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                            </Grid.RowDefinitions>
+
+                            <TextBlock Grid.Column="0" Grid.Row="0"
+                                       Text="{DynamicResource S.Settings.CloudCode}"
+                                       Style="{StaticResource FieldLabel}"/>
+                            <controls:SecretBox Grid.Column="1" Grid.Row="0" x:Name="CloudCodeBox"
+                                                SecretChanged="CloudCodeBox_SecretChanged"/>
+                            <TextBlock Grid.Column="1" Grid.Row="1"
+                                       Text="{DynamicResource S.Settings.CloudCodeHint}"
+                                       Style="{StaticResource FieldHint}"/>
+
+                            <TextBlock Grid.Column="0" Grid.Row="2"
+                                       Text="{DynamicResource S.Settings.CloudModel}"
+                                       Margin="0,16,12,0"
+                                       Style="{StaticResource FieldLabel}"/>
+                            <ComboBox Grid.Column="1" Grid.Row="2" x:Name="CloudModelBox"
+                                      Margin="0,16,0,0"
+                                      Style="{StaticResource ModernComboBox}"
+                                      DisplayMemberPath="Display"
+                                      SelectedValuePath="Model"
+                                      AutomationProperties.Name="{DynamicResource S.Settings.CloudModel}"
+                                      SelectionChanged="CloudModelBox_SelectionChanged"/>
+
+                            <TextBlock Grid.Column="0" Grid.Row="3"
+                                       Text="{DynamicResource S.Settings.CloudQuota}"
+                                       Margin="0,16,12,0"
+                                       Style="{StaticResource FieldLabel}"/>
+                            <StackPanel Grid.Column="1" Grid.Row="3" Orientation="Horizontal" Margin="0,16,0,0">
+                                <Button x:Name="CloudQuotaBtn"
+                                        Content="{DynamicResource S.Settings.CloudQuotaQuery}"
+                                        Style="{StaticResource FlatButton}"
+                                        Height="30"
+                                        MinWidth="96"
+                                        Cursor="Hand"
+                                        VerticalAlignment="Center"
+                                        Click="CloudQuotaBtn_Click"/>
+                                <TextBlock x:Name="CloudQuotaText"
+                                           Margin="12,0,0,0"
+                                           VerticalAlignment="Center"
+                                           TextWrapping="Wrap"
+                                           MaxWidth="300"
+                                           FontFamily="{DynamicResource AppFont}"
+                                           FontSize="{StaticResource AppFontSize}"
+                                           Foreground="{DynamicResource AppTextPrimary}"/>
+                            </StackPanel>
+                            <TextBlock Grid.Column="1" Grid.Row="4"
+                                       Text="{DynamicResource S.Settings.CloudPrivacyHint}"
+                                       Style="{StaticResource FieldHint}"/>
+                        </Grid>
+
                         <!-- ══════════ OpenAI ══════════ -->
                         <Grid x:Name="OpenAiPanel">
                             <Grid.ColumnDefinitions>

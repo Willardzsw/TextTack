@@ -448,6 +448,29 @@ Details: {0}</sys:String>
     <sys:String x:Key="S.Error.DeepSeekHttp">DeepSeek returned {0}: {1}</sys:String>
     <sys:String x:Key="S.Error.DeepSeekTimeout">DeepSeek did not answer within {0} seconds. Check your connection and try again.</sys:String>
     <sys:String x:Key="S.Error.DeepSeekBalanceUnreadable">Could not read the balance DeepSeek returned.</sys:String>
+    <sys:String x:Key="S.Provider.Cloud">Cloud</sys:String>
+    <sys:String x:Key="S.Provider.CloudHint">Just enter a TT code — no API key of your own needed.</sys:String>
+    <sys:String x:Key="S.Settings.CloudCode">TT code</sys:String>
+    <sys:String x:Key="S.Settings.CloudCodeHint">Enter the TT code you were given (starts with tt-). The address, prompt and parameters are already set.</sys:String>
+    <sys:String x:Key="S.Settings.CloudModel">Model</sys:String>
+    <sys:String x:Key="S.Settings.CloudModelLuna">GPT-6 Luna (default)</sys:String>
+    <sys:String x:Key="S.Settings.CloudModelDeepSeek">DeepSeek Flash (faster)</sys:String>
+    <sys:String x:Key="S.Settings.CloudQuota">Today’s allowance</sys:String>
+    <sys:String x:Key="S.Settings.CloudQuotaQuery">Check</sys:String>
+    <sys:String x:Key="S.Settings.CloudQuotaQuerying">Checking…</sys:String>
+    <sys:String x:Key="S.Settings.CloudQuotaResult">Used {0} of {1} today, {2} left</sys:String>
+    <sys:String x:Key="S.Settings.CloudQuotaFailed">Could not check: {0}</sys:String>
+    <sys:String x:Key="S.Settings.CloudPrivacyHint">Text to translate passes through the provider’s server on its way to OpenAI or DeepSeek; the server keeps no translations. The allowance resets at midnight Bangkok time.</sys:String>
+    <sys:String x:Key="S.Error.CloudNoCode">No TT code yet. Enter one in Settings › Translation services › Cloud.</sys:String>
+    <sys:String x:Key="S.Error.CloudBadCode">That TT code is not right. Check for extra spaces copied with it.</sys:String>
+    <sys:String x:Key="S.Error.CloudCodeDisabled">This TT code has been turned off. Please contact the provider.</sys:String>
+    <sys:String x:Key="S.Error.CloudQuotaUsed">Today’s allowance is used up. It resets at midnight Bangkok time.</sys:String>
+    <sys:String x:Key="S.Error.CloudRateLimited">Too many requests. Please wait a minute and try again.</sys:String>
+    <sys:String x:Key="S.Error.CloudProviderProblem">There is a problem with the Cloud server’s account. Please contact the provider.</sys:String>
+    <sys:String x:Key="S.Error.CloudModelUnavailable">This model is unavailable right now. Choose the other model in the Cloud settings.</sys:String>
+    <sys:String x:Key="S.Error.CloudHttp">Cloud returned {0}: {1}</sys:String>
+    <sys:String x:Key="S.Error.CloudTimeout">Cloud did not answer within {0} seconds. Please try again shortly.</sys:String>
+    <sys:String x:Key="S.Error.CloudQuotaUnreadable">Could not read the allowance Cloud returned.</sys:String>
 
     <!-- ── Settings page ── -->
     <sys:String x:Key="S.Settings.Title">Settings</sys:String>

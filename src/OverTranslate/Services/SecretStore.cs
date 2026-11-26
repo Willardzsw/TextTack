@@ -44,6 +44,7 @@ public static class SecretStore
         nameof(AppSettings.ApiKey),
         nameof(AppSettings.OpenAiApiKey),
         nameof(AppSettings.DeepSeekApiKey),
+        nameof(AppSettings.CloudApiKey),
     ];
 
     /// <summary>The stored form of <paramref name="plain"/>: encrypted, or empty for no key.</summary>
@@ -94,6 +95,7 @@ public static class SecretStore
         settings.ApiKey = Unprotect(settings.ApiKey);
         settings.OpenAiApiKey = Unprotect(settings.OpenAiApiKey);
         settings.DeepSeekApiKey = Unprotect(settings.DeepSeekApiKey);
+        settings.CloudApiKey = Unprotect(settings.CloudApiKey);
     }
 
     /// <summary>Whether a settings document still holds a key in the readable form.</summary>

@@ -1,0 +1,32 @@
+{
+  "default_model": "gpt-6-luna",
+  "models": {
+    "gpt-6-luna": {
+      "upstream": "openai",
+      "reasoning_effort": "none",
+      "input_cny_per_m": 0.75,
+      "output_cny_per_m": 3.6
+    },
+    "deepseek-flash": {
+      "upstream": "deepseek",
+      "reasoning_effort": "none",
+      "input_cny_per_m": 2.0,
+      "output_cny_per_m": 8.0
+    }
+  },
+  "upstreams": {
+    "openai": {
+      "url": "https://api.openai.com/v1/chat/completions",
+      "drop_fields": []
+    },
+    "deepseek": {
+      "url": "https://api.deepseek.com/chat/completions",
+      "drop_fields": ["seed"]
+    }
+  },
+  "default_daily_cny": 1.0,
+  "total_daily_cny": 10.0,
+  "requests_per_minute": 30,
+  "max_output_tokens": 8192,
+  "friends": {}
+}

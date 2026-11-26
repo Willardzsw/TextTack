@@ -1,0 +1,33 @@
+[Unit]
+Description=TextTack translation relay (tt-relay)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=tt-relay
+Group=tt-relay
+ExecStart=/usr/bin/python3 /opt/tt-relay/tt_relay.py serve --host 127.0.0.1 --port 8230
+Environment=PYTHONUNBUFFERED=1 PYTHONIOENCODING=utf-8
+# usage.json lives here; systemd creates it owned by tt-relay.
+StateDirectory=tt-relay
+StateDirectoryMode=0750
+Restart=on-failure
+RestartSec=3
+
+# Hardening: the relay only reads its config and writes its usage file.
+NoNewPrivileges=yes
+ProtectSystem=strict
+ProtectHome=yes
+PrivateTmp=yes
+PrivateDevices=yes
+ProtectKernelTunables=yes
+ProtectKernelModules=yes
+ProtectControlGroups=yes
+RestrictAddressFamilies=AF_INET AF_INET6 AF_UNIX
+RestrictNamespaces=yes
+LockPersonality=yes
+MemoryMax=200M
+
+[Install]
+WantedBy=multi-user.target

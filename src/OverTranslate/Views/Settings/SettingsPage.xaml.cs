@@ -878,6 +878,7 @@ public partial class SettingsPage : UserControl
         _ when ReferenceEquals(sender, DeepLConfigureBtn)  => TranslationProvider.DeepL,
         _ when ReferenceEquals(sender, OpenAiConfigureBtn) => TranslationProvider.OpenAI,
         _ when ReferenceEquals(sender, DeepSeekConfigureBtn) => TranslationProvider.DeepSeek,
+        _ when ReferenceEquals(sender, CloudConfigureBtn) => TranslationProvider.Cloud,
         _ => null,
     };
 
@@ -916,6 +917,9 @@ public partial class SettingsPage : UserControl
 
         // DeepSeek is a paid service: nothing is translated until its key is in.
         WriteServiceBadge(DeepSeekBadge, DeepSeekBadgeText, configured: s.DeepSeekApiKey.Trim().Length > 0, required: true);
+
+        // 云翻译 translates nothing until a TT code is in.
+        WriteServiceBadge(CloudBadge, CloudBadgeText, configured: s.CloudApiKey.Trim().Length > 0, required: true);
     }
 
     /// <param name="required">
