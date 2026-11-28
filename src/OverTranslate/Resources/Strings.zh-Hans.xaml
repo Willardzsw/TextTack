@@ -37,6 +37,8 @@
     <sys:String x:Key="S.Tray.Settings">设置</sys:String>
     <sys:String x:Key="S.Tray.Toggles">功能开关</sys:String>
     <sys:String x:Key="S.Tray.Exit">退出</sys:String>
+    <sys:String x:Key="S.Tray.Master">总开关</sys:String>
+    <sys:String x:Key="S.Tray.PausedTooltip">TextTack（已暂停）</sys:String>
 
     <!-- ── About ── -->
     <sys:String x:Key="S.About.BasedOn">基于 OverTranslate 修改 · © 2026 Hon-Lu · MIT 许可</sys:String>
@@ -249,6 +251,7 @@
     <sys:String x:Key="S.App.Name">TextTack 贴译</sys:String>
     <sys:String x:Key="S.Main.MinimizedTitle">TextTack 已最小化</sys:String>
     <sys:String x:Key="S.Main.MinimizedBody">程序已最小化到系统托盘，可使用 {0} 开始进行截图翻译。</sys:String>
+    <sys:String x:Key="S.Main.PausedBody">总开关已关闭，所有快捷键和鼠标增强都已暂停。可从托盘右键菜单重新打开。</sys:String>
     <sys:String x:Key="S.Main.DefaultShortcutName">已设置的快捷键</sys:String>
     <sys:String x:Key="S.Main.MissingApiKeyTitle">缺少 API Key</sys:String>
     <sys:String x:Key="S.Main.MissingApiKeyBody">请在设置中输入 API Key。</sys:String>
@@ -477,6 +480,8 @@
     <sys:String x:Key="S.Settings.Subtitle">管理快捷键、翻译服务、外观与高级选项</sys:String>
 
     <sys:String x:Key="S.Settings.Hotkeys">快捷键</sys:String>
+    <sys:String x:Key="S.Settings.Master">总开关</sys:String>
+    <sys:String x:Key="S.Settings.MasterHint">关闭后暂停所有快捷键和鼠标增强，不需要用到工具时使用；各功能自己的开关保持不变，重新打开即恢复。</sys:String>
     <!-- The checkbox carries no text, so this is its ToolTip rather than a label -->
     <sys:String x:Key="S.Settings.HotkeyEnable">启用此快捷键</sys:String>
     <sys:String x:Key="S.Settings.HotkeyDisable">停用此快捷键</sys:String>

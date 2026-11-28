@@ -40,6 +40,8 @@
     <sys:String x:Key="S.Tray.Settings">Настройки</sys:String>
     <sys:String x:Key="S.Tray.Toggles">Переключатели функций</sys:String>
     <sys:String x:Key="S.Tray.Exit">Выход</sys:String>
+    <sys:String x:Key="S.Tray.Master">Главный переключатель</sys:String>
+    <sys:String x:Key="S.Tray.PausedTooltip">TextTack (приостановлено)</sys:String>
 
     <!-- ── About ── -->
     <sys:String x:Key="S.About.BasedOn">На основе OverTranslate · © 2026 Hon-Lu · MIT</sys:String>
@@ -246,6 +248,7 @@
     <sys:String x:Key="S.App.Name">TextTack</sys:String>
     <sys:String x:Key="S.Main.MinimizedTitle">TextTack продолжает работать</sys:String>
     <sys:String x:Key="S.Main.MinimizedBody">Программа свернута в область уведомлений. Нажмите {0}, чтобы начать перевод снимка экрана.</sys:String>
+    <sys:String x:Key="S.Main.PausedBody">Главный переключатель выключен: все сочетания клавиш и улучшения мыши приостановлены. Включить снова можно из меню в области уведомлений.</sys:String>
     <sys:String x:Key="S.Main.DefaultShortcutName">сочетание клавиш</sys:String>
     <sys:String x:Key="S.Main.MissingApiKeyTitle">Нет ключа API</sys:String>
     <sys:String x:Key="S.Main.MissingApiKeyBody">Введите ключ API в настройках.</sys:String>
@@ -474,6 +477,8 @@
     <sys:String x:Key="S.Settings.Subtitle">Сочетания клавиш, службы перевода, внешний вид и дополнительные параметры</sys:String>
 
     <sys:String x:Key="S.Settings.Hotkeys">Сочетания клавиш</sys:String>
+    <sys:String x:Key="S.Settings.Master">Главный переключатель</sys:String>
+    <sys:String x:Key="S.Settings.MasterHint">Выключение приостанавливает все сочетания клавиш и улучшения мыши — когда инструмент не нужен. Собственные переключатели функций сохраняются и вернутся при повторном включении.</sys:String>
     <sys:String x:Key="S.Settings.HotkeyEnable">Включить это сочетание</sys:String>
     <sys:String x:Key="S.Settings.HotkeyDisable">Отключить это сочетание</sys:String>
     <sys:String x:Key="S.Settings.HotkeyRecordTip">Нажмите, чтобы записать новое сочетание</sys:String>

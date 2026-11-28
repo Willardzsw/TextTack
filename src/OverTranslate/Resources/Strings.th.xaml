@@ -32,6 +32,8 @@
     <sys:String x:Key="S.Tray.Settings">การตั้งค่า</sys:String>
     <sys:String x:Key="S.Tray.Toggles">สวิตช์ฟังก์ชัน</sys:String>
     <sys:String x:Key="S.Tray.Exit">ออก</sys:String>
+    <sys:String x:Key="S.Tray.Master">สวิตช์หลัก</sys:String>
+    <sys:String x:Key="S.Tray.PausedTooltip">TextTack (หยุดชั่วคราว)</sys:String>
 
     <!-- ── About ── -->
     <sys:String x:Key="S.About.BasedOn">พัฒนาจาก OverTranslate · © 2026 Hon-Lu · สัญญาอนุญาต MIT</sys:String>
@@ -244,6 +246,7 @@
     <sys:String x:Key="S.App.Name">TextTack</sys:String>
     <sys:String x:Key="S.Main.MinimizedTitle">TextTack ยังทำงานอยู่</sys:String>
     <sys:String x:Key="S.Main.MinimizedBody">ย่อไว้ที่ถาดระบบแล้ว กด {0} เพื่อเริ่มแปลภาพหน้าจอ</sys:String>
+    <sys:String x:Key="S.Main.PausedBody">ปิดสวิตช์หลักอยู่ ปุ่มลัดทั้งหมดและการเสริมเมาส์จึงหยุดชั่วคราว เปิดใหม่ได้จากเมนูที่ถาดระบบ</sys:String>
     <sys:String x:Key="S.Main.DefaultShortcutName">ปุ่มลัดของคุณ</sys:String>
     <sys:String x:Key="S.Main.MissingApiKeyTitle">ไม่มีคีย์ API</sys:String>
     <sys:String x:Key="S.Main.MissingApiKeyBody">กรอกคีย์ API ในการตั้งค่า</sys:String>
@@ -472,6 +475,8 @@
     <sys:String x:Key="S.Settings.Subtitle">ปุ่มลัด บริการแปล ลักษณะ และตัวเลือกขั้นสูง</sys:String>
 
     <sys:String x:Key="S.Settings.Hotkeys">ปุ่มลัด</sys:String>
+    <sys:String x:Key="S.Settings.Master">สวิตช์หลัก</sys:String>
+    <sys:String x:Key="S.Settings.MasterHint">ปิดเพื่อหยุดปุ่มลัดทั้งหมดและการเสริมเมาส์ชั่วคราวเมื่อไม่ต้องใช้เครื่องมือ สวิตช์ของแต่ละฟีเจอร์ยังคงเดิมและกลับมาเมื่อเปิดอีกครั้ง</sys:String>
     <!-- The checkbox carries no text, so this is its ToolTip rather than a label -->
     <sys:String x:Key="S.Settings.HotkeyEnable">เปิดใช้ปุ่มลัดนี้</sys:String>
     <sys:String x:Key="S.Settings.HotkeyDisable">ปิดใช้ปุ่มลัดนี้</sys:String>

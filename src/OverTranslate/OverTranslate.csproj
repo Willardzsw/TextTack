@@ -33,7 +33,12 @@
     <AssemblyTitle>TextTack</AssemblyTitle>
     <AssemblyName>TextTack</AssemblyName>
     <RootNamespace>OverTranslate</RootNamespace>
-    <Version>1.19.0</Version>
+    <Version>2.0.0</Version>
+    <!-- 本機檢測 (Services/LocalDiagnostics): extra logging for chasing problems on the developer's
+         own machine. On for every source build; tools/release/build-release.ps1 builds with
+         -p:LocalDiagnostics=false and refuses a package that still carries it. -->
+    <LocalDiagnostics Condition="'$(LocalDiagnostics)' == ''">true</LocalDiagnostics>
+    <DefineConstants Condition="'$(LocalDiagnostics)' == 'true'">$(DefineConstants);LOCAL_DIAGNOSTICS</DefineConstants>
     <RuntimeIdentifier>win-x64</RuntimeIdentifier>
     <!-- WFAC010 tells WinForms apps to declare DPI awareness through Application.SetHighDpiMode.
          This is a WPF app that only references WinForms types; ApplicationConfiguration.Initialize

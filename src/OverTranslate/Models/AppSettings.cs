@@ -64,6 +64,13 @@ public class AppSettings
     public bool CaptureHotkeyEnabled { get; set; } = true;
 
     /// <summary>
+    /// 總開關: off stands every shortcut and the mouse tools down at once, for stretches when the
+    /// tool should not be listening at all. Each feature keeps its own switch, so turning this back
+    /// on restores exactly what was on before. The tray icon turns grey while it is off.
+    /// </summary>
+    public bool MasterEnabled { get; set; } = true;
+
+    /// <summary>
     /// Pauses and resumes a running realtime session. Ctrl+Alt+S by default.
     /// </summary>
     /// <remarks>

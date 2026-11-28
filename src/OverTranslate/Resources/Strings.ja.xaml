@@ -38,6 +38,8 @@
     <sys:String x:Key="S.Tray.Settings">設定</sys:String>
     <sys:String x:Key="S.Tray.Toggles">機能スイッチ</sys:String>
     <sys:String x:Key="S.Tray.Exit">終了</sys:String>
+    <sys:String x:Key="S.Tray.Master">マスタースイッチ</sys:String>
+    <sys:String x:Key="S.Tray.PausedTooltip">TextTack（一時停止中）</sys:String>
 
     <!-- ── About ── -->
     <sys:String x:Key="S.About.BasedOn">OverTranslate ベース · © 2026 Hon-Lu · MIT</sys:String>
@@ -253,6 +255,7 @@
     <sys:String x:Key="S.App.Name">TextTack</sys:String>
     <sys:String x:Key="S.Main.MinimizedTitle">TextTack は動作中です</sys:String>
     <sys:String x:Key="S.Main.MinimizedBody">タスクトレイに最小化しました。{0} でキャプチャ翻訳を開始できます。</sys:String>
+    <sys:String x:Key="S.Main.PausedBody">マスタースイッチがオフのため、すべてのショートカットとマウス拡張を一時停止しています。タスクトレイのメニューから再びオンにできます。</sys:String>
     <sys:String x:Key="S.Main.DefaultShortcutName">設定したショートカットキー</sys:String>
     <sys:String x:Key="S.Main.MissingApiKeyTitle">API キーがありません</sys:String>
     <sys:String x:Key="S.Main.MissingApiKeyBody">設定で API キーを入力してください。</sys:String>
@@ -481,6 +484,8 @@
     <sys:String x:Key="S.Settings.Subtitle">ショートカットキー、翻訳サービス、外観、詳細オプション</sys:String>
 
     <sys:String x:Key="S.Settings.Hotkeys">ショートカットキー</sys:String>
+    <sys:String x:Key="S.Settings.Master">マスタースイッチ</sys:String>
+    <sys:String x:Key="S.Settings.MasterHint">オフにすると、すべてのショートカットとマウス拡張を一時停止します。ツールを使わないときに。各機能のスイッチはそのまま残り、オンに戻すと元どおりになります。</sys:String>
     <!-- The checkbox carries no text, so this is its ToolTip rather than a label -->
     <sys:String x:Key="S.Settings.HotkeyEnable">このショートカットキーを有効にする</sys:String>
     <sys:String x:Key="S.Settings.HotkeyDisable">このショートカットキーを無効にする</sys:String>

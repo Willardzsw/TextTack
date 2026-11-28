@@ -37,6 +37,8 @@
     <sys:String x:Key="S.Tray.Settings">Settings</sys:String>
     <sys:String x:Key="S.Tray.Toggles">Feature switches</sys:String>
     <sys:String x:Key="S.Tray.Exit">Exit</sys:String>
+    <sys:String x:Key="S.Tray.Master">Master switch</sys:String>
+    <sys:String x:Key="S.Tray.PausedTooltip">TextTack (paused)</sys:String>
 
     <!-- ── About ── -->
     <sys:String x:Key="S.About.BasedOn">Based on OverTranslate · © 2026 Hon-Lu · MIT License</sys:String>
@@ -249,6 +251,7 @@ Actually used this time: {2}</sys:String>
     <sys:String x:Key="S.App.Name">TextTack</sys:String>
     <sys:String x:Key="S.Main.MinimizedTitle">TextTack is still running</sys:String>
     <sys:String x:Key="S.Main.MinimizedBody">Minimised to the system tray. Press {0} to start a screen capture translation.</sys:String>
+    <sys:String x:Key="S.Main.PausedBody">The master switch is off, so every shortcut and Mouse enhancements are paused. Turn it back on from the tray menu.</sys:String>
     <sys:String x:Key="S.Main.DefaultShortcutName">your shortcut</sys:String>
     <sys:String x:Key="S.Main.MissingApiKeyTitle">No API key</sys:String>
     <sys:String x:Key="S.Main.MissingApiKeyBody">Enter an API key in Settings.</sys:String>
@@ -477,6 +480,8 @@ Details: {0}</sys:String>
     <sys:String x:Key="S.Settings.Subtitle">Shortcuts, translation services, appearance and advanced options</sys:String>
 
     <sys:String x:Key="S.Settings.Hotkeys">Shortcuts</sys:String>
+    <sys:String x:Key="S.Settings.Master">Master switch</sys:String>
+    <sys:String x:Key="S.Settings.MasterHint">Off pauses every shortcut and Mouse enhancements, for when you do not need the tool. Each feature keeps its own switch and comes back when this is turned on again.</sys:String>
     <!-- The checkbox carries no text, so this is its ToolTip rather than a label -->
     <sys:String x:Key="S.Settings.HotkeyEnable">Enable this shortcut</sys:String>
     <sys:String x:Key="S.Settings.HotkeyDisable">Disable this shortcut</sys:String>

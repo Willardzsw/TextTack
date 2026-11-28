@@ -66,6 +66,23 @@
                      the shortcut. Three entry points for one action was one too many, and this menu
                      is the one that has to stay short as the app grows. -->
 
+                <!-- 總開關: always here, whatever 設定 › 托盤右鍵選單 hides. Off stands every shortcut
+                     and the mouse tools down; clicking it leaves the menu open like the switches. -->
+                <Button x:Name="MasterBtn"
+                        Style="{StaticResource TrayMenuItem}"
+                        AutomationProperties.Name="{DynamicResource S.Tray.Master}"
+                        Click="MasterBtn_Click">
+                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                        <TextBlock x:Name="MasterCheck"
+                                   FontFamily="Segoe Fluent Icons, Segoe MDL2 Assets"
+                                   FontSize="14" Text="&#xE73E;"
+                                   Width="22" VerticalAlignment="Center"
+                                   Foreground="{DynamicResource AppAccent}"/>
+                        <TextBlock Text="{DynamicResource S.Tray.Master}" VerticalAlignment="Center"/>
+                    </StackPanel>
+                </Button>
+                <Rectangle Height="1" Margin="8,3" Fill="{DynamicResource AppSeparator}"/>
+
                 <!-- 開啟翻譯視窗；即時翻譯進行中改為把浮動視窗列移至最上層 -->
                 <Button x:Name="OpenWindowBtn"
                         Style="{StaticResource TrayMenuItem}"

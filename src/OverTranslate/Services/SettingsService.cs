@@ -355,6 +355,18 @@ public class SettingsService
         FeatureTogglesChanged?.Invoke(this, EventArgs.Empty);
     }
 
+    /// <summary>總開關 was flipped, from the tray menu or the settings page.</summary>
+    public event EventHandler? MasterEnabledChanged;
+
+    /// <summary>Sets 總開關, saves, and tells whoever shows or acts on it.</summary>
+    public void SetMasterEnabled(bool on)
+    {
+        if (Current.MasterEnabled == on) return;
+        Current.MasterEnabled = on;
+        Save();
+        MasterEnabledChanged?.Invoke(this, EventArgs.Empty);
+    }
+
     /// <summary>
     /// 替換翻譯's target language was switched by a double press of its shortcut, so an open
     /// settings page shows it.

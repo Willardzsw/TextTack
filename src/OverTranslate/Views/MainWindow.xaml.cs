@@ -176,18 +176,38 @@ public partial class MainWindow : Window
 
     private void InitNotifyIcon()
     {
-        _notifyIcon = new NotifyIcon
-        {
-            Icon = AppIconService.CreateTrayIcon(),
-            Text = "TextTack",
-            Visible = true
-        };
+        _notifyIcon = new NotifyIcon { Visible = true };
+        ShowMasterState();
+        SettingsService.Instance.MasterEnabledChanged += (_, _) => Dispatcher.Invoke(ApplyMasterEnabled);
+        LocalizationService.LanguageChanged += (_, _) => Dispatcher.Invoke(ShowMasterState);
 
         _notifyIcon.MouseClick += (_, e) =>
         {
             if (e.Button == MouseButtons.Left)  OnTrayLeftClick();
             if (e.Button == MouseButtons.Right) ShowTrayMenu();
         };
+    }
+
+    private System.Drawing.Icon? _trayIconOn, _trayIconOff;
+
+    /// <summary>The tray icon in colour while 總開關 is on, grey while it is off.</summary>
+    private void ShowMasterState()
+    {
+        if (_notifyIcon is null) return;
+        bool on = SettingsService.Instance.Current.MasterEnabled;
+        _notifyIcon.Icon = on
+            ? _trayIconOn ??= AppIconService.CreateTrayIcon()
+            : _trayIconOff ??= AppIconService.CreateDisabledTrayIcon();
+        _notifyIcon.Text = on ? "TextTack" : LocalizationService.Get("S.Tray.PausedTooltip");
+    }
+
+    /// <summary>總開關 flipped: take or give back every shortcut and the mouse tools at once.</summary>
+    private void ApplyMasterEnabled()
+    {
+        MouseEnhanceService.Instance.Apply(SettingsService.Instance.Current.MouseEnhance);
+        ReRegisterHotkey();
+        ShowMasterState();
+        ShellWindow.Current?.RefreshHotkeyHints();
     }
 
     /// <summary>
@@ -258,6 +278,14 @@ public partial class MainWindow : Window
             [HotkeyAction.StickyNote] = _stickyNoteHotkey,
             [HotkeyAction.StickyNoteNew] = _stickyNoteNewHotkey,
         };
+
+        // 總開關 off: nothing is claimed — no combinations, no mouse buttons, no key sequences —
+        // until it is turned back on, which comes through here again.
+        if (!settings.MasterEnabled)
+        {
+            Log.Info("Hotkeys not registered: the master switch is off");
+            return;
+        }
 
         var resolved = HotkeyBindings.Resolve(settings);
         foreach (var binding in resolved)
@@ -383,6 +411,14 @@ public partial class MainWindow : Window
 
     private void ShowStartupBalloon()
     {
+        if (!SettingsService.Instance.Current.MasterEnabled)
+        {
+            ShowTrayNotification(
+                LocalizationService.Get("S.Main.MinimizedTitle"),
+                LocalizationService.Get("S.Main.PausedBody"));
+            return;
+        }
+
         var hotkeyDisplay = SettingsService.Instance.Current.HotkeyDisplay;
         var shortcutText = string.IsNullOrWhiteSpace(hotkeyDisplay)
             ? LocalizationService.Get("S.Main.DefaultShortcutName")
@@ -2549,6 +2585,8 @@ public partial class MainWindow : Window
     {
         if (_trayMenu != null) return;
         _trayMenu = new TrayMenuWindow();
+        _trayMenu.SetMasterEnabled(SettingsService.Instance.Current.MasterEnabled);
+        _trayMenu.MasterToggleRequested += on => SettingsService.Instance.SetMasterEnabled(on);
         _trayMenu.OpenTranslationRequested += (_, _) => OnTrayLeftClick();
         _trayMenu.SetRealtimeRunning(Views.Realtime.RealtimeSessionController.Instance.IsActive);
         _trayMenu.OpenSettingsRequested    += (_, _) => OpenSettings();

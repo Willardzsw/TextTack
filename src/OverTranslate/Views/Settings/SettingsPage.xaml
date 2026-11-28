@@ -615,6 +615,44 @@
                             </Popup>
                         </Grid>
 
+                        <!-- 總開關: every shortcut and the mouse tools at once. No fold, as it has no
+                             options of its own; the rows below fade while it is off but stay
+                             editable, so shortcuts can still be set up while paused. -->
+                        <Border Style="{StaticResource HotkeyRow}">
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto"/>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="Auto" SharedSizeGroup="HotkeyToggle"/>
+                                </Grid.ColumnDefinitions>
+
+                                <Border Grid.Column="0" Style="{StaticResource HotkeyRowIcon}">
+                                    <TextBlock Text="&#xE7E8;" Style="{StaticResource HotkeyRowGlyph}"/>
+                                </Border>
+
+                                <StackPanel Grid.Column="1" VerticalAlignment="Center" Margin="0,0,14,0">
+                                    <TextBlock Text="{DynamicResource S.Settings.Master}"
+                                               Style="{StaticResource OptionTitle}"/>
+                                    <TextBlock Text="{DynamicResource S.Settings.MasterHint}"
+                                               Style="{StaticResource OptionDescription}"
+                                               TextWrapping="Wrap"/>
+                                </StackPanel>
+
+                                <StackPanel Grid.Column="2"
+                                            Orientation="Horizontal"
+                                            VerticalAlignment="Center"
+                                            Margin="12,0,0,0">
+                                    <CheckBox x:Name="MasterEnabledCheckBox"
+                                              Style="{StaticResource ToggleSwitch}"
+                                              AutomationProperties.Name="{DynamicResource S.Settings.Master}"
+                                              Checked="MasterEnabled_Toggled"
+                                              Unchecked="MasterEnabled_Toggled"/>
+                                </StackPanel>
+                            </Grid>
+                        </Border>
+
+                        <StackPanel x:Name="HotkeyRowsPanel">
+
                         <!-- Capture: its switch turns off only the shortcut; the capture button
                              on the translation page still works. -->
                         <Border Style="{StaticResource HotkeyRow}">
@@ -1597,6 +1635,7 @@
                             </StackPanel>
                         </Border>
 
+                        </StackPanel>
                     </StackPanel>
                 </Border>
 

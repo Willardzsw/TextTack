@@ -86,7 +86,8 @@ internal sealed class MouseEnhanceService : IDisposable
     public void Apply(MouseEnhanceSettings? settings)
     {
         var snapshot = Copy(settings ?? new MouseEnhanceSettings());
-        bool active = MouseEnhanceRules.IsActive(snapshot);
+        // 總開關 off: no hooks whatever the tools themselves are set to.
+        bool active = SettingsService.Instance.Current.MasterEnabled && MouseEnhanceRules.IsActive(snapshot);
         _settings = active ? snapshot : null;
 
         if (active)

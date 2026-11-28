@@ -38,6 +38,8 @@
     <sys:String x:Key="S.Tray.Settings">설정</sys:String>
     <sys:String x:Key="S.Tray.Toggles">기능 스위치</sys:String>
     <sys:String x:Key="S.Tray.Exit">종료</sys:String>
+    <sys:String x:Key="S.Tray.Master">마스터 스위치</sys:String>
+    <sys:String x:Key="S.Tray.PausedTooltip">TextTack (일시 중지됨)</sys:String>
 
     <!-- ── About ── -->
     <sys:String x:Key="S.About.BasedOn">OverTranslate 기반 수정본 · © 2026 Hon-Lu · MIT 라이선스</sys:String>
@@ -253,6 +255,7 @@
     <sys:String x:Key="S.App.Name">TextTack</sys:String>
     <sys:String x:Key="S.Main.MinimizedTitle">TextTack가 실행 중입니다</sys:String>
     <sys:String x:Key="S.Main.MinimizedBody">시스템 트레이로 최소화했습니다. {0} 키로 캡처 번역을 시작할 수 있습니다.</sys:String>
+    <sys:String x:Key="S.Main.PausedBody">마스터 스위치가 꺼져 있어 모든 단축키와 마우스 향상 기능이 일시 중지되었습니다. 트레이 메뉴에서 다시 켤 수 있습니다.</sys:String>
     <sys:String x:Key="S.Main.DefaultShortcutName">설정한 단축키</sys:String>
     <sys:String x:Key="S.Main.MissingApiKeyTitle">API 키가 없습니다</sys:String>
     <sys:String x:Key="S.Main.MissingApiKeyBody">설정에서 API 키를 입력하세요.</sys:String>
@@ -481,6 +484,8 @@
     <sys:String x:Key="S.Settings.Subtitle">단축키, 번역 서비스, 외관, 고급 옵션</sys:String>
 
     <sys:String x:Key="S.Settings.Hotkeys">단축키</sys:String>
+    <sys:String x:Key="S.Settings.Master">마스터 스위치</sys:String>
+    <sys:String x:Key="S.Settings.MasterHint">끄면 모든 단축키와 마우스 향상 기능이 일시 중지됩니다. 도구가 필요 없을 때 사용하세요. 각 기능의 스위치는 그대로 유지되며 다시 켜면 원래대로 돌아옵니다.</sys:String>
     <!-- The checkbox carries no text, so this is its ToolTip rather than a label -->
     <sys:String x:Key="S.Settings.HotkeyEnable">이 단축키 사용</sys:String>
     <sys:String x:Key="S.Settings.HotkeyDisable">이 단축키 사용 안 함</sys:String>

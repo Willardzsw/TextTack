@@ -60,7 +60,7 @@ internal static class QuickTranslateFlow
         SettingsService.Instance.SetQuickTranslateTarget(next);
         Log.Info("替換翻譯 switched its target language to {Language}", next);
 
-        QuickTranslateHintWindow.Summon().ReportLanguageSwitch(languages, next);
+        QuickTranslateHintWindow.Summon(GetForegroundWindow()).ReportLanguageSwitch(languages, next);
     }
 
     /// <summary>Reads the selection, translates it, and pastes the result over it.</summary>
@@ -105,8 +105,14 @@ internal static class QuickTranslateFlow
 
         // Before anything is shown. Putting a window on the screen takes the foreground away from
         // the application holding the selection, and the copy would then be sent to our own card.
+#if LOCAL_DIAGNOSTICS
+        using var foregroundTrail = Services.LocalDiagnostics.ForegroundTrail.Start("替換翻譯");
+#endif
         var source = await SelectedTextReader.ReadAsync(SelectedTextReader.MaxLength, copiedSince: copiedSince);
         var foreground = GetForegroundWindow();
+#if LOCAL_DIAGNOSTICS
+        foregroundTrail.SetExpected(foreground);
+#endif
 
         if (source.Length == 0)
         {
@@ -121,7 +127,7 @@ internal static class QuickTranslateFlow
 
         if (!Request.IsCurrent(seq)) return;
 
-        var hint = QuickTranslateHintWindow.Summon();
+        var hint = QuickTranslateHintWindow.Summon(foreground);
         var settings = SettingsService.Instance.Current;
 
         var engine = settings.QuickTranslate.Provider ?? settings.Provider;
@@ -150,6 +156,16 @@ internal static class QuickTranslateFlow
 
             Log.Debug("替換翻譯 is pasting{Mode}: {Text}", append ? " after the selection" : "", translation);
 
+            // The label may still hold the foreground (WeChat, 2026-11-27): that is not the user
+            // moving away, so take it back rather than refuse the paste.
+            var reclaimed = await hint.ReclaimForegroundAsync(foreground);
+            if (!Request.IsCurrent(seq)) return;
+            if (reclaimed is not null)
+                Log.Info("替換翻譯 found its own label holding the foreground before pasting; taken back: {Reclaimed}", reclaimed);
+#if LOCAL_DIAGNOSTICS
+            if (reclaimed is not null) foregroundTrail.ReportReclaimed(reclaimed.Value);
+#endif
+
             var outcome = append
                 ? await SelectionReplacer.AppendAfterSelectionAsync(" " + translation, foreground)
                 : await SelectionReplacer.ReplaceSelectionAsync(translation, foreground);
@@ -161,6 +177,9 @@ internal static class QuickTranslateFlow
                     hint.ReportSuccess(append);
                     break;
                 case PasteOutcome.FocusMoved:
+#if LOCAL_DIAGNOSTICS
+                    foregroundTrail.ReportFocusMoved();
+#endif
                     hint.ReportFailure(LocalizationService.Get("S.QuickTranslate.FocusMoved"));
                     break;
                 default:

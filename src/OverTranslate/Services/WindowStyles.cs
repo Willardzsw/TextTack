@@ -106,7 +106,13 @@ internal static class WindowStyles
     /// stop it (and let WeChat cover the label), so the window keeps Topmost="True" in XAML and this
     /// hands the foreground back. Call from <c>OnSourceInitialized</c>.
     /// </remarks>
-    public static void ApplyHintWindow(Window window)
+    /// <param name="returnTo">
+    /// The window to hand the foreground back to, when the caller knows it (替換翻譯 does: it read it
+    /// after the copy). Without it, the window named in WM_ACTIVATE is used — which Windows leaves
+    /// empty when the activation comes from another program, as the trace of 2026-11-27 showed in
+    /// WeChat: the label kept the foreground and the paste was refused.
+    /// </param>
+    public static void ApplyHintWindow(Window window, Func<IntPtr>? returnTo = null)
     {
         var hwnd = new WindowInteropHelper(window).Handle;
         if (hwnd == IntPtr.Zero) return;
@@ -123,9 +129,32 @@ internal static class WindowStyles
                     return new IntPtr(MA_NOACTIVATE);
 
                 case WM_ACTIVATE when (wParam.ToInt64() & 0xFFFF) != WA_INACTIVE:
-                    // lParam is the window being deactivated: the one the user was typing in.
-                    if (lParam != IntPtr.Zero && IsWindow(lParam)) SetForegroundWindow(lParam);
+                {
+                    // lParam is the window being deactivated: the one the user was typing in — when
+                    // Windows says. The caller's own record comes first.
+                    var known = returnTo?.Invoke() ?? IntPtr.Zero;
+                    var target = known != IntPtr.Zero ? known : lParam;
+#if LOCAL_DIAGNOSTICS
+                    LocalDiagnostics.ForegroundTrail.Note(
+                        $"提示標籤被啟用，WM_ACTIVATE 帶來的視窗：{(lParam == IntPtr.Zero ? "空" : $"0x{lParam:X}")}，" +
+                        $"呼叫方記下的：{(known == IntPtr.Zero ? "無" : $"0x{known:X}")}");
+#endif
+                    if (target == IntPtr.Zero || !IsWindow(target)) break;
+
+                    // Not from inside WM_ACTIVATE: the activation is still under way there, and a
+                    // SetForegroundWindow made in the middle of it can be overtaken by it. Once it has
+                    // finished, and only if the label still holds the foreground.
+                    window.Dispatcher.BeginInvoke(() =>
+                    {
+                        if (GetForegroundWindow() != hwnd || !IsWindow(target)) return;
+                        var ok = SetForegroundWindow(target);
+#if LOCAL_DIAGNOSTICS
+                        LocalDiagnostics.ForegroundTrail.Note(
+                            $"提示標籤交還前台給 0x{target:X}：{(ok ? "成功" : "失敗")}，之後前台 0x{GetForegroundWindow():X}");
+#endif
+                    }, System.Windows.Threading.DispatcherPriority.Send);
                     break;
+                }
             }
             return IntPtr.Zero;
         });
@@ -146,6 +175,9 @@ internal static class WindowStyles
 
     [DllImport("user32.dll")]
     private static extern bool IsWindow(IntPtr hwnd);
+
+    [DllImport("user32.dll")]
+    private static extern IntPtr GetForegroundWindow();
 
     /// <summary>
     /// Adds bits to the existing extended style rather than replacing it: WPF has already put its own

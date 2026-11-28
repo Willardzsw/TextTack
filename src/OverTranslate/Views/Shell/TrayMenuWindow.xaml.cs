@@ -25,6 +25,28 @@ public partial class TrayMenuWindow : Window
 
     private const string CheckGlyph = "";
 
+    /// <summary>總開關 was clicked: the state it should now have.</summary>
+    public event Action<bool>? MasterToggleRequested;
+
+    private bool _masterOn = true;
+
+    /// <summary>
+    /// Shows 總開關's state. It is always in the menu — never among the switches 設定 can hide —
+    /// because it is the way back to every other shortcut once they are all off.
+    /// </summary>
+    public void SetMasterEnabled(bool on)
+    {
+        _masterOn = on;
+        MasterCheck.Text = on ? CheckGlyph : "";
+        TogglesPanel.Opacity = on ? 1 : 0.5;
+    }
+
+    private void MasterBtn_Click(object sender, RoutedEventArgs e)
+    {
+        SetMasterEnabled(!_masterOn);
+        MasterToggleRequested?.Invoke(_masterOn);
+    }
+
     /// <summary>Fills the 功能開關 group; hidden when no switch is chosen for the menu.</summary>
     public void SetFeatureToggles(IEnumerable<(OverTranslate.Models.FeatureToggle Toggle, bool On)> toggles)
     {

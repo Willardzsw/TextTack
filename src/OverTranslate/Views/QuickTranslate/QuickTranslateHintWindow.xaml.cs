@@ -45,17 +45,24 @@ public partial class QuickTranslateHintWindow : Window
     /// <summary>Where the pointer was when the label was put up; it stays there.</summary>
     private readonly System.Drawing.Point _pointer;
 
+    /// <summary>The window the paste goes to; see <see cref="Summon"/>.</summary>
+    private readonly IntPtr _returnTo;
+
     private DispatcherTimer? _hold;
     private bool _holdsForPointer;
     private bool _closed;
     private bool _fadingOut;
 
     /// <summary>Puts a label up saying 翻譯中…, replacing whichever one is on screen.</summary>
-    public static QuickTranslateHintWindow Summon()
+    /// <param name="returnTo">
+    /// The window holding the selection, which the translation will be pasted into. Should Windows
+    /// activate the label anyway, the foreground goes straight back there.
+    /// </param>
+    public static QuickTranslateHintWindow Summon(IntPtr returnTo)
     {
         Dismiss();
 
-        var hint = new QuickTranslateHintWindow();
+        var hint = new QuickTranslateHintWindow(returnTo);
         _current = hint;
         ((Window)hint).Show();
         return hint;
@@ -70,8 +77,9 @@ public partial class QuickTranslateHintWindow : Window
     }
 
     // Private on purpose: Window.Show() on one made directly would bypass the one-at-a-time rule.
-    private QuickTranslateHintWindow()
+    private QuickTranslateHintWindow(IntPtr returnTo)
     {
+        _returnTo = returnTo;
         InitializeComponent();
         _pointer = System.Windows.Forms.Cursor.Position;
 
@@ -107,8 +115,38 @@ public partial class QuickTranslateHintWindow : Window
     protected override void OnSourceInitialized(EventArgs e)
     {
         base.OnSourceInitialized(e);
-        WindowStyles.ApplyHintWindow(this);
+        WindowStyles.ApplyHintWindow(this, () => _returnTo);
     }
+
+    /// <summary>
+    /// Last resort before pasting: if the label itself still holds the foreground — Windows activated
+    /// it and the hand-back in <see cref="WindowStyles.ApplyHintWindow"/> did not take — gives it back
+    /// to <paramref name="target"/> and waits briefly for that to happen.
+    /// </summary>
+    /// <returns>
+    /// Null when the label did not hold the foreground (nothing to do); otherwise whether the target
+    /// has it again. Any other window in front is left alone: that is the user's own move.
+    /// </returns>
+    public async Task<bool?> ReclaimForegroundAsync(IntPtr target)
+    {
+        var hwnd = new System.Windows.Interop.WindowInteropHelper(this).Handle;
+        if (_closed || hwnd == IntPtr.Zero || GetForegroundWindow() != hwnd) return null;
+        if (target == IntPtr.Zero || !IsWindow(target)) return false;
+
+        SetForegroundWindow(target);
+        for (var i = 0; i < 10 && GetForegroundWindow() != target; i++)
+            await Task.Delay(15);
+        return GetForegroundWindow() == target;
+    }
+
+    [System.Runtime.InteropServices.DllImport("user32.dll")]
+    private static extern IntPtr GetForegroundWindow();
+
+    [System.Runtime.InteropServices.DllImport("user32.dll")]
+    private static extern bool SetForegroundWindow(IntPtr hwnd);
+
+    [System.Runtime.InteropServices.DllImport("user32.dll")]
+    private static extern bool IsWindow(IntPtr hwnd);
 
     // ══════════════════════════ What it says ══════════════════════════
 

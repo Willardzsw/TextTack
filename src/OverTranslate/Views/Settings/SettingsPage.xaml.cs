@@ -241,6 +241,7 @@ public partial class SettingsPage : UserControl
             SettingsService.Instance.OcrDebugChanged += OnOcrDebugChanged;
             SettingsService.Instance.CaptureOptionsChanged += OnCaptureOptionsChanged;
             SettingsService.Instance.FeatureTogglesChanged += OnFeatureTogglesChanged;
+            SettingsService.Instance.MasterEnabledChanged += OnMasterEnabledChanged;
             SettingsService.Instance.QuickTranslateTargetChanged += OnQuickTranslateTargetChanged;
             OnOcrDebugChanged(this, EventArgs.Empty);
             OnCaptureOptionsChanged(this, EventArgs.Empty);
@@ -251,6 +252,7 @@ public partial class SettingsPage : UserControl
             SettingsService.Instance.OcrDebugChanged -= OnOcrDebugChanged;
             SettingsService.Instance.CaptureOptionsChanged -= OnCaptureOptionsChanged;
             SettingsService.Instance.FeatureTogglesChanged -= OnFeatureTogglesChanged;
+            SettingsService.Instance.MasterEnabledChanged -= OnMasterEnabledChanged;
             SettingsService.Instance.QuickTranslateTargetChanged -= OnQuickTranslateTargetChanged;
             StopRecording();
         };
@@ -274,6 +276,28 @@ public partial class SettingsPage : UserControl
         ShowMouseEnhanceSummary();
         FlashSaved();
     }
+
+    /// <summary>總開關: saved; MainWindow takes or gives back the shortcuts and mouse tools.</summary>
+    private void MasterEnabled_Toggled(object sender, RoutedEventArgs e)
+    {
+        if (_loading) return;
+        SettingsService.Instance.SetMasterEnabled(MasterEnabledCheckBox.IsChecked == true);
+        FlashSaved();
+    }
+
+    /// <summary>The switch and the faded rows under it, from the stored value.</summary>
+    private void ShowMasterEnabled()
+    {
+        bool on = SettingsService.Instance.Current.MasterEnabled;
+        bool wasLoading = _loading;
+        _loading = true;
+        MasterEnabledCheckBox.IsChecked = on;
+        _loading = wasLoading;
+        HotkeyRowsPanel.Opacity = on ? 1 : 0.5;
+    }
+
+    private void OnMasterEnabledChanged(object? sender, EventArgs e) =>
+        Dispatcher.BeginInvoke(new Action(ShowMasterEnabled));
 
     /// <summary>The summary box opens 鼠標增強設定, where what it lists is changed.</summary>
     private void MouseEnhanceSummary_Click(object sender, System.Windows.Input.MouseButtonEventArgs e) =>
@@ -322,6 +346,7 @@ public partial class SettingsPage : UserControl
             MouseEnhanceEnabledCheckBox.IsChecked = s.MouseEnhance.Enabled;
             ShowMouseEnhanceSummary();
             TrayMenuOptions.Reload();
+            ShowMasterEnabled();
 
             LightThemeRadio.IsChecked = s.Theme != ThemeService.Dark;
             DarkThemeRadio.IsChecked  = s.Theme == ThemeService.Dark;

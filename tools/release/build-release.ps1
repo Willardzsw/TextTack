@@ -20,7 +20,9 @@ New-Item -ItemType Directory -Force $out | Out-Null
 
 # ReadyToRun: the app's own code ships precompiled, so a slow machine does not spend its first
 # seconds compiling it before the tray icon appears. Same code, a few MB larger.
-dotnet publish $project -c Release -r win-x64 --self-contained true -p:PublishReadyToRun=true `
+# LocalDiagnostics=false: the local diagnostics logging (src\OverTranslate\Services\LocalDiagnostics) is for the
+# developer's own machine and never ships.
+dotnet publish $project -c Release -r win-x64 --self-contained true -p:PublishReadyToRun=true -p:LocalDiagnostics=false `
     --source https://api.nuget.org/v3/index.json --artifacts-path (Join-Path $work "build") -o $stage -p:DebugType=none -p:DebugSymbols=false
 if ($LASTEXITCODE -ne 0) { throw "dotnet publish failed" }
 
@@ -32,6 +34,16 @@ if ($bad) { throw "Refusing to package: $($bad.FullName -join ', ')" }
 foreach ($required in "TextTack.exe", "hostfxr.dll", "LICENSE.txt", "THIRD-PARTY-NOTICES.txt",
     "icons\app.ico", "ocrmodels\onnx\thai\rec.onnx", "ocrmodels\onnx\thai\dict.txt", "ocrmodels\onnx\thai\provenance.json") {
     if (-not (Test-Path (Join-Path $stage $required))) { throw "Missing from package: $required" }
+}
+
+# Every local diagnostics log line starts with a marker (ForegroundTrail.Marker, spelled by code point to keep
+# this file ASCII); finding it in the assembly means the diagnostics were compiled in. Searched at
+# both byte alignments, since the string heap does not keep UTF-16 text on even offsets.
+$marker = -join [char[]](0x5B, 0x672C, 0x6A5F, 0x6AA2, 0x6E2C, 0x5D)
+$dll = [System.IO.File]::ReadAllBytes((Join-Path $stage "TextTack.dll"))
+$utf16 = [System.Text.Encoding]::Unicode
+if ($utf16.GetString($dll).Contains($marker) -or $utf16.GetString($dll, 1, $dll.Length - 1).Contains($marker)) {
+    throw "Refusing to package: TextTack.dll still contains the local diagnostics"
 }
 
 $zip = Join-Path $out "TextTack-$version-win-x64-Portable.zip"
